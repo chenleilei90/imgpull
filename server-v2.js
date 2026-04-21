@@ -1046,6 +1046,39 @@ app.post('/api/v2/settings', (req, res) => {
     res.json({ success: true });
 });
 
+app.get('/api/v2/admin/users', (req, res) => {
+    const rows = db.prepare(`
+        SELECT
+            a.*,
+            COUNT(DISTINCT p.id) AS project_count,
+            COUNT(DISTINCT pi.catalog_image_id) AS image_count
+        FROM access_codes a
+        LEFT JOIN user_projects_v2 p ON p.access_code_id = a.id
+        LEFT JOIN user_project_images_v2 pi ON pi.project_id = p.id
+        GROUP BY a.id
+        ORDER BY a.created_at DESC, a.id DESC
+        LIMIT 200
+    `).all();
+
+    res.json({
+        success: true,
+        users: rows.map((row) => ({
+            id: row.id,
+            code: row.code,
+            email: row.email,
+            status: row.status,
+            expireAt: row.expire_at || null,
+            harborProjectName: row.harbor_project_name || normalizeNamespace(row.code),
+            projectCount: Number(row.project_count || 0),
+            imageCount: Number(row.image_count || 0),
+            createdAt: row.created_at,
+            lastUsed: row.last_used || null,
+            deletedAt: row.deleted_at || null,
+            purgeAfter: row.purge_after || null
+        }))
+    });
+});
+
 app.get('/api/v2/admin/summary', (req, res) => {
     const summary = {
         catalogCount: db.prepare('SELECT COUNT(*) AS count FROM catalog_images').get().count,
