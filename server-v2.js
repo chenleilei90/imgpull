@@ -604,6 +604,30 @@ function getProjectImageTask(projectId, catalogImageId) {
     `).get(projectId, catalogImageId);
 }
 
+function getLatestTasksMap(accessCodeId, imageIds) {
+    const result = new Map();
+    if (!imageIds || !imageIds.length) {
+        return result;
+    }
+
+    const placeholders = imageIds.map(() => '?').join(',');
+    const rows = db.prepare(`
+        SELECT *
+        FROM distribution_tasks
+        WHERE access_code_id = ?
+          AND catalog_image_id IN (${placeholders})
+        ORDER BY requested_at DESC, id DESC
+    `).all(accessCodeId, ...imageIds);
+
+    rows.forEach((row) => {
+        if (!result.has(row.catalog_image_id)) {
+            result.set(row.catalog_image_id, row);
+        }
+    });
+
+    return result;
+}
+
 function serializeTask(task) {
     if (!task) {
         return null;
@@ -794,6 +818,41 @@ app.get('/api/v2/projects/:projectId/images', (req, res) => {
         project,
         images: images.map((row) => serializeCatalogImage(row, codeRow, getProjectImageTask(project.id, row.id)))
     });
+});
+
+app.get('/api/v2/my-images', (req, res) => {
+    const validation = getAccessCodeOrThrow(req.query.code);
+    if (validation.status !== 200) {
+        return res.status(validation.status).json(validation.payload);
+    }
+
+    const codeRow = validation.payload;
+    const rows = db.prepare(`
+        SELECT
+            c.*, 
+            GROUP_CONCAT(DISTINCT p.name) AS project_names,
+            COUNT(DISTINCT p.id) AS project_count,
+            MAX(pi.created_at) AS latest_project_add_at
+        FROM user_project_images_v2 pi
+        JOIN user_projects_v2 p ON p.id = pi.project_id
+        JOIN catalog_images c ON c.id = pi.catalog_image_id
+        WHERE p.access_code_id = ?
+        GROUP BY c.id
+        ORDER BY latest_project_add_at DESC, c.updated_at DESC
+    `).all(codeRow.id);
+
+    const taskMap = getLatestTasksMap(codeRow.id, rows.map((row) => row.id));
+    const images = rows.map((row) => {
+        const task = taskMap.get(row.id) || null;
+        return {
+            ...serializeCatalogImage(row, codeRow, task),
+            projectNames: row.project_names ? row.project_names.split(',') : [],
+            projectCount: Number(row.project_count || 0),
+            delivered: !!task && task.status === 'completed'
+        };
+    });
+
+    res.json({ success: true, images });
 });
 
 app.post('/api/v2/projects/:projectId/images', (req, res) => {
