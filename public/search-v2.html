@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ImgPull V2</title>
+    <title>ImgPull V2 Console</title>
     <style>
         :root {
             --bg: #f4efe6;
@@ -13,7 +13,9 @@
             --muted: #6b5b47;
             --brand: #b35c2e;
             --brand-dark: #7e3d1d;
+            --ink-soft: #433528;
             --ok: #276749;
+            --warn: #9a4d1f;
         }
         * { box-sizing: border-box; }
         body {
@@ -26,36 +28,53 @@
             color: var(--ink);
         }
         .wrap {
-            max-width: 1100px;
+            max-width: 1240px;
             margin: 0 auto;
-            padding: 32px 20px 60px;
+            padding: 28px 20px 60px;
+        }
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+        .topbar a {
+            text-decoration: none;
+            color: white;
+            background: var(--brand);
+            border-radius: 14px;
+            padding: 12px 14px;
         }
         .hero {
-            margin-bottom: 24px;
-            padding: 28px;
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 18px;
+            margin-bottom: 18px;
+        }
+        .panel {
+            background: rgba(255, 250, 242, 0.92);
             border: 1px solid var(--line);
             border-radius: 24px;
-            background: rgba(255, 250, 242, 0.92);
-            backdrop-filter: blur(8px);
-        }
-        h1 { margin: 0 0 8px; font-size: 36px; }
-        .hero p { margin: 0; color: var(--muted); }
-        .panel {
-            background: var(--panel);
-            border: 1px solid var(--line);
-            border-radius: 20px;
             padding: 20px;
-            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
         }
+        h1 { margin: 0 0 8px; font-size: 34px; }
+        p { margin: 0; color: var(--muted); line-height: 1.7; }
         .grid {
             display: grid;
             grid-template-columns: 220px 1fr auto;
             gap: 12px;
         }
+        .layout {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 18px;
+        }
         input, button, select {
             width: 100%;
             padding: 12px 14px;
-            border-radius: 12px;
+            border-radius: 14px;
             border: 1px solid var(--line);
             font: inherit;
         }
@@ -66,22 +85,38 @@
             border: none;
         }
         button:hover { background: var(--brand-dark); }
+        .muted { color: var(--muted); }
         .meta {
             display: flex;
-            gap: 12px;
+            gap: 10px;
             flex-wrap: wrap;
-            margin-top: 12px;
+            margin-top: 14px;
             color: var(--muted);
             font-size: 14px;
+        }
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: #f2e5d1;
+            color: var(--ink-soft);
+            border-radius: 999px;
         }
         .actions {
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
-            margin-top: 16px;
+            margin-top: 14px;
         }
         .actions input, .actions select { width: auto; min-width: 180px; }
-        .results {
+        .section-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .results, .stack {
             display: grid;
             gap: 14px;
         }
@@ -110,6 +145,10 @@
             background: #d8f3df;
             color: var(--ok);
         }
+        .badge.warn {
+            background: #f5dfd1;
+            color: var(--warn);
+        }
         code {
             display: block;
             padding: 10px 12px;
@@ -118,49 +157,111 @@
             overflow-x: auto;
             margin-top: 8px;
         }
-        .hint {
+        .empty {
+            padding: 22px;
+            border: 1px dashed var(--line);
+            border-radius: 16px;
             color: var(--muted);
-            font-size: 14px;
+            text-align: center;
         }
-        @media (max-width: 800px) {
+        .small {
+            font-size: 13px;
+            color: var(--muted);
+        }
+        @media (max-width: 960px) {
+            .hero, .layout { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 760px) {
             .grid { grid-template-columns: 1fr; }
             .actions { flex-direction: column; }
             .actions input, .actions select { width: 100%; }
+            .topbar { flex-direction: column; align-items: flex-start; }
             h1 { font-size: 28px; }
         }
     </style>
 </head>
 <body>
     <div class="wrap">
+        <div class="topbar">
+            <div>
+                <div class="small">ImgPull V2 / 用户控制台</div>
+                <h1>默认缓存优先，用户只拉自己的镜像。</h1>
+            </div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <a href="/v2">首页</a>
+                <a href="/v2/admin">后台</a>
+            </div>
+        </div>
+
         <section class="hero">
-            <h1>ImgPull V2</h1>
-            <p>本地 Harbor 默认仓库优先，Docker Hub 结果兜底。串码对应一个用户命名空间，用户可以把镜像自由组合成自己的项目。</p>
+            <article class="panel">
+                <div class="grid">
+                    <input id="code" placeholder="输入串码">
+                    <input id="query" placeholder="搜索镜像，例如 nginx 或 calico/apiserver">
+                    <button id="searchBtn">搜索镜像</button>
+                </div>
+                <div class="meta">
+                    <span class="chip" id="namespaceInfo">命名空间：未验证</span>
+                    <span class="chip" id="visibilityInfo">拉取方式：未确认</span>
+                    <span class="chip" id="searchModeInfo">搜索策略：默认缓存优先</span>
+                </div>
+                <div class="actions">
+                    <input id="projectName" placeholder="新项目名，例如 k8s-base">
+                    <button id="createProjectBtn" type="button">创建我的项目</button>
+                    <select id="projectSelect">
+                        <option value="">先创建或选择项目</option>
+                    </select>
+                    <button id="refreshBtn" type="button">刷新我的项目和任务</button>
+                </div>
+            </article>
+            <aside class="panel">
+                <div class="section-title">
+                    <strong>我的交付说明</strong>
+                </div>
+                <div class="stack">
+                    <div class="card">
+                        <div class="small">默认规则</div>
+                        <p>系统只搜索默认私有缓存仓库。只有缓存没命中时，才去 Docker Hub 搜索并准备回填缓存。</p>
+                    </div>
+                    <div class="card">
+                        <div class="small">你的拉取地址</div>
+                        <p id="pullHint">请先验证串码，系统会展示你的 Harbor 命名空间和目标镜像地址。</p>
+                    </div>
+                </div>
+            </aside>
         </section>
 
-        <section class="panel">
-            <div class="grid">
-                <input id="code" placeholder="输入串码">
-                <input id="query" placeholder="搜索镜像，例如 nginx 或 calico/apiserver">
-                <button id="searchBtn">搜索</button>
+        <section class="layout">
+            <div class="panel">
+                <div class="section-title">
+                    <strong>搜索结果</strong>
+                    <span class="small">优先本地缓存，没有命中再查 Docker Hub</span>
+                </div>
+                <section class="results" id="results">
+                    <div class="empty">输入串码并搜索镜像后，这里会显示结果。</div>
+                </section>
             </div>
-            <div class="meta">
-                <span id="namespaceInfo">命名空间：未验证</span>
-                <span>规则：本地 Harbor 结果排前，官方结果排后</span>
-            </div>
-            <div class="actions">
-                <input id="projectName" placeholder="新项目名，例如 k8s-base">
-                <button id="createProjectBtn" type="button">创建我的项目</button>
-                <select id="projectSelect">
-                    <option value="">先创建或选择项目</option>
-                </select>
+            <div class="stack">
+                <section class="panel">
+                    <div class="section-title">
+                        <strong>我的项目</strong>
+                        <span class="small" id="projectCountInfo">0 个项目</span>
+                    </div>
+                    <section id="projectList" class="stack">
+                        <div class="empty">还没有项目。</div>
+                    </section>
+                </section>
+                <section class="panel">
+                    <div class="section-title">
+                        <strong>最近任务</strong>
+                        <span class="small">加入项目时自动排队</span>
+                    </div>
+                    <section id="taskList" class="stack">
+                        <div class="empty">还没有任务。</div>
+                    </section>
+                </section>
             </div>
         </section>
-
-        <section class="panel">
-            <div class="hint">这版先完成搜索、命名空间映射和用户项目组织。真正的 pull / tag / push 同步任务下一步继续接。</div>
-        </section>
-
-        <section class="results" id="results"></section>
     </div>
 
     <script>
@@ -170,42 +271,122 @@
         const projectSelectEl = document.getElementById('projectSelect');
         const resultsEl = document.getElementById('results');
         const namespaceInfoEl = document.getElementById('namespaceInfo');
+        const visibilityInfoEl = document.getElementById('visibilityInfo');
+        const searchModeInfoEl = document.getElementById('searchModeInfo');
+        const pullHintEl = document.getElementById('pullHint');
+        const projectListEl = document.getElementById('projectList');
+        const taskListEl = document.getElementById('taskList');
+        const projectCountInfoEl = document.getElementById('projectCountInfo');
+
+        function getCode() {
+            return codeEl.value.trim();
+        }
+
+        function getParamCode() {
+            const code = new URLSearchParams(window.location.search).get('code');
+            if (code) {
+                codeEl.value = code;
+            }
+        }
 
         async function loadMe() {
-            const code = codeEl.value.trim();
+            const code = getCode();
             if (!code) return false;
 
             const response = await fetch(`/api/v2/me?code=${encodeURIComponent(code)}`);
             const data = await response.json();
             if (!response.ok || !data.success) {
                 namespaceInfoEl.textContent = '命名空间：串码无效';
+                visibilityInfoEl.textContent = '拉取方式：未知';
+                pullHintEl.textContent = data.error || '串码无效';
                 throw new Error(data.error || '串码无效');
             }
 
             namespaceInfoEl.textContent = `命名空间：${data.accessCode.harborProjectName}`;
+            visibilityInfoEl.textContent = `拉取方式：${data.accessCode.visibility}`;
+            pullHintEl.textContent = `你的镜像会分发到 ${data.accessCode.harborProjectName} 这个命名空间下，你后续只需要拉自己的地址。`;
             return true;
         }
 
-        async function loadProjects() {
-            const code = codeEl.value.trim();
-            if (!code) return;
-
-            const response = await fetch(`/api/v2/projects?code=${encodeURIComponent(code)}`);
-            const data = await response.json();
+        function renderProjectCards(projects) {
+            projectCountInfoEl.textContent = `${projects.length} 个项目`;
             projectSelectEl.innerHTML = '<option value="">先创建或选择项目</option>';
 
-            if (!response.ok || !data.success) return;
+            if (!projects.length) {
+                projectListEl.innerHTML = '<div class="empty">还没有项目，先创建一个你自己的镜像组合项目。</div>';
+                return;
+            }
 
-            data.projects.forEach((project) => {
+            projectListEl.innerHTML = '';
+            projects.forEach((project) => {
                 const option = document.createElement('option');
                 option.value = project.id;
                 option.textContent = `${project.name} (${project.image_count}个镜像)`;
                 projectSelectEl.appendChild(option);
+
+                const card = document.createElement('article');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="title">
+                        <strong>${project.name}</strong>
+                        <span class="badge">${project.image_count} 个镜像</span>
+                    </div>
+                    <div class="small">项目标识：${project.slug}</div>
+                `;
+                projectListEl.appendChild(card);
             });
         }
 
+        async function loadProjects() {
+            const code = getCode();
+            if (!code) return;
+
+            const response = await fetch(`/api/v2/projects?code=${encodeURIComponent(code)}`);
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                renderProjectCards([]);
+                return;
+            }
+            renderProjectCards(data.projects);
+        }
+
+        function renderTasks(tasks) {
+            if (!tasks.length) {
+                taskListEl.innerHTML = '<div class="empty">还没有任务，添加镜像到项目后会自动排队。</div>';
+                return;
+            }
+
+            taskListEl.innerHTML = '';
+            tasks.forEach((task) => {
+                const card = document.createElement('article');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="title">
+                        <strong>${task.displayName}</strong>
+                        <span class="badge ${task.status === 'completed' ? 'ok' : task.status === 'failed' ? 'warn' : ''}">${task.status}</span>
+                    </div>
+                    <div class="small">项目：${task.projectName || '-'}</div>
+                    <code>目标地址：${task.targetFullName}</code>
+                    <div class="small">请求时间：${task.requestedAt || '-'}</div>
+                `;
+                taskListEl.appendChild(card);
+            });
+        }
+
+        async function loadTasks() {
+            const code = getCode();
+            if (!code) return;
+            const response = await fetch(`/api/v2/tasks?code=${encodeURIComponent(code)}`);
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                renderTasks([]);
+                return;
+            }
+            renderTasks(data.tasks);
+        }
+
         async function createProject() {
-            const code = codeEl.value.trim();
+            const code = getCode();
             const name = projectNameEl.value.trim();
             if (!code || !name) {
                 alert('请先输入串码和项目名');
@@ -230,70 +411,69 @@
 
         function renderResults(items) {
             resultsEl.innerHTML = '';
-
             if (!items.length) {
-                resultsEl.innerHTML = '<div class="panel">没有搜索到镜像</div>';
+                resultsEl.innerHTML = '<div class="empty">没有搜索到镜像。</div>';
                 return;
             }
 
             items.forEach((item) => {
                 const card = document.createElement('article');
                 card.className = 'card';
+                const statusBadge = item.local.available ? '本地缓存已命中' : 'Docker Hub 候选';
+                const badgeClass = item.local.available ? 'ok' : 'warn';
                 card.innerHTML = `
                     <div class="title">
                         <strong>${item.displayName}</strong>
-                        <div>
-                            <span class="badge ${item.local.available ? 'ok' : ''}">
-                                ${item.local.available ? '本地已存在' : '官方候选'}
-                            </span>
-                        </div>
+                        <span class="badge ${badgeClass}">${statusBadge}</span>
                     </div>
-                    <div class="hint">${item.description || '暂无描述'}</div>
+                    <div class="muted">${item.description || '暂无描述'}</div>
                     <code>源镜像：${item.source.fullName}</code>
+                    <code>默认缓存：${item.local.fullName || '当前缓存里还没有，分发时会先进入默认缓存仓库'}</code>
                     <code>用户目标：${item.userTarget ? item.userTarget.fullName : '请先验证串码'}</code>
                     <div class="actions">
-                        <button type="button" data-image='${JSON.stringify(item).replace(/'/g, '&apos;')}'>添加到当前项目</button>
+                        <button type="button">加入当前项目并排队分发</button>
                     </div>
                 `;
 
-                card.querySelector('button').addEventListener('click', async (event) => {
+                card.querySelector('button').addEventListener('click', async () => {
                     const projectId = projectSelectEl.value;
-                    const code = codeEl.value.trim();
+                    const code = getCode();
                     if (!projectId) {
                         alert('请先选择一个项目');
                         return;
                     }
 
-                    const image = JSON.parse(event.target.getAttribute('data-image').replace(/&apos;/g, "'"));
                     const response = await fetch(`/api/v2/projects/${projectId}/images`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             code,
-                            catalogImageId: image.id,
+                            catalogImageId: item.id,
                             image: {
-                                sourceType: image.sourceType,
-                                registry: image.source.registry,
-                                namespace: image.source.namespace,
-                                repository: image.source.repository,
-                                tag: image.source.tag,
-                                description: image.description,
-                                localAvailable: image.local.available,
-                                localRegistry: image.local.registry,
-                                localNamespace: image.local.namespace,
-                                localRepository: image.local.repository,
-                                localTag: image.local.tag,
-                                localFullName: image.local.fullName
+                                sourceType: item.sourceType,
+                                registry: item.source.registry,
+                                namespace: item.source.namespace,
+                                repository: item.source.repository,
+                                tag: item.source.tag,
+                                digest: item.source.digest,
+                                description: item.description,
+                                localAvailable: item.local.available,
+                                localRegistry: item.local.registry,
+                                localNamespace: item.local.namespace,
+                                localRepository: item.local.repository,
+                                localTag: item.local.tag,
+                                localFullName: item.local.fullName
                             }
                         })
                     });
                     const data = await response.json();
                     if (!response.ok || !data.success) {
-                        alert(data.error || '添加失败');
+                        alert(data.error || '加入项目失败');
                         return;
                     }
                     await loadProjects();
-                    alert('已加入项目，下一步可以接同步任务');
+                    await loadTasks();
+                    alert('镜像已加入项目，并已生成分发任务。');
                 });
 
                 resultsEl.appendChild(card);
@@ -301,7 +481,7 @@
         }
 
         async function search() {
-            const code = codeEl.value.trim();
+            const code = getCode();
             const query = queryEl.value.trim();
             if (!code || !query) {
                 alert('请先输入串码和搜索词');
@@ -311,6 +491,7 @@
             try {
                 await loadMe();
                 await loadProjects();
+                await loadTasks();
 
                 const response = await fetch(`/api/v2/search/images?code=${encodeURIComponent(code)}&q=${encodeURIComponent(query)}`);
                 const data = await response.json();
@@ -318,14 +499,32 @@
                     alert(data.error || '搜索失败');
                     return;
                 }
+                searchModeInfoEl.textContent = `搜索策略：${data.searchMode === 'cache-only-hit' ? '默认缓存命中，未查 Docker Hub' : '默认缓存未命中，已查 Docker Hub'}`;
                 renderResults(data.results);
             } catch (error) {
                 alert(error.message || '搜索失败');
             }
         }
 
+        async function refreshAll() {
+            try {
+                await loadMe();
+                await loadProjects();
+                await loadTasks();
+            } catch (error) {
+                if (getCode()) {
+                    alert(error.message || '刷新失败');
+                }
+            }
+        }
+
         document.getElementById('searchBtn').addEventListener('click', search);
         document.getElementById('createProjectBtn').addEventListener('click', createProject);
+        document.getElementById('refreshBtn').addEventListener('click', refreshAll);
+        getParamCode();
+        if (getCode()) {
+            refreshAll();
+        }
     </script>
 </body>
 </html>
