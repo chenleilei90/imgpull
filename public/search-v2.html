@@ -18,6 +18,7 @@
             --warn: #9a4d1f;
             --sea: #30565b;
         }
+
         * { box-sizing: border-box; }
         body {
             margin: 0;
@@ -28,45 +29,109 @@
                 var(--bg);
             color: var(--ink);
         }
+
         .wrap { max-width: 1280px; margin: 0 auto; padding: 28px 20px 60px; }
-        .topbar { display:flex; justify-content:space-between; gap:12px; align-items:center; margin-bottom:18px; }
-        .topbar a { text-decoration:none; color:white; background:var(--brand); border-radius:14px; padding:12px 14px; }
-        .hero { display:grid; grid-template-columns:1.1fr 0.9fr; gap:18px; margin-bottom:18px; }
-        .panel { background:rgba(255,250,242,0.92); border:1px solid var(--line); border-radius:24px; padding:20px; backdrop-filter:blur(10px); }
-        h1 { margin:0 0 8px; font-size:34px; }
-        h2 { margin:0; font-size:22px; }
-        p { margin:0; color:var(--muted); line-height:1.7; }
-        .grid { display:grid; grid-template-columns:220px 1fr auto; gap:12px; }
-        .layout { display:grid; grid-template-columns:1.05fr 0.95fr; gap:18px; }
-        input, button, select { width:100%; padding:12px 14px; border-radius:14px; border:1px solid var(--line); font:inherit; }
-        button { cursor:pointer; background:var(--brand); color:white; border:none; }
-        button.secondary { background:var(--sea); }
-        button.danger { background:#7d3f34; }
-        button:hover { background:var(--brand-dark); }
-        button.secondary:hover { background:#224144; }
-        button.danger:hover { background:#642e26; }
-        .muted { color:var(--muted); }
-        .meta { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; color:var(--muted); font-size:14px; }
-        .chip { display:inline-flex; align-items:center; gap:6px; padding:6px 12px; background:#f2e5d1; color:var(--ink-soft); border-radius:999px; }
-        .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
-        .actions input, .actions select { width:auto; min-width:180px; }
-        .section-title { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:10px; }
-        .results, .stack { display:grid; gap:14px; }
-        .card { border:1px solid var(--line); border-radius:18px; padding:16px; background:white; }
-        .title { display:flex; justify-content:space-between; gap:12px; align-items:center; margin-bottom:8px; }
-        .badge { display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px; background:#efe0c8; color:var(--brand-dark); }
-        .badge.ok { background:#d8f3df; color:var(--ok); }
-        .badge.warn { background:#f5dfd1; color:var(--warn); }
-        .badge.info { background:#dae9ea; color:var(--sea); }
-        code { display:block; padding:10px 12px; background:#fbf6ee; border-radius:12px; overflow-x:auto; margin-top:8px; }
-        .empty { padding:22px; border:1px dashed var(--line); border-radius:16px; color:var(--muted); text-align:center; }
-        .small { font-size:13px; color:var(--muted); }
-        .project-card.active { border-color:var(--brand); box-shadow:0 0 0 1px rgba(179, 92, 46, 0.25); }
-        .stats-row { display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; margin-top:14px; }
-        .mini-stat { border-radius:16px; border:1px solid var(--line); background:rgba(255,255,255,0.78); padding:14px; }
-        .mini-stat strong { display:block; font-size:24px; margin-bottom:4px; }
-        @media (max-width:1080px) { .hero, .layout { grid-template-columns:1fr; } }
-        @media (max-width:760px) { .grid { grid-template-columns:1fr; } .actions { flex-direction:column; } .actions input, .actions select { width:100%; } .topbar { flex-direction:column; align-items:flex-start; } .stats-row { grid-template-columns:1fr; } h1 { font-size:28px; } }
+        .topbar { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 18px; }
+        .topbar a { text-decoration: none; color: white; background: var(--brand); border-radius: 14px; padding: 12px 14px; }
+        .hero { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 18px; margin-bottom: 18px; }
+        .panel {
+            background: rgba(255, 250, 242, 0.92);
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 { margin: 0 0 8px; font-size: 34px; }
+        h2 { margin: 0; font-size: 22px; }
+        p { margin: 0; color: var(--muted); line-height: 1.7; }
+        .grid { display: grid; grid-template-columns: 220px 1fr auto; gap: 12px; }
+        .layout { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 18px; }
+        input, button, select {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 14px;
+            border: 1px solid var(--line);
+            font: inherit;
+        }
+
+        button { cursor: pointer; background: var(--brand); color: white; border: none; }
+        button.secondary { background: var(--sea); }
+        button.danger { background: #7d3f34; }
+        button.ghost { background: #ede1cf; color: var(--ink-soft); }
+        button:hover { background: var(--brand-dark); }
+        button.secondary:hover { background: #224144; }
+        button.danger:hover { background: #642e26; }
+        button.ghost:hover { background: #e2d1ba; }
+
+        .muted { color: var(--muted); }
+        .meta { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; color: var(--muted); font-size: 14px; }
+        .chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: #f2e5d1; color: var(--ink-soft); border-radius: 999px; }
+        .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+        .actions input, .actions select { width: auto; min-width: 180px; }
+        .section-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 10px; }
+        .results, .stack { display: grid; gap: 14px; }
+        .card { border: 1px solid var(--line); border-radius: 18px; padding: 16px; background: white; }
+        .title { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 8px; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; background: #efe0c8; color: var(--brand-dark); }
+        .badge.ok { background: #d8f3df; color: var(--ok); }
+        .badge.warn { background: #f5dfd1; color: var(--warn); }
+        .badge.info { background: #dae9ea; color: var(--sea); }
+        code {
+            display: block;
+            padding: 10px 12px;
+            background: #fbf6ee;
+            border-radius: 12px;
+            overflow-x: auto;
+            margin-top: 8px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .empty {
+            padding: 22px;
+            border: 1px dashed var(--line);
+            border-radius: 16px;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        .small { font-size: 13px; color: var(--muted); }
+        .project-card.active { border-color: var(--brand); box-shadow: 0 0 0 1px rgba(179, 92, 46, 0.25); }
+        .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 14px; }
+        .mini-stat { border-radius: 16px; border: 1px solid var(--line); background: rgba(255,255,255,0.78); padding: 14px; }
+        .mini-stat strong { display: block; font-size: 24px; margin-bottom: 4px; }
+        .command-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+        .command-row button { width: auto; padding: 10px 12px; }
+        .toast {
+            position: fixed;
+            right: 18px;
+            bottom: 18px;
+            background: #2d2418;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 14px;
+            box-shadow: 0 16px 32px rgba(45, 36, 24, 0.16);
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(8px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        .toast.show { opacity: 1; transform: translateY(0); }
+
+        @media (max-width: 1080px) {
+            .hero, .layout { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 760px) {
+            .grid { grid-template-columns: 1fr; }
+            .actions { flex-direction: column; }
+            .actions input, .actions select { width: 100%; }
+            .topbar { flex-direction: column; align-items: flex-start; }
+            .stats-row { grid-template-columns: 1fr; }
+            h1 { font-size: 28px; }
+        }
     </style>
 </head>
 <body>
@@ -111,7 +176,7 @@
             </article>
             <aside class="panel">
                 <div class="section-title">
-                    <strong>我的交付说明</strong>
+                    <strong>交付说明</strong>
                 </div>
                 <div class="stack">
                     <div class="card">
@@ -120,7 +185,7 @@
                     </div>
                     <div class="card">
                         <div class="small">你的拉取地址</div>
-                        <p id="pullHint">请先验证串码，系统会展示你的 Harbor 命名空间和目标镜像地址。</p>
+                        <p id="pullHint">请先验证串码，系统会显示你的 Harbor 命名空间和最终交付地址。</p>
                     </div>
                 </div>
             </aside>
@@ -193,6 +258,8 @@
         </section>
     </div>
 
+    <div id="toast" class="toast">已复制</div>
+
     <script>
         const codeEl = document.getElementById('code');
         const queryEl = document.getElementById('query');
@@ -214,13 +281,78 @@
         const deliveredStatEl = document.getElementById('deliveredStat');
         const myImageStatusFilterEl = document.getElementById('myImageStatusFilter');
         const myImageProjectFilterEl = document.getElementById('myImageProjectFilter');
+        const toastEl = document.getElementById('toast');
 
         let currentProjectId = '';
         let latestMyImages = [];
+        let latestSettings = { harborDomain: 'harbor.wh02.com' };
 
-        function getCode() { return codeEl.value.trim(); }
-        function getParamCode() { const code = new URLSearchParams(window.location.search).get('code'); if (code) codeEl.value = code; }
-        function statusClass(status) { if (status === 'completed') return 'ok'; if (status === 'failed') return 'warn'; return 'info'; }
+        function getCode() {
+            return codeEl.value.trim();
+        }
+
+        function getParamCode() {
+            const code = new URLSearchParams(window.location.search).get('code');
+            if (code) codeEl.value = code;
+        }
+
+        function statusClass(status) {
+            if (status === 'completed') return 'ok';
+            if (status === 'failed') return 'warn';
+            return 'info';
+        }
+
+        function showToast(message) {
+            toastEl.textContent = message;
+            toastEl.classList.add('show');
+            clearTimeout(showToast.timer);
+            showToast.timer = setTimeout(() => toastEl.classList.remove('show'), 1800);
+        }
+
+        async function copyText(text, successMessage) {
+            try {
+                await navigator.clipboard.writeText(text);
+                showToast(successMessage || '已复制');
+            } catch (error) {
+                window.prompt('复制失败，请手动复制下面内容：', text);
+            }
+        }
+
+        function buildPullCommand(fullName) {
+            return `docker pull ${fullName}`;
+        }
+
+        function buildLoginAndPullCommand(fullName) {
+            return `docker login ${latestSettings.harborDomain}\ndocker pull ${fullName}`;
+        }
+
+        function renderCommandButtons(fullName, labelPrefix) {
+            if (!fullName) return '';
+            return `
+                <div class="command-row">
+                    <button type="button" class="ghost" data-copy="${encodeURIComponent(buildPullCommand(fullName))}" data-label="${labelPrefix}拉取命令">复制 pull 命令</button>
+                    <button type="button" class="ghost" data-copy="${encodeURIComponent(buildLoginAndPullCommand(fullName))}" data-label="${labelPrefix}登录加拉取命令">复制 login + pull</button>
+                </div>
+            `;
+        }
+
+        function bindCopyButtons(scope) {
+            scope.querySelectorAll('[data-copy]').forEach((button) => {
+                button.addEventListener('click', async () => {
+                    const text = decodeURIComponent(button.getAttribute('data-copy'));
+                    const label = button.getAttribute('data-label') || '命令';
+                    await copyText(text, `${label}已复制`);
+                });
+            });
+        }
+
+        async function loadSettings() {
+            const response = await fetch('/api/v2/settings');
+            const data = await response.json();
+            if (response.ok && data.success) {
+                latestSettings = data.settings;
+            }
+        }
 
         async function loadMe() {
             const code = getCode();
@@ -350,12 +482,14 @@
                     <div class="small">源镜像：${item.source.fullName}</div>
                     <code>交付地址：${item.userTarget ? item.userTarget.fullName : '暂不可用'}</code>
                     <code>默认缓存：${item.local.fullName || '任务执行后会写入默认缓存'}</code>
+                    ${renderCommandButtons(item.userTarget ? item.userTarget.fullName : '', '项目镜像')}
                     <div class="actions">
                         <button type="button" class="secondary" data-action="redistribute">重新分发</button>
                         <button type="button" class="danger" data-action="remove">从项目移除</button>
                     </div>
                 `;
-                card.querySelectorAll('button').forEach((button) => {
+                bindCopyButtons(card);
+                card.querySelectorAll('[data-action]').forEach((button) => {
                     button.addEventListener('click', async () => {
                         try {
                             await projectImageAction(project.id, item.id, button.getAttribute('data-action'));
@@ -391,6 +525,7 @@
                 taskListEl.innerHTML = '<div class="empty">还没有任务，添加镜像到项目后会自动排队。</div>';
                 return;
             }
+
             taskListEl.innerHTML = '';
             tasks.forEach((task) => {
                 const card = document.createElement('article');
@@ -402,8 +537,10 @@
                     </div>
                     <div class="small">项目：${task.projectName || '-'}</div>
                     <code>目标地址：${task.targetFullName}</code>
+                    ${renderCommandButtons(task.targetFullName, '任务镜像')}
                     <div class="small">请求时间：${task.requestedAt || '-'}</div>
                 `;
+                bindCopyButtons(card);
                 taskListEl.appendChild(card);
             });
         }
@@ -454,7 +591,9 @@
                     <div class="small">所属项目：${projects}</div>
                     <code>最终拉取：${item.userTarget ? item.userTarget.fullName : '暂不可用'}</code>
                     <code>源镜像：${item.source.fullName}</code>
+                    ${renderCommandButtons(item.userTarget ? item.userTarget.fullName : '', '我的镜像')}
                 `;
+                bindCopyButtons(card);
                 myImagesEl.appendChild(card);
             });
         }
@@ -476,7 +615,7 @@
             const code = getCode();
             const name = projectNameEl.value.trim();
             if (!code || !name) {
-                alert('请先输入串码和项目名');
+                alert('请输入串码和项目名');
                 return;
             }
             const response = await fetch('/api/v2/projects', {
@@ -501,6 +640,7 @@
                 resultsEl.innerHTML = '<div class="empty">没有搜索到镜像。</div>';
                 return;
             }
+
             items.forEach((item) => {
                 const card = document.createElement('article');
                 card.className = 'card';
@@ -515,11 +655,13 @@
                     <code>源镜像：${item.source.fullName}</code>
                     <code>默认缓存：${item.local.fullName || '当前缓存里还没有，分发时会先进入默认缓存仓库'}</code>
                     <code>用户目标：${item.userTarget ? item.userTarget.fullName : '请先验证串码'}</code>
+                    ${renderCommandButtons(item.userTarget ? item.userTarget.fullName : '', '搜索结果')}
                     <div class="actions">
-                        <button type="button">加入当前项目并排队分发</button>
+                        <button type="button" data-role="add-project">加入当前项目并排队分发</button>
                     </div>
                 `;
-                card.querySelector('button').addEventListener('click', async () => {
+                bindCopyButtons(card);
+                card.querySelector('[data-role="add-project"]').addEventListener('click', async () => {
                     const projectId = projectSelectEl.value || currentProjectId;
                     const code = getCode();
                     if (!projectId) {
@@ -566,7 +708,7 @@
             const code = getCode();
             const query = queryEl.value.trim();
             if (!code || !query) {
-                alert('请先输入串码和搜索词');
+                alert('请输入串码和搜索词');
                 return;
             }
             try {
@@ -586,6 +728,7 @@
 
         async function refreshAll() {
             try {
+                await loadSettings();
                 await loadMe();
                 await loadProjects();
                 await loadProjectImages();
@@ -611,9 +754,8 @@
         myImageProjectFilterEl.addEventListener('change', () => renderMyImages(latestMyImages));
 
         getParamCode();
-        if (getCode()) {
-            refreshAll();
-        }
+        loadSettings();
+        if (getCode()) refreshAll();
     </script>
 </body>
 </html>
