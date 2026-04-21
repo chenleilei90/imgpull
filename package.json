@@ -5,7 +5,9 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
+    "start:v2": "node server-v2.js",
     "dev": "nodemon server.js",
+    "dev:v2": "nodemon server-v2.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
