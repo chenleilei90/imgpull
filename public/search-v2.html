@@ -28,192 +28,45 @@
                 var(--bg);
             color: var(--ink);
         }
-        .wrap {
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 28px 20px 60px;
-        }
-        .topbar {
-            display: flex;
-            justify-content: space-between;
-            gap: 12px;
-            align-items: center;
-            margin-bottom: 18px;
-        }
-        .topbar a {
-            text-decoration: none;
-            color: white;
-            background: var(--brand);
-            border-radius: 14px;
-            padding: 12px 14px;
-        }
-        .hero {
-            display: grid;
-            grid-template-columns: 1.1fr 0.9fr;
-            gap: 18px;
-            margin-bottom: 18px;
-        }
-        .panel {
-            background: rgba(255, 250, 242, 0.92);
-            border: 1px solid var(--line);
-            border-radius: 24px;
-            padding: 20px;
-            backdrop-filter: blur(10px);
-        }
-        h1 { margin: 0 0 8px; font-size: 34px; }
-        h2 { margin: 0; font-size: 22px; }
-        p { margin: 0; color: var(--muted); line-height: 1.7; }
-        .grid {
-            display: grid;
-            grid-template-columns: 220px 1fr auto;
-            gap: 12px;
-        }
-        .layout {
-            display: grid;
-            grid-template-columns: 1.05fr 0.95fr;
-            gap: 18px;
-        }
-        .subgrid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 18px;
-        }
-        input, button, select {
-            width: 100%;
-            padding: 12px 14px;
-            border-radius: 14px;
-            border: 1px solid var(--line);
-            font: inherit;
-        }
-        button {
-            cursor: pointer;
-            background: var(--brand);
-            color: white;
-            border: none;
-        }
-        button.secondary { background: var(--sea); }
-        button:hover { background: var(--brand-dark); }
-        button.secondary:hover { background: #224144; }
-        .muted { color: var(--muted); }
-        .meta {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 14px;
-            color: var(--muted);
-            font-size: 14px;
-        }
-        .chip {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            background: #f2e5d1;
-            color: var(--ink-soft);
-            border-radius: 999px;
-        }
-        .actions {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 14px;
-        }
-        .actions input, .actions select { width: auto; min-width: 180px; }
-        .section-title {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-            gap: 10px;
-        }
-        .results, .stack {
-            display: grid;
-            gap: 14px;
-        }
-        .card {
-            border: 1px solid var(--line);
-            border-radius: 18px;
-            padding: 16px;
-            background: white;
-        }
-        .title {
-            display: flex;
-            justify-content: space-between;
-            gap: 12px;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-        .badge {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 999px;
-            font-size: 12px;
-            background: #efe0c8;
-            color: var(--brand-dark);
-        }
-        .badge.ok {
-            background: #d8f3df;
-            color: var(--ok);
-        }
-        .badge.warn {
-            background: #f5dfd1;
-            color: var(--warn);
-        }
-        .badge.info {
-            background: #dae9ea;
-            color: var(--sea);
-        }
-        code {
-            display: block;
-            padding: 10px 12px;
-            background: #fbf6ee;
-            border-radius: 12px;
-            overflow-x: auto;
-            margin-top: 8px;
-        }
-        .empty {
-            padding: 22px;
-            border: 1px dashed var(--line);
-            border-radius: 16px;
-            color: var(--muted);
-            text-align: center;
-        }
-        .small {
-            font-size: 13px;
-            color: var(--muted);
-        }
-        .project-card.active {
-            border-color: var(--brand);
-            box-shadow: 0 0 0 1px rgba(179, 92, 46, 0.25);
-        }
-        .stats-row {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin-top: 14px;
-        }
-        .mini-stat {
-            border-radius: 16px;
-            border: 1px solid var(--line);
-            background: rgba(255,255,255,0.78);
-            padding: 14px;
-        }
-        .mini-stat strong {
-            display: block;
-            font-size: 24px;
-            margin-bottom: 4px;
-        }
-        @media (max-width: 1080px) {
-            .hero, .layout, .subgrid { grid-template-columns: 1fr; }
-        }
-        @media (max-width: 760px) {
-            .grid { grid-template-columns: 1fr; }
-            .actions { flex-direction: column; }
-            .actions input, .actions select { width: 100%; }
-            .topbar { flex-direction: column; align-items: flex-start; }
-            .stats-row { grid-template-columns: 1fr; }
-            h1 { font-size: 28px; }
-        }
+        .wrap { max-width: 1280px; margin: 0 auto; padding: 28px 20px 60px; }
+        .topbar { display:flex; justify-content:space-between; gap:12px; align-items:center; margin-bottom:18px; }
+        .topbar a { text-decoration:none; color:white; background:var(--brand); border-radius:14px; padding:12px 14px; }
+        .hero { display:grid; grid-template-columns:1.1fr 0.9fr; gap:18px; margin-bottom:18px; }
+        .panel { background:rgba(255,250,242,0.92); border:1px solid var(--line); border-radius:24px; padding:20px; backdrop-filter:blur(10px); }
+        h1 { margin:0 0 8px; font-size:34px; }
+        h2 { margin:0; font-size:22px; }
+        p { margin:0; color:var(--muted); line-height:1.7; }
+        .grid { display:grid; grid-template-columns:220px 1fr auto; gap:12px; }
+        .layout { display:grid; grid-template-columns:1.05fr 0.95fr; gap:18px; }
+        input, button, select { width:100%; padding:12px 14px; border-radius:14px; border:1px solid var(--line); font:inherit; }
+        button { cursor:pointer; background:var(--brand); color:white; border:none; }
+        button.secondary { background:var(--sea); }
+        button.danger { background:#7d3f34; }
+        button:hover { background:var(--brand-dark); }
+        button.secondary:hover { background:#224144; }
+        button.danger:hover { background:#642e26; }
+        .muted { color:var(--muted); }
+        .meta { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; color:var(--muted); font-size:14px; }
+        .chip { display:inline-flex; align-items:center; gap:6px; padding:6px 12px; background:#f2e5d1; color:var(--ink-soft); border-radius:999px; }
+        .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
+        .actions input, .actions select { width:auto; min-width:180px; }
+        .section-title { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:10px; }
+        .results, .stack { display:grid; gap:14px; }
+        .card { border:1px solid var(--line); border-radius:18px; padding:16px; background:white; }
+        .title { display:flex; justify-content:space-between; gap:12px; align-items:center; margin-bottom:8px; }
+        .badge { display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px; background:#efe0c8; color:var(--brand-dark); }
+        .badge.ok { background:#d8f3df; color:var(--ok); }
+        .badge.warn { background:#f5dfd1; color:var(--warn); }
+        .badge.info { background:#dae9ea; color:var(--sea); }
+        code { display:block; padding:10px 12px; background:#fbf6ee; border-radius:12px; overflow-x:auto; margin-top:8px; }
+        .empty { padding:22px; border:1px dashed var(--line); border-radius:16px; color:var(--muted); text-align:center; }
+        .small { font-size:13px; color:var(--muted); }
+        .project-card.active { border-color:var(--brand); box-shadow:0 0 0 1px rgba(179, 92, 46, 0.25); }
+        .stats-row { display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; margin-top:14px; }
+        .mini-stat { border-radius:16px; border:1px solid var(--line); background:rgba(255,255,255,0.78); padding:14px; }
+        .mini-stat strong { display:block; font-size:24px; margin-bottom:4px; }
+        @media (max-width:1080px) { .hero, .layout { grid-template-columns:1fr; } }
+        @media (max-width:760px) { .grid { grid-template-columns:1fr; } .actions { flex-direction:column; } .actions input, .actions select { width:100%; } .topbar { flex-direction:column; align-items:flex-start; } .stats-row { grid-template-columns:1fr; } h1 { font-size:28px; } }
     </style>
 </head>
 <body>
@@ -225,6 +78,7 @@
             </div>
             <div style="display:flex; gap:10px; flex-wrap:wrap;">
                 <a href="/v2">首页</a>
+                <a href="/v2/deliveries">交付镜像</a>
                 <a href="/v2/admin">后台</a>
             </div>
         </div>
@@ -311,6 +165,16 @@
                         <h2>我的镜像</h2>
                         <span class="small">已经加入项目的镜像</span>
                     </div>
+                    <div class="actions" style="margin-top:0; margin-bottom:12px;">
+                        <select id="myImageStatusFilter">
+                            <option value="all">全部状态</option>
+                            <option value="delivered">只看已交付</option>
+                            <option value="pending">只看待处理</option>
+                        </select>
+                        <select id="myImageProjectFilter">
+                            <option value="">全部项目</option>
+                        </select>
+                    </div>
                     <section id="myImages" class="stack">
                         <div class="empty">还没有镜像加入到项目里。</div>
                     </section>
@@ -348,30 +212,19 @@
         const projectTotalStatEl = document.getElementById('projectTotalStat');
         const myImageTotalStatEl = document.getElementById('myImageTotalStat');
         const deliveredStatEl = document.getElementById('deliveredStat');
+        const myImageStatusFilterEl = document.getElementById('myImageStatusFilter');
+        const myImageProjectFilterEl = document.getElementById('myImageProjectFilter');
 
         let currentProjectId = '';
+        let latestMyImages = [];
 
-        function getCode() {
-            return codeEl.value.trim();
-        }
-
-        function getParamCode() {
-            const code = new URLSearchParams(window.location.search).get('code');
-            if (code) {
-                codeEl.value = code;
-            }
-        }
-
-        function statusClass(status) {
-            if (status === 'completed') return 'ok';
-            if (status === 'failed') return 'warn';
-            return 'info';
-        }
+        function getCode() { return codeEl.value.trim(); }
+        function getParamCode() { const code = new URLSearchParams(window.location.search).get('code'); if (code) codeEl.value = code; }
+        function statusClass(status) { if (status === 'completed') return 'ok'; if (status === 'failed') return 'warn'; return 'info'; }
 
         async function loadMe() {
             const code = getCode();
             if (!code) return false;
-
             const response = await fetch(`/api/v2/me?code=${encodeURIComponent(code)}`);
             const data = await response.json();
             if (!response.ok || !data.success) {
@@ -380,11 +233,26 @@
                 pullHintEl.textContent = data.error || '串码无效';
                 throw new Error(data.error || '串码无效');
             }
-
             namespaceInfoEl.textContent = `命名空间：${data.accessCode.harborProjectName}`;
             visibilityInfoEl.textContent = `拉取方式：${data.accessCode.visibility}`;
             pullHintEl.textContent = `你的镜像会分发到 ${data.accessCode.harborProjectName} 这个命名空间下。镜像一旦交付完成，你就可以直接拉自己的地址。`;
             return true;
+        }
+
+        function rebuildMyImageProjectFilter(images) {
+            const current = myImageProjectFilterEl.value;
+            const names = new Set();
+            images.forEach((item) => (item.projectNames || []).forEach((name) => names.add(name)));
+            myImageProjectFilterEl.innerHTML = '<option value="">全部项目</option>';
+            Array.from(names).sort().forEach((name) => {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                myImageProjectFilterEl.appendChild(option);
+            });
+            if (Array.from(names).includes(current)) {
+                myImageProjectFilterEl.value = current;
+            }
         }
 
         function renderProjectCards(projects) {
@@ -438,7 +306,6 @@
         async function loadProjects() {
             const code = getCode();
             if (!code) return [];
-
             const response = await fetch(`/api/v2/projects?code=${encodeURIComponent(code)}`);
             const data = await response.json();
             if (!response.ok || !data.success) {
@@ -447,6 +314,20 @@
             }
             renderProjectCards(data.projects);
             return data.projects;
+        }
+
+        async function projectImageAction(projectId, imageId, action) {
+            const code = getCode();
+            const response = await fetch(`/api/v2/projects/${projectId}/images/${imageId}/${action}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code })
+            });
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || '操作失败');
+            }
+            return data;
         }
 
         function renderProjectImages(project, images) {
@@ -469,7 +350,22 @@
                     <div class="small">源镜像：${item.source.fullName}</div>
                     <code>交付地址：${item.userTarget ? item.userTarget.fullName : '暂不可用'}</code>
                     <code>默认缓存：${item.local.fullName || '任务执行后会写入默认缓存'}</code>
+                    <div class="actions">
+                        <button type="button" class="secondary" data-action="redistribute">重新分发</button>
+                        <button type="button" class="danger" data-action="remove">从项目移除</button>
+                    </div>
                 `;
+                card.querySelectorAll('button').forEach((button) => {
+                    button.addEventListener('click', async () => {
+                        try {
+                            await projectImageAction(project.id, item.id, button.getAttribute('data-action'));
+                            await refreshAll();
+                            alert(button.getAttribute('data-action') === 'remove' ? '已经从项目移除。' : '已重新加入分发队列。');
+                        } catch (error) {
+                            alert(error.message || '操作失败');
+                        }
+                    });
+                });
                 projectImagesEl.appendChild(card);
             });
         }
@@ -481,7 +377,6 @@
                 renderProjectImages(null, []);
                 return;
             }
-
             const response = await fetch(`/api/v2/projects/${projectId}/images?code=${encodeURIComponent(code)}`);
             const data = await response.json();
             if (!response.ok || !data.success) {
@@ -496,7 +391,6 @@
                 taskListEl.innerHTML = '<div class="empty">还没有任务，添加镜像到项目后会自动排队。</div>';
                 return;
             }
-
             taskListEl.innerHTML = '';
             tasks.forEach((task) => {
                 const card = document.createElement('article');
@@ -528,16 +422,26 @@
         }
 
         function renderMyImages(images) {
+            latestMyImages = images;
             myImageTotalStatEl.textContent = String(images.length);
             deliveredStatEl.textContent = String(images.filter((item) => item.delivered).length);
+            rebuildMyImageProjectFilter(images);
 
-            if (!images.length) {
-                myImagesEl.innerHTML = '<div class="empty">还没有镜像加入到项目里。</div>';
+            const statusFilter = myImageStatusFilterEl.value;
+            const projectFilter = myImageProjectFilterEl.value;
+            const filtered = images.filter((item) => {
+                const matchStatus = statusFilter === 'all' || (statusFilter === 'delivered' ? item.delivered : !item.delivered);
+                const matchProject = !projectFilter || (item.projectNames || []).includes(projectFilter);
+                return matchStatus && matchProject;
+            });
+
+            if (!filtered.length) {
+                myImagesEl.innerHTML = '<div class="empty">当前筛选条件下没有镜像。</div>';
                 return;
             }
 
             myImagesEl.innerHTML = '';
-            images.forEach((item) => {
+            filtered.forEach((item) => {
                 const task = item.latestTask;
                 const projects = item.projectNames && item.projectNames.length ? item.projectNames.join(' / ') : '未分组';
                 const card = document.createElement('article');
@@ -575,7 +479,6 @@
                 alert('请先输入串码和项目名');
                 return;
             }
-
             const response = await fetch('/api/v2/projects', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -586,7 +489,6 @@
                 alert(data.error || '创建项目失败');
                 return;
             }
-
             projectNameEl.value = '';
             currentProjectId = String(data.project.id);
             await refreshAll();
@@ -599,7 +501,6 @@
                 resultsEl.innerHTML = '<div class="empty">没有搜索到镜像。</div>';
                 return;
             }
-
             items.forEach((item) => {
                 const card = document.createElement('article');
                 card.className = 'card';
@@ -618,7 +519,6 @@
                         <button type="button">加入当前项目并排队分发</button>
                     </div>
                 `;
-
                 card.querySelector('button').addEventListener('click', async () => {
                     const projectId = projectSelectEl.value || currentProjectId;
                     const code = getCode();
@@ -626,7 +526,6 @@
                         alert('请先选择一个项目');
                         return;
                     }
-
                     const response = await fetch(`/api/v2/projects/${projectId}/images`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -659,7 +558,6 @@
                     await refreshAll();
                     alert('镜像已加入项目，并已生成分发任务。');
                 });
-
                 resultsEl.appendChild(card);
             });
         }
@@ -671,7 +569,6 @@
                 alert('请先输入串码和搜索词');
                 return;
             }
-
             try {
                 await loadMe();
                 const response = await fetch(`/api/v2/search/images?code=${encodeURIComponent(code)}&q=${encodeURIComponent(query)}`);
@@ -710,6 +607,8 @@
             const projects = await loadProjects();
             renderProjectCards(projects);
         });
+        myImageStatusFilterEl.addEventListener('change', () => renderMyImages(latestMyImages));
+        myImageProjectFilterEl.addEventListener('change', () => renderMyImages(latestMyImages));
 
         getParamCode();
         if (getCode()) {
