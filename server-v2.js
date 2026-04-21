@@ -695,12 +695,43 @@ function listProjectsForCode(accessCodeId) {
     `).all(accessCodeId);
 }
 
+function buildMyImagesForAccessCode(codeRow) {
+    const rows = db.prepare(`
+        SELECT
+            c.*,
+            GROUP_CONCAT(DISTINCT p.name) AS project_names,
+            COUNT(DISTINCT p.id) AS project_count,
+            MAX(pi.created_at) AS latest_project_add_at
+        FROM user_project_images_v2 pi
+        JOIN user_projects_v2 p ON p.id = pi.project_id
+        JOIN catalog_images c ON c.id = pi.catalog_image_id
+        WHERE p.access_code_id = ?
+        GROUP BY c.id
+        ORDER BY latest_project_add_at DESC, c.updated_at DESC
+    `).all(codeRow.id);
+
+    const taskMap = getLatestTasksMap(codeRow.id, rows.map((row) => row.id));
+    return rows.map((row) => {
+        const task = taskMap.get(row.id) || null;
+        return {
+            ...serializeCatalogImage(row, codeRow, task),
+            projectNames: row.project_names ? row.project_names.split(',') : [],
+            projectCount: Number(row.project_count || 0),
+            delivered: !!task && task.status === 'completed'
+        };
+    });
+}
+
 app.get('/v2', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index-v2.html'));
 });
 
 app.get('/v2/console', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'search-v2.html'));
+});
+
+app.get('/v2/deliveries', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'deliveries-v2.html'));
 });
 
 app.get('/v2/admin', (req, res) => {
@@ -820,38 +851,69 @@ app.get('/api/v2/projects/:projectId/images', (req, res) => {
     });
 });
 
+app.post('/api/v2/projects/:projectId/images/:imageId/redistribute', (req, res) => {
+    const validation = getAccessCodeOrThrow(req.body.code || req.query.code);
+    if (validation.status !== 200) {
+        return res.status(validation.status).json(validation.payload);
+    }
+
+    const codeRow = validation.payload;
+    const project = db.prepare('SELECT * FROM user_projects_v2 WHERE id = ? AND access_code_id = ?').get(req.params.projectId, codeRow.id);
+    if (!project) {
+        return res.status(404).json({ error: '项目不存在' });
+    }
+
+    const relation = db.prepare('SELECT * FROM user_project_images_v2 WHERE project_id = ? AND catalog_image_id = ?').get(project.id, req.params.imageId);
+    if (!relation) {
+        return res.status(404).json({ error: '项目里没有这个镜像' });
+    }
+
+    const catalogImage = db.prepare('SELECT * FROM catalog_images WHERE id = ?').get(req.params.imageId);
+    if (!catalogImage) {
+        return res.status(404).json({ error: '镜像不存在' });
+    }
+
+    const task = queueDistributionTask(catalogImage, codeRow, project.id, 'manual-redistribute');
+    res.json({ success: true, task: serializeTask(task) });
+});
+
+app.post('/api/v2/projects/:projectId/images/:imageId/remove', (req, res) => {
+    const validation = getAccessCodeOrThrow(req.body.code || req.query.code);
+    if (validation.status !== 200) {
+        return res.status(validation.status).json(validation.payload);
+    }
+
+    const codeRow = validation.payload;
+    const project = db.prepare('SELECT * FROM user_projects_v2 WHERE id = ? AND access_code_id = ?').get(req.params.projectId, codeRow.id);
+    if (!project) {
+        return res.status(404).json({ error: '项目不存在' });
+    }
+
+    const result = db.prepare('DELETE FROM user_project_images_v2 WHERE project_id = ? AND catalog_image_id = ?').run(project.id, req.params.imageId);
+    if (!result.changes) {
+        return res.status(404).json({ error: '项目里没有这个镜像' });
+    }
+
+    res.json({ success: true });
+});
+
 app.get('/api/v2/my-images', (req, res) => {
     const validation = getAccessCodeOrThrow(req.query.code);
     if (validation.status !== 200) {
         return res.status(validation.status).json(validation.payload);
     }
 
-    const codeRow = validation.payload;
-    const rows = db.prepare(`
-        SELECT
-            c.*, 
-            GROUP_CONCAT(DISTINCT p.name) AS project_names,
-            COUNT(DISTINCT p.id) AS project_count,
-            MAX(pi.created_at) AS latest_project_add_at
-        FROM user_project_images_v2 pi
-        JOIN user_projects_v2 p ON p.id = pi.project_id
-        JOIN catalog_images c ON c.id = pi.catalog_image_id
-        WHERE p.access_code_id = ?
-        GROUP BY c.id
-        ORDER BY latest_project_add_at DESC, c.updated_at DESC
-    `).all(codeRow.id);
+    const images = buildMyImagesForAccessCode(validation.payload);
+    res.json({ success: true, images });
+});
 
-    const taskMap = getLatestTasksMap(codeRow.id, rows.map((row) => row.id));
-    const images = rows.map((row) => {
-        const task = taskMap.get(row.id) || null;
-        return {
-            ...serializeCatalogImage(row, codeRow, task),
-            projectNames: row.project_names ? row.project_names.split(',') : [],
-            projectCount: Number(row.project_count || 0),
-            delivered: !!task && task.status === 'completed'
-        };
-    });
+app.get('/api/v2/my-deliveries', (req, res) => {
+    const validation = getAccessCodeOrThrow(req.query.code);
+    if (validation.status !== 200) {
+        return res.status(validation.status).json(validation.payload);
+    }
 
+    const images = buildMyImagesForAccessCode(validation.payload).filter((item) => item.delivered);
     res.json({ success: true, images });
 });
 
