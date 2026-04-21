@@ -16,6 +16,7 @@
             --ink-soft: #433528;
             --ok: #276749;
             --warn: #9a4d1f;
+            --sea: #30565b;
         }
         * { box-sizing: border-box; }
         body {
@@ -28,7 +29,7 @@
             color: var(--ink);
         }
         .wrap {
-            max-width: 1240px;
+            max-width: 1280px;
             margin: 0 auto;
             padding: 28px 20px 60px;
         }
@@ -60,6 +61,7 @@
             backdrop-filter: blur(10px);
         }
         h1 { margin: 0 0 8px; font-size: 34px; }
+        h2 { margin: 0; font-size: 22px; }
         p { margin: 0; color: var(--muted); line-height: 1.7; }
         .grid {
             display: grid;
@@ -68,7 +70,12 @@
         }
         .layout {
             display: grid;
-            grid-template-columns: 1.2fr 0.8fr;
+            grid-template-columns: 1.05fr 0.95fr;
+            gap: 18px;
+        }
+        .subgrid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 18px;
         }
         input, button, select {
@@ -84,7 +91,9 @@
             color: white;
             border: none;
         }
+        button.secondary { background: var(--sea); }
         button:hover { background: var(--brand-dark); }
+        button.secondary:hover { background: #224144; }
         .muted { color: var(--muted); }
         .meta {
             display: flex;
@@ -115,6 +124,7 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 12px;
+            gap: 10px;
         }
         .results, .stack {
             display: grid;
@@ -149,6 +159,10 @@
             background: #f5dfd1;
             color: var(--warn);
         }
+        .badge.info {
+            background: #dae9ea;
+            color: var(--sea);
+        }
         code {
             display: block;
             padding: 10px 12px;
@@ -168,14 +182,36 @@
             font-size: 13px;
             color: var(--muted);
         }
-        @media (max-width: 960px) {
-            .hero, .layout { grid-template-columns: 1fr; }
+        .project-card.active {
+            border-color: var(--brand);
+            box-shadow: 0 0 0 1px rgba(179, 92, 46, 0.25);
+        }
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 14px;
+        }
+        .mini-stat {
+            border-radius: 16px;
+            border: 1px solid var(--line);
+            background: rgba(255,255,255,0.78);
+            padding: 14px;
+        }
+        .mini-stat strong {
+            display: block;
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+        @media (max-width: 1080px) {
+            .hero, .layout, .subgrid { grid-template-columns: 1fr; }
         }
         @media (max-width: 760px) {
             .grid { grid-template-columns: 1fr; }
             .actions { flex-direction: column; }
             .actions input, .actions select { width: 100%; }
             .topbar { flex-direction: column; align-items: flex-start; }
+            .stats-row { grid-template-columns: 1fr; }
             h1 { font-size: 28px; }
         }
     </style>
@@ -185,7 +221,7 @@
         <div class="topbar">
             <div>
                 <div class="small">ImgPull V2 / 用户控制台</div>
-                <h1>默认缓存优先，用户只拉自己的镜像。</h1>
+                <h1>先找镜像，再看交付，再从自己的地址拉取。</h1>
             </div>
             <div style="display:flex; gap:10px; flex-wrap:wrap;">
                 <a href="/v2">首页</a>
@@ -211,7 +247,12 @@
                     <select id="projectSelect">
                         <option value="">先创建或选择项目</option>
                     </select>
-                    <button id="refreshBtn" type="button">刷新我的项目和任务</button>
+                    <button id="refreshBtn" class="secondary" type="button">刷新控制台</button>
+                </div>
+                <div class="stats-row">
+                    <div class="mini-stat"><strong id="projectTotalStat">0</strong><span class="small">我的项目</span></div>
+                    <div class="mini-stat"><strong id="myImageTotalStat">0</strong><span class="small">我的镜像</span></div>
+                    <div class="mini-stat"><strong id="deliveredStat">0</strong><span class="small">已交付镜像</span></div>
                 </div>
             </article>
             <aside class="panel">
@@ -232,28 +273,52 @@
         </section>
 
         <section class="layout">
-            <div class="panel">
-                <div class="section-title">
-                    <strong>搜索结果</strong>
-                    <span class="small">优先本地缓存，没有命中再查 Docker Hub</span>
-                </div>
-                <section class="results" id="results">
-                    <div class="empty">输入串码并搜索镜像后，这里会显示结果。</div>
-                </section>
-            </div>
             <div class="stack">
                 <section class="panel">
                     <div class="section-title">
-                        <strong>我的项目</strong>
+                        <h2>搜索结果</h2>
+                        <span class="small">优先本地缓存，没有命中再查 Docker Hub</span>
+                    </div>
+                    <section class="results" id="results">
+                        <div class="empty">输入串码并搜索镜像后，这里会显示结果。</div>
+                    </section>
+                </section>
+
+                <section class="panel">
+                    <div class="section-title">
+                        <h2>当前项目镜像</h2>
+                        <span class="small" id="currentProjectInfo">还没有选中项目</span>
+                    </div>
+                    <section id="projectImages" class="stack">
+                        <div class="empty">选择一个项目后，这里会显示该项目里的镜像和状态。</div>
+                    </section>
+                </section>
+            </div>
+
+            <div class="stack">
+                <section class="panel">
+                    <div class="section-title">
+                        <h2>我的项目</h2>
                         <span class="small" id="projectCountInfo">0 个项目</span>
                     </div>
                     <section id="projectList" class="stack">
                         <div class="empty">还没有项目。</div>
                     </section>
                 </section>
+
                 <section class="panel">
                     <div class="section-title">
-                        <strong>最近任务</strong>
+                        <h2>我的镜像</h2>
+                        <span class="small">已经加入项目的镜像</span>
+                    </div>
+                    <section id="myImages" class="stack">
+                        <div class="empty">还没有镜像加入到项目里。</div>
+                    </section>
+                </section>
+
+                <section class="panel">
+                    <div class="section-title">
+                        <h2>最近任务</h2>
                         <span class="small">加入项目时自动排队</span>
                     </div>
                     <section id="taskList" class="stack">
@@ -276,7 +341,15 @@
         const pullHintEl = document.getElementById('pullHint');
         const projectListEl = document.getElementById('projectList');
         const taskListEl = document.getElementById('taskList');
+        const myImagesEl = document.getElementById('myImages');
+        const projectImagesEl = document.getElementById('projectImages');
         const projectCountInfoEl = document.getElementById('projectCountInfo');
+        const currentProjectInfoEl = document.getElementById('currentProjectInfo');
+        const projectTotalStatEl = document.getElementById('projectTotalStat');
+        const myImageTotalStatEl = document.getElementById('myImageTotalStat');
+        const deliveredStatEl = document.getElementById('deliveredStat');
+
+        let currentProjectId = '';
 
         function getCode() {
             return codeEl.value.trim();
@@ -287,6 +360,12 @@
             if (code) {
                 codeEl.value = code;
             }
+        }
+
+        function statusClass(status) {
+            if (status === 'completed') return 'ok';
+            if (status === 'failed') return 'warn';
+            return 'info';
         }
 
         async function loadMe() {
@@ -304,17 +383,25 @@
 
             namespaceInfoEl.textContent = `命名空间：${data.accessCode.harborProjectName}`;
             visibilityInfoEl.textContent = `拉取方式：${data.accessCode.visibility}`;
-            pullHintEl.textContent = `你的镜像会分发到 ${data.accessCode.harborProjectName} 这个命名空间下，你后续只需要拉自己的地址。`;
+            pullHintEl.textContent = `你的镜像会分发到 ${data.accessCode.harborProjectName} 这个命名空间下。镜像一旦交付完成，你就可以直接拉自己的地址。`;
             return true;
         }
 
         function renderProjectCards(projects) {
             projectCountInfoEl.textContent = `${projects.length} 个项目`;
+            projectTotalStatEl.textContent = String(projects.length);
             projectSelectEl.innerHTML = '<option value="">先创建或选择项目</option>';
 
             if (!projects.length) {
+                currentProjectId = '';
                 projectListEl.innerHTML = '<div class="empty">还没有项目，先创建一个你自己的镜像组合项目。</div>';
+                projectImagesEl.innerHTML = '<div class="empty">选择一个项目后，这里会显示该项目里的镜像和状态。</div>';
+                currentProjectInfoEl.textContent = '还没有选中项目';
                 return;
+            }
+
+            if (!currentProjectId || !projects.some((project) => String(project.id) === String(currentProjectId))) {
+                currentProjectId = String(projects[0].id);
             }
 
             projectListEl.innerHTML = '';
@@ -325,29 +412,83 @@
                 projectSelectEl.appendChild(option);
 
                 const card = document.createElement('article');
-                card.className = 'card';
+                card.className = `card project-card ${String(project.id) === String(currentProjectId) ? 'active' : ''}`;
                 card.innerHTML = `
                     <div class="title">
                         <strong>${project.name}</strong>
                         <span class="badge">${project.image_count} 个镜像</span>
                     </div>
                     <div class="small">项目标识：${project.slug}</div>
+                    <div class="actions">
+                        <button type="button" class="secondary">查看这个项目</button>
+                    </div>
                 `;
+                card.querySelector('button').addEventListener('click', async () => {
+                    currentProjectId = String(project.id);
+                    projectSelectEl.value = currentProjectId;
+                    renderProjectCards(projects);
+                    await loadProjectImages();
+                });
                 projectListEl.appendChild(card);
             });
+
+            projectSelectEl.value = currentProjectId;
         }
 
         async function loadProjects() {
             const code = getCode();
-            if (!code) return;
+            if (!code) return [];
 
             const response = await fetch(`/api/v2/projects?code=${encodeURIComponent(code)}`);
             const data = await response.json();
             if (!response.ok || !data.success) {
                 renderProjectCards([]);
-                return;
+                return [];
             }
             renderProjectCards(data.projects);
+            return data.projects;
+        }
+
+        function renderProjectImages(project, images) {
+            currentProjectInfoEl.textContent = project ? `${project.name} / ${images.length} 个镜像` : '还没有选中项目';
+            if (!project || !images.length) {
+                projectImagesEl.innerHTML = '<div class="empty">这个项目里还没有镜像，先从左侧搜索结果加入。</div>';
+                return;
+            }
+
+            projectImagesEl.innerHTML = '';
+            images.forEach((item) => {
+                const task = item.latestTask;
+                const card = document.createElement('article');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="title">
+                        <strong>${item.displayName}</strong>
+                        <span class="badge ${statusClass(task ? task.status : 'queued')}">${task ? task.status : '未排队'}</span>
+                    </div>
+                    <div class="small">源镜像：${item.source.fullName}</div>
+                    <code>交付地址：${item.userTarget ? item.userTarget.fullName : '暂不可用'}</code>
+                    <code>默认缓存：${item.local.fullName || '任务执行后会写入默认缓存'}</code>
+                `;
+                projectImagesEl.appendChild(card);
+            });
+        }
+
+        async function loadProjectImages() {
+            const code = getCode();
+            const projectId = currentProjectId || projectSelectEl.value;
+            if (!code || !projectId) {
+                renderProjectImages(null, []);
+                return;
+            }
+
+            const response = await fetch(`/api/v2/projects/${projectId}/images?code=${encodeURIComponent(code)}`);
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                renderProjectImages(null, []);
+                return;
+            }
+            renderProjectImages(data.project, data.images);
         }
 
         function renderTasks(tasks) {
@@ -363,7 +504,7 @@
                 card.innerHTML = `
                     <div class="title">
                         <strong>${task.displayName}</strong>
-                        <span class="badge ${task.status === 'completed' ? 'ok' : task.status === 'failed' ? 'warn' : ''}">${task.status}</span>
+                        <span class="badge ${statusClass(task.status)}">${task.status}</span>
                     </div>
                     <div class="small">项目：${task.projectName || '-'}</div>
                     <code>目标地址：${task.targetFullName}</code>
@@ -375,14 +516,56 @@
 
         async function loadTasks() {
             const code = getCode();
-            if (!code) return;
+            if (!code) return [];
             const response = await fetch(`/api/v2/tasks?code=${encodeURIComponent(code)}`);
             const data = await response.json();
             if (!response.ok || !data.success) {
                 renderTasks([]);
-                return;
+                return [];
             }
             renderTasks(data.tasks);
+            return data.tasks;
+        }
+
+        function renderMyImages(images) {
+            myImageTotalStatEl.textContent = String(images.length);
+            deliveredStatEl.textContent = String(images.filter((item) => item.delivered).length);
+
+            if (!images.length) {
+                myImagesEl.innerHTML = '<div class="empty">还没有镜像加入到项目里。</div>';
+                return;
+            }
+
+            myImagesEl.innerHTML = '';
+            images.forEach((item) => {
+                const task = item.latestTask;
+                const projects = item.projectNames && item.projectNames.length ? item.projectNames.join(' / ') : '未分组';
+                const card = document.createElement('article');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="title">
+                        <strong>${item.displayName}</strong>
+                        <span class="badge ${item.delivered ? 'ok' : statusClass(task ? task.status : 'queued')}">${item.delivered ? '已交付' : task ? task.status : '待处理'}</span>
+                    </div>
+                    <div class="small">所属项目：${projects}</div>
+                    <code>最终拉取：${item.userTarget ? item.userTarget.fullName : '暂不可用'}</code>
+                    <code>源镜像：${item.source.fullName}</code>
+                `;
+                myImagesEl.appendChild(card);
+            });
+        }
+
+        async function loadMyImages() {
+            const code = getCode();
+            if (!code) return [];
+            const response = await fetch(`/api/v2/my-images?code=${encodeURIComponent(code)}`);
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                renderMyImages([]);
+                return [];
+            }
+            renderMyImages(data.images);
+            return data.images;
         }
 
         async function createProject() {
@@ -405,8 +588,9 @@
             }
 
             projectNameEl.value = '';
-            await loadProjects();
-            projectSelectEl.value = String(data.project.id);
+            currentProjectId = String(data.project.id);
+            await refreshAll();
+            projectSelectEl.value = currentProjectId;
         }
 
         function renderResults(items) {
@@ -436,7 +620,7 @@
                 `;
 
                 card.querySelector('button').addEventListener('click', async () => {
-                    const projectId = projectSelectEl.value;
+                    const projectId = projectSelectEl.value || currentProjectId;
                     const code = getCode();
                     if (!projectId) {
                         alert('请先选择一个项目');
@@ -471,8 +655,8 @@
                         alert(data.error || '加入项目失败');
                         return;
                     }
-                    await loadProjects();
-                    await loadTasks();
+                    currentProjectId = String(projectId);
+                    await refreshAll();
                     alert('镜像已加入项目，并已生成分发任务。');
                 });
 
@@ -490,9 +674,6 @@
 
             try {
                 await loadMe();
-                await loadProjects();
-                await loadTasks();
-
                 const response = await fetch(`/api/v2/search/images?code=${encodeURIComponent(code)}&q=${encodeURIComponent(query)}`);
                 const data = await response.json();
                 if (!response.ok || !data.success) {
@@ -510,6 +691,8 @@
             try {
                 await loadMe();
                 await loadProjects();
+                await loadProjectImages();
+                await loadMyImages();
                 await loadTasks();
             } catch (error) {
                 if (getCode()) {
@@ -521,6 +704,13 @@
         document.getElementById('searchBtn').addEventListener('click', search);
         document.getElementById('createProjectBtn').addEventListener('click', createProject);
         document.getElementById('refreshBtn').addEventListener('click', refreshAll);
+        projectSelectEl.addEventListener('change', async () => {
+            currentProjectId = projectSelectEl.value;
+            await loadProjectImages();
+            const projects = await loadProjects();
+            renderProjectCards(projects);
+        });
+
         getParamCode();
         if (getCode()) {
             refreshAll();
