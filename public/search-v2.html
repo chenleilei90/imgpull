@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ImgPull V2</title>
+    <style>
+        :root {
+            --bg: #f4efe6;
+            --panel: #fffaf2;
+            --line: #dccfb7;
+            --ink: #2d2418;
+            --muted: #6b5b47;
+            --brand: #b35c2e;
+            --brand-dark: #7e3d1d;
+            --ok: #276749;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+            background:
+                radial-gradient(circle at top left, #f7dcc2 0, transparent 30%),
+                radial-gradient(circle at bottom right, #ecd8b9 0, transparent 35%),
+                var(--bg);
+            color: var(--ink);
+        }
+        .wrap {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 32px 20px 60px;
+        }
+        .hero {
+            margin-bottom: 24px;
+            padding: 28px;
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            background: rgba(255, 250, 242, 0.92);
+            backdrop-filter: blur(8px);
+        }
+        h1 { margin: 0 0 8px; font-size: 36px; }
+        .hero p { margin: 0; color: var(--muted); }
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 220px 1fr auto;
+            gap: 12px;
+        }
+        input, button, select {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid var(--line);
+            font: inherit;
+        }
+        button {
+            cursor: pointer;
+            background: var(--brand);
+            color: white;
+            border: none;
+        }
+        button:hover { background: var(--brand-dark); }
+        .meta {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+        .actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+        }
+        .actions input, .actions select { width: auto; min-width: 180px; }
+        .results {
+            display: grid;
+            gap: 14px;
+        }
+        .card {
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 16px;
+            background: white;
+        }
+        .title {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            background: #efe0c8;
+            color: var(--brand-dark);
+        }
+        .badge.ok {
+            background: #d8f3df;
+            color: var(--ok);
+        }
+        code {
+            display: block;
+            padding: 10px 12px;
+            background: #fbf6ee;
+            border-radius: 12px;
+            overflow-x: auto;
+            margin-top: 8px;
+        }
+        .hint {
+            color: var(--muted);
+            font-size: 14px;
+        }
+        @media (max-width: 800px) {
+            .grid { grid-template-columns: 1fr; }
+            .actions { flex-direction: column; }
+            .actions input, .actions select { width: 100%; }
+            h1 { font-size: 28px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <section class="hero">
+            <h1>ImgPull V2</h1>
+            <p>本地 Harbor 默认仓库优先，Docker Hub 结果兜底。串码对应一个用户命名空间，用户可以把镜像自由组合成自己的项目。</p>
+        </section>
+
+        <section class="panel">
+            <div class="grid">
+                <input id="code" placeholder="输入串码">
+                <input id="query" placeholder="搜索镜像，例如 nginx 或 calico/apiserver">
+                <button id="searchBtn">搜索</button>
+            </div>
+            <div class="meta">
+                <span id="namespaceInfo">命名空间：未验证</span>
+                <span>规则：本地 Harbor 结果排前，官方结果排后</span>
+            </div>
+            <div class="actions">
+                <input id="projectName" placeholder="新项目名，例如 k8s-base">
+                <button id="createProjectBtn" type="button">创建我的项目</button>
+                <select id="projectSelect">
+                    <option value="">先创建或选择项目</option>
+                </select>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="hint">这版先完成搜索、命名空间映射和用户项目组织。真正的 pull / tag / push 同步任务下一步继续接。</div>
+        </section>
+
+        <section class="results" id="results"></section>
+    </div>
+
+    <script>
+        const codeEl = document.getElementById('code');
+        const queryEl = document.getElementById('query');
+        const projectNameEl = document.getElementById('projectName');
+        const projectSelectEl = document.getElementById('projectSelect');
+        const resultsEl = document.getElementById('results');
+        const namespaceInfoEl = document.getElementById('namespaceInfo');
+
+        async function loadMe() {
+            const code = codeEl.value.trim();
+            if (!code) return false;
+
+            const response = await fetch(`/api/v2/me?code=${encodeURIComponent(code)}`);
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                namespaceInfoEl.textContent = '命名空间：串码无效';
+                throw new Error(data.error || '串码无效');
+            }
+
+            namespaceInfoEl.textContent = `命名空间：${data.accessCode.harborProjectName}`;
+            return true;
+        }
+
+        async function loadProjects() {
+            const code = codeEl.value.trim();
+            if (!code) return;
+
+            const response = await fetch(`/api/v2/projects?code=${encodeURIComponent(code)}`);
+            const data = await response.json();
+            projectSelectEl.innerHTML = '<option value="">先创建或选择项目</option>';
+
+            if (!response.ok || !data.success) return;
+
+            data.projects.forEach((project) => {
+                const option = document.createElement('option');
+                option.value = project.id;
+                option.textContent = `${project.name} (${project.image_count}个镜像)`;
+                projectSelectEl.appendChild(option);
+            });
+        }
+
+        async function createProject() {
+            const code = codeEl.value.trim();
+            const name = projectNameEl.value.trim();
+            if (!code || !name) {
+                alert('请先输入串码和项目名');
+                return;
+            }
+
+            const response = await fetch('/api/v2/projects', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code, name })
+            });
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                alert(data.error || '创建项目失败');
+                return;
+            }
+
+            projectNameEl.value = '';
+            await loadProjects();
+            projectSelectEl.value = String(data.project.id);
+        }
+
+        function renderResults(items) {
+            resultsEl.innerHTML = '';
+
+            if (!items.length) {
+                resultsEl.innerHTML = '<div class="panel">没有搜索到镜像</div>';
+                return;
+            }
+
+            items.forEach((item) => {
+                const card = document.createElement('article');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="title">
+                        <strong>${item.displayName}</strong>
+                        <div>
+                            <span class="badge ${item.local.available ? 'ok' : ''}">
+                                ${item.local.available ? '本地已存在' : '官方候选'}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="hint">${item.description || '暂无描述'}</div>
+                    <code>源镜像：${item.source.fullName}</code>
+                    <code>用户目标：${item.userTarget ? item.userTarget.fullName : '请先验证串码'}</code>
+                    <div class="actions">
+                        <button type="button" data-image='${JSON.stringify(item).replace(/'/g, '&apos;')}'>添加到当前项目</button>
+                    </div>
+                `;
+
+                card.querySelector('button').addEventListener('click', async (event) => {
+                    const projectId = projectSelectEl.value;
+                    const code = codeEl.value.trim();
+                    if (!projectId) {
+                        alert('请先选择一个项目');
+                        return;
+                    }
+
+                    const image = JSON.parse(event.target.getAttribute('data-image').replace(/&apos;/g, "'"));
+                    const response = await fetch(`/api/v2/projects/${projectId}/images`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            code,
+                            catalogImageId: image.id,
+                            image: {
+                                sourceType: image.sourceType,
+                                registry: image.source.registry,
+                                namespace: image.source.namespace,
+                                repository: image.source.repository,
+                                tag: image.source.tag,
+                                description: image.description,
+                                localAvailable: image.local.available,
+                                localRegistry: image.local.registry,
+                                localNamespace: image.local.namespace,
+                                localRepository: image.local.repository,
+                                localTag: image.local.tag,
+                                localFullName: image.local.fullName
+                            }
+                        })
+                    });
+                    const data = await response.json();
+                    if (!response.ok || !data.success) {
+                        alert(data.error || '添加失败');
+                        return;
+                    }
+                    await loadProjects();
+                    alert('已加入项目，下一步可以接同步任务');
+                });
+
+                resultsEl.appendChild(card);
+            });
+        }
+
+        async function search() {
+            const code = codeEl.value.trim();
+            const query = queryEl.value.trim();
+            if (!code || !query) {
+                alert('请先输入串码和搜索词');
+                return;
+            }
+
+            try {
+                await loadMe();
+                await loadProjects();
+
+                const response = await fetch(`/api/v2/search/images?code=${encodeURIComponent(code)}&q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    alert(data.error || '搜索失败');
+                    return;
+                }
+                renderResults(data.results);
+            } catch (error) {
+                alert(error.message || '搜索失败');
+            }
+        }
+
+        document.getElementById('searchBtn').addEventListener('click', search);
+        document.getElementById('createProjectBtn').addEventListener('click', createProject);
+    </script>
+</body>
+</html>
