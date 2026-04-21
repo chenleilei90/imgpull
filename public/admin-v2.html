@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ImgPull V2 Admin</title>
+    <style>
+        :root {
+            --bg: #efe7dd;
+            --panel: #fffaf4;
+            --line: #d8c8b5;
+            --ink: #241c15;
+            --muted: #6b5b4b;
+            --brand: #92512d;
+            --brand-dark: #6f3d20;
+            --ok: #2c6d4d;
+            --warn: #a4551f;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: linear-gradient(180deg, #f5efe8 0%, var(--bg) 100%);
+            color: var(--ink);
+            font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+        }
+        .wrap {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 28px 20px 56px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .header a {
+            color: white;
+            background: var(--brand);
+            padding: 12px 16px;
+            border-radius: 14px;
+            text-decoration: none;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+        }
+        .panel {
+            margin-top: 18px;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            padding: 20px;
+        }
+        .metric {
+            background: white;
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 18px;
+        }
+        .metric strong {
+            display: block;
+            font-size: 28px;
+            margin-bottom: 6px;
+        }
+        .settings {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            align-items: end;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 14px;
+            border: 1px solid var(--line);
+            font: inherit;
+        }
+        button {
+            background: var(--brand);
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover { background: var(--brand-dark); }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            font-size: 14px;
+        }
+        th, td {
+            text-align: left;
+            border-bottom: 1px solid #eadfce;
+            padding: 12px 8px;
+            vertical-align: top;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            background: #efe1cd;
+            color: var(--warn);
+        }
+        .badge.ok {
+            background: #d7efde;
+            color: var(--ok);
+        }
+        .muted { color: var(--muted); }
+        @media (max-width: 980px) {
+            .grid, .settings { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 720px) {
+            .grid, .settings { grid-template-columns: 1fr; }
+            .header { flex-direction: column; align-items: flex-start; }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="header">
+            <div>
+                <h1 style="margin:0 0 6px;">ImgPull V2 管理后台</h1>
+                <div class="muted">管理默认缓存仓库、分发任务、串码缓删和系统设置。</div>
+            </div>
+            <a href="/v2">返回首页</a>
+        </div>
+
+        <section class="grid" id="summaryGrid">
+            <div class="metric"><strong id="catalogCount">-</strong><span>目录镜像</span></div>
+            <div class="metric"><strong id="localCount">-</strong><span>默认缓存镜像</span></div>
+            <div class="metric"><strong id="userCount">-</strong><span>有效用户</span></div>
+            <div class="metric"><strong id="queuedCount">-</strong><span>排队任务</span></div>
+        </section>
+
+        <section class="panel">
+            <h2 style="margin-top:0;">系统设置</h2>
+            <div class="settings">
+                <label>
+                    <div class="muted">Harbor 域名</div>
+                    <input id="harborDomain" placeholder="harbor.example.com">
+                </label>
+                <label>
+                    <div class="muted">默认缓存仓库</div>
+                    <input id="cacheProjectName" placeholder="cache">
+                </label>
+                <label>
+                    <div class="muted">缓存保留天数</div>
+                    <input id="cacheRetentionDays" placeholder="-1 / 0 / 7">
+                </label>
+                <label>
+                    <div class="muted">用户仓库可见性</div>
+                    <select id="defaultUserRepoVisibility">
+                        <option value="private">private</option>
+                        <option value="public">public</option>
+                    </select>
+                </label>
+                <button id="saveSettingsBtn">保存设置</button>
+            </div>
+            <label style="display:block; margin-top:12px;" class="muted">
+                <input id="dockerhubSearchEnabled" type="checkbox" style="width:auto; margin-right:8px;">开启 Docker Hub 兜底搜索
+            </label>
+        </section>
+
+        <section class="panel">
+            <h2 style="margin-top:0;">分发任务</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>状态</th>
+                        <th>用户</th>
+                        <th>项目</th>
+                        <th>镜像</th>
+                        <th>目标地址</th>
+                        <th>请求时间</th>
+                    </tr>
+                </thead>
+                <tbody id="taskRows"></tbody>
+            </table>
+        </section>
+
+        <section class="panel">
+            <h2 style="margin-top:0;">30 天缓删用户</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>串码</th>
+                        <th>邮箱</th>
+                        <th>删除时间</th>
+                        <th>彻底清理时间</th>
+                    </tr>
+                </thead>
+                <tbody id="retentionRows"></tbody>
+            </table>
+        </section>
+    </div>
+
+    <script>
+        async function loadSummary() {
+            const response = await fetch('/api/v2/admin/summary');
+            const data = await response.json();
+            if (!response.ok || !data.success) return;
+            document.getElementById('catalogCount').textContent = data.summary.catalogCount;
+            document.getElementById('localCount').textContent = data.summary.localCatalogCount;
+            document.getElementById('userCount').textContent = data.summary.userCount;
+            document.getElementById('queuedCount').textContent = data.summary.queuedTaskCount;
+        }
+
+        async function loadSettings() {
+            const response = await fetch('/api/v2/settings');
+            const data = await response.json();
+            if (!response.ok || !data.success) return;
+            document.getElementById('harborDomain').value = data.settings.harborDomain;
+            document.getElementById('cacheProjectName').value = data.settings.cacheProjectName;
+            document.getElementById('cacheRetentionDays').value = data.settings.cacheRetentionDays;
+            document.getElementById('defaultUserRepoVisibility').value = data.settings.defaultUserRepoVisibility;
+            document.getElementById('dockerhubSearchEnabled').checked = data.settings.dockerhubSearchEnabled;
+        }
+
+        async function saveSettings() {
+            const payload = {
+                harborDomain: document.getElementById('harborDomain').value.trim(),
+                cacheProjectName: document.getElementById('cacheProjectName').value.trim(),
+                cacheRetentionDays: document.getElementById('cacheRetentionDays').value.trim(),
+                defaultUserRepoVisibility: document.getElementById('defaultUserRepoVisibility').value,
+                dockerhubSearchEnabled: document.getElementById('dockerhubSearchEnabled').checked
+            };
+            const response = await fetch('/api/v2/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                alert(data.error || '保存失败');
+                return;
+            }
+            alert('设置已保存');
+            loadSummary();
+        }
+
+        async function loadTasks() {
+            const response = await fetch('/api/v2/admin/tasks');
+            const data = await response.json();
+            const tbody = document.getElementById('taskRows');
+            tbody.innerHTML = '';
+            if (!response.ok || !data.success) return;
+            if (!data.tasks.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="muted">暂时没有任务。</td></tr>';
+                return;
+            }
+            data.tasks.forEach((task) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><span class="badge ${task.status === 'completed' ? 'ok' : ''}">${task.status}</span></td>
+                    <td>${task.accessCode}</td>
+                    <td>${task.projectName || '-'}</td>
+                    <td>${task.displayName}</td>
+                    <td class="muted">${task.targetFullName}</td>
+                    <td>${task.requestedAt || '-'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function loadRetention() {
+            const response = await fetch('/api/v2/retention/pending-purge');
+            const data = await response.json();
+            const tbody = document.getElementById('retentionRows');
+            tbody.innerHTML = '';
+            if (!response.ok || !data.success) return;
+            if (!data.rows.length) {
+                tbody.innerHTML = '<tr><td colspan="4" class="muted">没有处于保留期的用户。</td></tr>';
+                return;
+            }
+            data.rows.forEach((row) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${row.code}</td>
+                    <td>${row.email || '-'}</td>
+                    <td>${row.deleted_at || '-'}</td>
+                    <td>${row.purge_after || '-'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        document.getElementById('saveSettingsBtn').addEventListener('click', saveSettings);
+        loadSummary();
+        loadSettings();
+        loadTasks();
+        loadRetention();
+    </script>
+</body>
+</html>
