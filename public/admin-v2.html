@@ -13,6 +13,7 @@
             --muted: #6b5b4b;
             --brand: #92512d;
             --brand-dark: #6f3d20;
+            --brand-alt: #31565b;
             --ok: #2c6d4d;
             --warn: #a4551f;
         }
@@ -71,6 +72,12 @@
             gap: 12px;
             align-items: end;
         }
+        .toolbar {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+        }
         input, select, button {
             width: 100%;
             padding: 12px 14px;
@@ -84,7 +91,9 @@
             border: none;
             cursor: pointer;
         }
+        button.alt { background: var(--brand-alt); }
         button:hover { background: var(--brand-dark); }
+        button.alt:hover { background: #213e42; }
         table {
             width: 100%;
             border-collapse: collapse;
@@ -110,6 +119,14 @@
             color: var(--ok);
         }
         .muted { color: var(--muted); }
+        .status-box {
+            margin-top: 12px;
+            padding: 12px 14px;
+            border: 1px dashed var(--line);
+            border-radius: 14px;
+            color: var(--muted);
+            background: rgba(255,255,255,0.68);
+        }
         @media (max-width: 980px) {
             .grid, .settings { grid-template-columns: 1fr 1fr; }
         }
@@ -163,6 +180,11 @@
             <label style="display:block; margin-top:12px;" class="muted">
                 <input id="dockerhubSearchEnabled" type="checkbox" style="width:auto; margin-right:8px;">开启 Docker Hub 兜底搜索
             </label>
+            <div class="toolbar">
+                <button id="runQueuedBtn" class="alt" style="max-width:220px;">执行排队任务</button>
+                <button id="cleanupCacheBtn" class="alt" style="max-width:220px;">清理过期缓存</button>
+            </div>
+            <div id="actionStatus" class="status-box">这里会显示任务执行和缓存清理结果。</div>
         </section>
 
         <section class="panel">
@@ -199,6 +221,8 @@
     </div>
 
     <script>
+        const actionStatusEl = document.getElementById('actionStatus');
+
         async function loadSummary() {
             const response = await fetch('/api/v2/admin/summary');
             const data = await response.json();
@@ -238,7 +262,7 @@
                 alert(data.error || '保存失败');
                 return;
             }
-            alert('设置已保存');
+            actionStatusEl.textContent = '设置已保存，新的缓存保留策略会影响后续任务和缓存过期时间。';
             loadSummary();
         }
 
@@ -288,11 +312,44 @@
             });
         }
 
+        async function runQueuedTasks() {
+            const response = await fetch('/api/v2/admin/tasks/run-queued', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ limit: 10 })
+            });
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                actionStatusEl.textContent = data.error || '执行排队任务失败。';
+                return;
+            }
+            actionStatusEl.textContent = `这次共尝试执行 ${data.executedCount} 个任务。已完成的任务会转成 completed，并把镜像标记进默认缓存。`;
+            refreshAll();
+        }
+
+        async function cleanupCache() {
+            const response = await fetch('/api/v2/admin/cache/cleanup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                actionStatusEl.textContent = data.error || '缓存清理失败。';
+                return;
+            }
+            actionStatusEl.textContent = `已按保留策略检查默认缓存，移除了 ${data.removed} 个过期缓存镜像。当前保留策略是 ${data.retentionDays}。`;
+            refreshAll();
+        }
+
+        async function refreshAll() {
+            await Promise.all([loadSummary(), loadTasks(), loadRetention()]);
+        }
+
         document.getElementById('saveSettingsBtn').addEventListener('click', saveSettings);
-        loadSummary();
+        document.getElementById('runQueuedBtn').addEventListener('click', runQueuedTasks);
+        document.getElementById('cleanupCacheBtn').addEventListener('click', cleanupCache);
         loadSettings();
-        loadTasks();
-        loadRetention();
+        refreshAll();
     </script>
 </body>
 </html>
