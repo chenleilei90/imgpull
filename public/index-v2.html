@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ImgPull V2</title>
+    <style>
+        :root {
+            --bg: #f3ede3;
+            --panel: rgba(255, 250, 243, 0.88);
+            --line: #d9c7ae;
+            --ink: #241a12;
+            --muted: #6b5a48;
+            --brand: #af5a2c;
+            --brand-2: #305252;
+            --ok: #2f6d4c;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            color: var(--ink);
+            font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(224, 170, 112, 0.28), transparent 28%),
+                radial-gradient(circle at 80% 20%, rgba(77, 124, 124, 0.16), transparent 26%),
+                linear-gradient(180deg, #f7f1e8 0%, var(--bg) 100%);
+        }
+        .wrap {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 28px 20px 64px;
+        }
+        .hero {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 22px;
+            align-items: stretch;
+        }
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 28px;
+            padding: 26px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 18px 48px rgba(46, 29, 16, 0.08);
+        }
+        h1 {
+            margin: 0 0 12px;
+            font-size: 44px;
+            line-height: 1.06;
+        }
+        .lead {
+            margin: 0;
+            font-size: 16px;
+            line-height: 1.8;
+            color: var(--muted);
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 170px;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        input, button, a.button {
+            width: 100%;
+            border-radius: 16px;
+            border: 1px solid var(--line);
+            padding: 14px 16px;
+            font: inherit;
+            text-decoration: none;
+        }
+        input { background: white; }
+        button, a.button {
+            cursor: pointer;
+            background: var(--brand);
+            color: white;
+            border: none;
+            text-align: center;
+        }
+        button.alt, a.button.alt {
+            background: var(--brand-2);
+        }
+        .status {
+            margin-top: 14px;
+            color: var(--muted);
+            min-height: 24px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        .metric {
+            border-radius: 18px;
+            background: rgba(255,255,255,0.78);
+            border: 1px solid var(--line);
+            padding: 18px;
+        }
+        .metric strong {
+            display: block;
+            font-size: 28px;
+            margin-bottom: 6px;
+        }
+        .sections {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-top: 22px;
+        }
+        .card {
+            border-radius: 22px;
+            border: 1px solid var(--line);
+            background: rgba(255,255,255,0.74);
+            padding: 20px;
+        }
+        .card h3 {
+            margin: 0 0 10px;
+            font-size: 20px;
+        }
+        .card p {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.7;
+        }
+        .list {
+            margin-top: 14px;
+            display: grid;
+            gap: 10px;
+        }
+        .item {
+            padding: 12px 14px;
+            background: rgba(255,255,255,0.86);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            color: var(--muted);
+        }
+        .tag {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: #efe2cf;
+            color: var(--brand);
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+        .tag.ok {
+            background: #d8f2df;
+            color: var(--ok);
+        }
+        @media (max-width: 920px) {
+            .hero, .sections { grid-template-columns: 1fr; }
+            .grid { grid-template-columns: 1fr; }
+            h1 { font-size: 34px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <section class="hero">
+            <article class="panel">
+                <span class="tag">ImgPull V2</span>
+                <h1>先查默认缓存，再从 Docker Hub 补齐。</h1>
+                <p class="lead">这版把默认 Harbor 私有仓库作为唯一缓存层，普通用户只拿自己的命名空间镜像。你输入串码后，就可以进入控制台搜索镜像、组合项目、查看分发任务和自己的拉取地址。</p>
+                <div class="grid">
+                    <input id="code" placeholder="输入你的串码，例如 KZABC123">
+                    <button id="enterBtn">进入控制台</button>
+                </div>
+                <div class="status" id="status">还没有验证串码。</div>
+                <div class="grid" style="grid-template-columns: 1fr 1fr; margin-top: 12px;">
+                    <a class="button alt" href="/v2/console">直接查看控制台</a>
+                    <a class="button alt" href="/v2/admin">进入管理后台</a>
+                </div>
+            </article>
+            <aside class="panel">
+                <div class="stats" id="stats">
+                    <div class="metric"><strong id="catalogCount">-</strong><span>目录镜像数</span></div>
+                    <div class="metric"><strong id="localCount">-</strong><span>默认缓存镜像</span></div>
+                    <div class="metric"><strong id="userCount">-</strong><span>有效用户</span></div>
+                    <div class="metric"><strong id="queuedCount">-</strong><span>排队任务</span></div>
+                </div>
+            </aside>
+        </section>
+
+        <section class="sections">
+            <article class="card">
+                <span class="tag ok">搜索规则</span>
+                <h3>只有两层搜索</h3>
+                <p>先搜默认私有缓存仓库。只有缓存完全没命中时，才去 Docker Hub 搜索，避免普通用户仓库参与搜索结果。</p>
+            </article>
+            <article class="card">
+                <span class="tag ok">交付方式</span>
+                <h3>用户只拉自己的路径</h3>
+                <p>系统先把上游镜像落进默认缓存，再分发到用户自己的 Harbor 命名空间。用户最终只用自己的账号和自己的镜像地址。</p>
+            </article>
+            <article class="card">
+                <span class="tag ok">保留策略</span>
+                <h3>缓存和用户分层清理</h3>
+                <p>用户删除后先保留 30 天。默认缓存仓库按你设置的保留天数管理，支持 0、-1 和正整数天。</p>
+            </article>
+        </section>
+
+        <section class="panel" style="margin-top: 22px;">
+            <h3 style="margin-top:0;">这一版已经接上的内容</h3>
+            <div class="list">
+                <div class="item">独立镜像目录、用户逻辑项目、分发任务表和系统设置页已经拆开。</div>
+                <div class="item">首页、用户控制台、管理后台现在分别承担入口、日常操作和系统管理职责。</div>
+                <div class="item">接下来继续对接 Harbor API 和真实 pull / tag / push worker，就能进入可用版本。</div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const codeEl = document.getElementById('code');
+        const statusEl = document.getElementById('status');
+
+        async function loadSummary() {
+            const response = await fetch('/api/v2/admin/summary');
+            const data = await response.json();
+            if (!response.ok || !data.success) return;
+            document.getElementById('catalogCount').textContent = data.summary.catalogCount;
+            document.getElementById('localCount').textContent = data.summary.localCatalogCount;
+            document.getElementById('userCount').textContent = data.summary.userCount;
+            document.getElementById('queuedCount').textContent = data.summary.queuedTaskCount;
+        }
+
+        async function enterConsole() {
+            const code = codeEl.value.trim();
+            if (!code) {
+                statusEl.textContent = '请输入串码后再进入控制台。';
+                return;
+            }
+            const response = await fetch(`/api/v2/me?code=${encodeURIComponent(code)}`);
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                statusEl.textContent = data.error || '串码验证失败。';
+                return;
+            }
+            statusEl.textContent = `验证成功，用户命名空间是 ${data.accessCode.harborProjectName}。正在进入控制台...`;
+            window.location.href = `/v2/console?code=${encodeURIComponent(code)}`;
+        }
+
+        document.getElementById('enterBtn').addEventListener('click', enterConsole);
+        loadSummary();
+    </script>
+</body>
+</html>
