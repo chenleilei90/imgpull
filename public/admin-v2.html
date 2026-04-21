@@ -16,7 +16,9 @@
             --brand-alt: #31565b;
             --ok: #2c6d4d;
             --warn: #a4551f;
+            --danger: #7d3f34;
         }
+
         * { box-sizing: border-box; }
         body {
             margin: 0;
@@ -24,60 +26,17 @@
             color: var(--ink);
             font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
         }
-        .wrap {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 28px 20px 56px;
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            gap: 16px;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        .header a {
-            color: white;
-            background: var(--brand);
-            padding: 12px 16px;
-            border-radius: 14px;
-            text-decoration: none;
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 14px;
-        }
-        .panel {
-            margin-top: 18px;
-            background: var(--panel);
-            border: 1px solid var(--line);
-            border-radius: 24px;
-            padding: 20px;
-        }
-        .metric {
-            background: white;
-            border: 1px solid var(--line);
-            border-radius: 18px;
-            padding: 18px;
-        }
-        .metric strong {
-            display: block;
-            font-size: 28px;
-            margin-bottom: 6px;
-        }
-        .settings {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 12px;
-            align-items: end;
-        }
-        .toolbar {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            margin-top: 16px;
-        }
+
+        .wrap { max-width: 1320px; margin: 0 auto; padding: 28px 20px 56px; }
+        .header { display: flex; justify-content: space-between; gap: 16px; align-items: center; margin-bottom: 20px; }
+        .header a { color: white; background: var(--brand); padding: 12px 16px; border-radius: 14px; text-decoration: none; }
+        .grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; }
+        .panel { margin-top: 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 24px; padding: 20px; }
+        .panel-head { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 12px; }
+        .metric { background: white; border: 1px solid var(--line); border-radius: 18px; padding: 18px; }
+        .metric strong { display: block; font-size: 28px; margin-bottom: 6px; }
+        .settings { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; align-items: end; }
+        .toolbar { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
         input, select, button {
             width: 100%;
             padding: 12px 14px;
@@ -85,27 +44,30 @@
             border: 1px solid var(--line);
             font: inherit;
         }
+
         button {
             background: var(--brand);
             color: white;
             border: none;
             cursor: pointer;
         }
+
         button.alt { background: var(--brand-alt); }
+        button.warn { background: var(--danger); }
+        button.ghost { background: #efe1cd; color: var(--ink); }
         button:hover { background: var(--brand-dark); }
         button.alt:hover { background: #213e42; }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 12px;
-            font-size: 14px;
-        }
+        button.warn:hover { background: #642e26; }
+        button.ghost:hover { background: #e2d1ba; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14px; }
         th, td {
             text-align: left;
             border-bottom: 1px solid #eadfce;
             padding: 12px 8px;
             vertical-align: top;
         }
+
         .badge {
             display: inline-block;
             padding: 4px 10px;
@@ -114,10 +76,10 @@
             background: #efe1cd;
             color: var(--warn);
         }
-        .badge.ok {
-            background: #d7efde;
-            color: var(--ok);
-        }
+
+        .badge.ok { background: #d7efde; color: var(--ok); }
+        .badge.info { background: #dae9ea; color: var(--brand-alt); }
+        .badge.warn { background: #f6dfd5; color: var(--danger); }
         .muted { color: var(--muted); }
         .status-box {
             margin-top: 12px;
@@ -127,12 +89,27 @@
             color: var(--muted);
             background: rgba(255,255,255,0.68);
         }
-        @media (max-width: 980px) {
-            .grid, .settings { grid-template-columns: 1fr 1fr; }
+
+        .tabs { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+        .tabs button { width: auto; padding: 10px 14px; }
+        .tabs button.active { background: var(--brand-alt); }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+        .table-tools { display: flex; gap: 10px; flex-wrap: wrap; }
+        .table-tools input, .table-tools select { width: auto; min-width: 180px; }
+        .table-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .code-wrap { max-width: 320px; word-break: break-all; }
+
+        @media (max-width: 1180px) {
+            .grid { grid-template-columns: repeat(3, 1fr); }
+            .settings { grid-template-columns: repeat(2, 1fr); }
         }
-        @media (max-width: 720px) {
+
+        @media (max-width: 760px) {
             .grid, .settings { grid-template-columns: 1fr; }
             .header { flex-direction: column; align-items: flex-start; }
+            .table-tools { flex-direction: column; }
+            .table-tools input, .table-tools select { width: 100%; }
         }
     </style>
 </head>
@@ -141,20 +118,28 @@
         <div class="header">
             <div>
                 <h1 style="margin:0 0 6px;">ImgPull V2 管理后台</h1>
-                <div class="muted">管理默认缓存仓库、分发任务、串码缓删和系统设置。</div>
+                <div class="muted">这一版后台按真实管理视角拆成用户、缓存、任务和系统设置，不再把管理员工作混在一页里。</div>
             </div>
-            <a href="/v2">返回首页</a>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <a href="/v2">返回首页</a>
+                <a href="/v2/console">用户控制台</a>
+            </div>
         </div>
 
         <section class="grid" id="summaryGrid">
             <div class="metric"><strong id="catalogCount">-</strong><span>目录镜像</span></div>
             <div class="metric"><strong id="localCount">-</strong><span>默认缓存镜像</span></div>
             <div class="metric"><strong id="userCount">-</strong><span>有效用户</span></div>
+            <div class="metric"><strong id="deletedUserCount">-</strong><span>缓删用户</span></div>
+            <div class="metric"><strong id="projectCount">-</strong><span>用户项目</span></div>
             <div class="metric"><strong id="queuedCount">-</strong><span>排队任务</span></div>
         </section>
 
         <section class="panel">
-            <h2 style="margin-top:0;">系统设置</h2>
+            <div class="panel-head">
+                <h2 style="margin:0;">系统设置</h2>
+                <span class="muted">缓存保留规则：`-1` 永久保留，`0` 不保留，正整数按天保留</span>
+            </div>
             <div class="settings">
                 <label>
                     <div class="muted">Harbor 域名</div>
@@ -183,60 +168,156 @@
             <div class="toolbar">
                 <button id="runQueuedBtn" class="alt" style="max-width:220px;">执行排队任务</button>
                 <button id="cleanupCacheBtn" class="alt" style="max-width:220px;">清理过期缓存</button>
+                <button id="refreshAllBtn" class="ghost" style="max-width:220px;">刷新全部后台数据</button>
             </div>
-            <div id="actionStatus" class="status-box">这里会显示任务执行和缓存清理结果。</div>
+            <div id="actionStatus" class="status-box">这里会显示任务执行、用户操作和缓存清理结果。</div>
         </section>
 
         <section class="panel">
-            <h2 style="margin-top:0;">分发任务</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>状态</th>
-                        <th>用户</th>
-                        <th>项目</th>
-                        <th>镜像</th>
-                        <th>目标地址</th>
-                        <th>请求时间</th>
-                    </tr>
-                </thead>
-                <tbody id="taskRows"></tbody>
-            </table>
-        </section>
+            <div class="tabs">
+                <button class="active" data-tab="users">用户管理</button>
+                <button data-tab="cache">缓存镜像</button>
+                <button data-tab="tasks">分发任务</button>
+                <button data-tab="retention">30 天缓删</button>
+            </div>
 
-        <section class="panel">
-            <h2 style="margin-top:0;">30 天缓删用户</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>串码</th>
-                        <th>邮箱</th>
-                        <th>删除时间</th>
-                        <th>彻底清理时间</th>
-                    </tr>
-                </thead>
-                <tbody id="retentionRows"></tbody>
-            </table>
+            <div id="tab-users" class="tab-panel active">
+                <div class="panel-head">
+                    <h2 style="margin:0;">用户管理</h2>
+                    <div class="table-tools">
+                        <input id="userKeyword" placeholder="按串码、邮箱、命名空间筛选">
+                        <select id="userStatusFilter">
+                            <option value="all">全部状态</option>
+                            <option value="active">active</option>
+                            <option value="deleted">deleted</option>
+                            <option value="pending">pending</option>
+                        </select>
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>用户</th>
+                            <th>命名空间</th>
+                            <th>项目/镜像</th>
+                            <th>最近使用</th>
+                            <th>到期/缓删</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userRows"></tbody>
+                </table>
+            </div>
+
+            <div id="tab-cache" class="tab-panel">
+                <div class="panel-head">
+                    <h2 style="margin:0;">默认缓存镜像</h2>
+                    <div class="table-tools">
+                        <input id="cacheKeyword" placeholder="按镜像名、仓库地址筛选">
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>镜像</th>
+                            <th>缓存地址</th>
+                            <th>最近命中</th>
+                            <th>过期时间</th>
+                            <th>来源</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cacheRows"></tbody>
+                </table>
+            </div>
+
+            <div id="tab-tasks" class="tab-panel">
+                <div class="panel-head">
+                    <h2 style="margin:0;">分发任务</h2>
+                    <div class="table-tools">
+                        <input id="taskKeyword" placeholder="按串码、项目、镜像筛选">
+                        <select id="taskStatusFilter">
+                            <option value="all">全部状态</option>
+                            <option value="queued">queued</option>
+                            <option value="running">running</option>
+                            <option value="completed">completed</option>
+                            <option value="failed">failed</option>
+                            <option value="cancelled">cancelled</option>
+                        </select>
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>状态</th>
+                            <th>用户</th>
+                            <th>项目</th>
+                            <th>镜像</th>
+                            <th>目标地址</th>
+                            <th>请求时间</th>
+                        </tr>
+                    </thead>
+                    <tbody id="taskRows"></tbody>
+                </table>
+            </div>
+
+            <div id="tab-retention" class="tab-panel">
+                <div class="panel-head">
+                    <h2 style="margin:0;">30 天缓删用户</h2>
+                    <span class="muted">用户删除后先保留 30 天，恢复后可以继续使用自己的命名空间。</span>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>串码</th>
+                            <th>邮箱</th>
+                            <th>删除时间</th>
+                            <th>彻底清理时间</th>
+                        </tr>
+                    </thead>
+                    <tbody id="retentionRows"></tbody>
+                </table>
+            </div>
         </section>
     </div>
 
     <script>
         const actionStatusEl = document.getElementById('actionStatus');
+        let allUsers = [];
+        let allTasks = [];
+        let allCacheImages = [];
+        let allRetentionRows = [];
+
+        function setStatus(message) {
+            actionStatusEl.textContent = message;
+        }
+
+        function badgeClass(status) {
+            if (status === 'completed' || status === 'active') return 'ok';
+            if (status === 'failed' || status === 'deleted' || status === 'cancelled') return 'warn';
+            return 'info';
+        }
+
+        async function requestJson(url, options) {
+            const response = await fetch(url, options);
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || '请求失败');
+            }
+            return data;
+        }
 
         async function loadSummary() {
-            const response = await fetch('/api/v2/admin/summary');
-            const data = await response.json();
-            if (!response.ok || !data.success) return;
+            const data = await requestJson('/api/v2/admin/summary');
             document.getElementById('catalogCount').textContent = data.summary.catalogCount;
             document.getElementById('localCount').textContent = data.summary.localCatalogCount;
             document.getElementById('userCount').textContent = data.summary.userCount;
+            document.getElementById('deletedUserCount').textContent = data.summary.deletedUserCount;
+            document.getElementById('projectCount').textContent = data.summary.projectCount;
             document.getElementById('queuedCount').textContent = data.summary.queuedTaskCount;
         }
 
         async function loadSettings() {
-            const response = await fetch('/api/v2/settings');
-            const data = await response.json();
-            if (!response.ok || !data.success) return;
+            const data = await requestJson('/api/v2/settings');
             document.getElementById('harborDomain').value = data.settings.harborDomain;
             document.getElementById('cacheProjectName').value = data.settings.cacheProjectName;
             document.getElementById('cacheRetentionDays').value = data.settings.cacheRetentionDays;
@@ -252,55 +333,175 @@
                 defaultUserRepoVisibility: document.getElementById('defaultUserRepoVisibility').value,
                 dockerhubSearchEnabled: document.getElementById('dockerhubSearchEnabled').checked
             };
-            const response = await fetch('/api/v2/settings', {
+            await requestJson('/api/v2/settings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-            const data = await response.json();
-            if (!response.ok || !data.success) {
-                alert(data.error || '保存失败');
-                return;
-            }
-            actionStatusEl.textContent = '设置已保存，新的缓存保留策略会影响后续任务和缓存过期时间。';
-            loadSummary();
+            setStatus('系统设置已保存，新的缓存策略会影响后续分发和过期时间。');
+            await Promise.all([loadSummary(), loadSettings(), loadCache()]);
         }
 
-        async function loadTasks() {
-            const response = await fetch('/api/v2/admin/tasks');
-            const data = await response.json();
-            const tbody = document.getElementById('taskRows');
+        function renderUsers() {
+            const keyword = document.getElementById('userKeyword').value.trim().toLowerCase();
+            const statusFilter = document.getElementById('userStatusFilter').value;
+            const tbody = document.getElementById('userRows');
             tbody.innerHTML = '';
-            if (!response.ok || !data.success) return;
-            if (!data.tasks.length) {
-                tbody.innerHTML = '<tr><td colspan="6" class="muted">暂时没有任务。</td></tr>';
+
+            const rows = allUsers.filter((user) => {
+                const matchesKeyword = !keyword || [user.code, user.email, user.harborProjectName]
+                    .filter(Boolean)
+                    .some((value) => String(value).toLowerCase().includes(keyword));
+                const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
+                return matchesKeyword && matchesStatus;
+            });
+
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="muted">当前筛选条件下没有用户。</td></tr>';
                 return;
             }
-            data.tasks.forEach((task) => {
+
+            rows.forEach((user) => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td><span class="badge ${task.status === 'completed' ? 'ok' : ''}">${task.status}</span></td>
+                    <td class="code-wrap">
+                        <div><strong>${user.code}</strong></div>
+                        <div class="muted">${user.email || '未绑定邮箱'}</div>
+                        <div><span class="badge ${badgeClass(user.status)}">${user.status}</span></div>
+                    </td>
+                    <td>${user.harborProjectName}</td>
+                    <td>${user.projectCount} 个项目 / ${user.imageCount} 个镜像</td>
+                    <td>
+                        <div>${user.lastUsed || '暂未使用'}</div>
+                        <div class="muted">创建：${user.createdAt || '-'}</div>
+                    </td>
+                    <td>
+                        <div>到期：${user.expireAt || '-'}</div>
+                        <div class="muted">缓删：${user.purgeAfter || '-'}</div>
+                    </td>
+                    <td>
+                        <div class="table-actions">
+                            ${user.status === 'deleted'
+                                ? `<button class="alt" data-restore="${user.code}">恢复</button>`
+                                : `<button class="warn" data-delete="${user.code}">软删除</button>`}
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            tbody.querySelectorAll('[data-delete]').forEach((button) => {
+                button.addEventListener('click', async () => {
+                    const code = button.getAttribute('data-delete');
+                    if (!window.confirm(`确定把 ${code} 放入 30 天缓删吗？`)) return;
+                    await requestJson(`/api/v2/access-codes/${encodeURIComponent(code)}/soft-delete`, { method: 'POST' });
+                    setStatus(`用户 ${code} 已进入 30 天缓删期。`);
+                    await refreshAdminData();
+                });
+            });
+
+            tbody.querySelectorAll('[data-restore]').forEach((button) => {
+                button.addEventListener('click', async () => {
+                    const code = button.getAttribute('data-restore');
+                    await requestJson(`/api/v2/access-codes/${encodeURIComponent(code)}/restore`, { method: 'POST' });
+                    setStatus(`用户 ${code} 已恢复为 active。`);
+                    await refreshAdminData();
+                });
+            });
+        }
+
+        async function loadUsers() {
+            const data = await requestJson('/api/v2/admin/users');
+            allUsers = data.users || [];
+            renderUsers();
+        }
+
+        function renderCache() {
+            const keyword = document.getElementById('cacheKeyword').value.trim().toLowerCase();
+            const tbody = document.getElementById('cacheRows');
+            tbody.innerHTML = '';
+
+            const rows = allCacheImages.filter((item) => {
+                return !keyword || [item.displayName, item.source.fullName, item.local.fullName]
+                    .filter(Boolean)
+                    .some((value) => String(value).toLowerCase().includes(keyword));
+            });
+
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="5" class="muted">当前没有可展示的默认缓存镜像。</td></tr>';
+                return;
+            }
+
+            rows.forEach((item) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <div><strong>${item.displayName}</strong></div>
+                        <div class="muted">${item.source.fullName}</div>
+                    </td>
+                    <td>${item.local.fullName || '-'}</td>
+                    <td>${item.local.cacheLastSeenAt || '-'}</td>
+                    <td>${item.local.cacheExpiresAt || '永久保留'}</td>
+                    <td><span class="badge ${item.sourceType === 'local' ? 'ok' : 'info'}">${item.sourceType}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function loadCache() {
+            const data = await requestJson('/api/v2/cache/images');
+            allCacheImages = data.images || [];
+            renderCache();
+        }
+
+        function renderTasks() {
+            const keyword = document.getElementById('taskKeyword').value.trim().toLowerCase();
+            const statusFilter = document.getElementById('taskStatusFilter').value;
+            const tbody = document.getElementById('taskRows');
+            tbody.innerHTML = '';
+
+            const rows = allTasks.filter((task) => {
+                const matchesKeyword = !keyword || [task.accessCode, task.projectName, task.displayName, task.targetFullName]
+                    .filter(Boolean)
+                    .some((value) => String(value).toLowerCase().includes(keyword));
+                const matchesStatus = statusFilter === 'all' || task.status === statusFilter;
+                return matchesKeyword && matchesStatus;
+            });
+
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="muted">当前筛选条件下没有任务。</td></tr>';
+                return;
+            }
+
+            rows.forEach((task) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><span class="badge ${badgeClass(task.status)}">${task.status}</span></td>
                     <td>${task.accessCode}</td>
                     <td>${task.projectName || '-'}</td>
                     <td>${task.displayName}</td>
-                    <td class="muted">${task.targetFullName}</td>
+                    <td class="code-wrap">${task.targetFullName}</td>
                     <td>${task.requestedAt || '-'}</td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
-        async function loadRetention() {
-            const response = await fetch('/api/v2/retention/pending-purge');
-            const data = await response.json();
+        async function loadTasks() {
+            const data = await requestJson('/api/v2/admin/tasks');
+            allTasks = data.tasks || [];
+            renderTasks();
+        }
+
+        function renderRetention() {
             const tbody = document.getElementById('retentionRows');
             tbody.innerHTML = '';
-            if (!response.ok || !data.success) return;
-            if (!data.rows.length) {
+            if (!allRetentionRows.length) {
                 tbody.innerHTML = '<tr><td colspan="4" class="muted">没有处于保留期的用户。</td></tr>';
                 return;
             }
-            data.rows.forEach((row) => {
+
+            allRetentionRows.forEach((row) => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${row.code}</td>
@@ -312,44 +513,69 @@
             });
         }
 
+        async function loadRetention() {
+            const data = await requestJson('/api/v2/retention/pending-purge');
+            allRetentionRows = data.rows || [];
+            renderRetention();
+        }
+
         async function runQueuedTasks() {
-            const response = await fetch('/api/v2/admin/tasks/run-queued', {
+            const data = await requestJson('/api/v2/admin/tasks/run-queued', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ limit: 10 })
             });
-            const data = await response.json();
-            if (!response.ok || !data.success) {
-                actionStatusEl.textContent = data.error || '执行排队任务失败。';
-                return;
-            }
-            actionStatusEl.textContent = `这次共尝试执行 ${data.executedCount} 个任务。已完成的任务会转成 completed，并把镜像标记进默认缓存。`;
-            refreshAll();
+            setStatus(`这次共尝试执行 ${data.executedCount} 个任务。已完成的任务会进入 completed，并把镜像标记进默认缓存。`);
+            await refreshAdminData();
         }
 
         async function cleanupCache() {
-            const response = await fetch('/api/v2/admin/cache/cleanup', {
+            const data = await requestJson('/api/v2/admin/cache/cleanup', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' }
             });
-            const data = await response.json();
-            if (!response.ok || !data.success) {
-                actionStatusEl.textContent = data.error || '缓存清理失败。';
-                return;
-            }
-            actionStatusEl.textContent = `已按保留策略检查默认缓存，移除了 ${data.removed} 个过期缓存镜像。当前保留策略是 ${data.retentionDays}。`;
-            refreshAll();
+            setStatus(`已按保留策略检查默认缓存，移除了 ${data.removed} 个过期缓存镜像。当前保留策略是 ${data.retentionDays}。`);
+            await refreshAdminData();
         }
 
-        async function refreshAll() {
-            await Promise.all([loadSummary(), loadTasks(), loadRetention()]);
+        async function refreshAdminData() {
+            await Promise.all([
+                loadSummary(),
+                loadUsers(),
+                loadCache(),
+                loadTasks(),
+                loadRetention()
+            ]);
+        }
+
+        function bindTabs() {
+            document.querySelectorAll('[data-tab]').forEach((button) => {
+                button.addEventListener('click', () => {
+                    const tab = button.getAttribute('data-tab');
+                    document.querySelectorAll('[data-tab]').forEach((item) => item.classList.remove('active'));
+                    document.querySelectorAll('.tab-panel').forEach((panel) => panel.classList.remove('active'));
+                    button.classList.add('active');
+                    document.getElementById(`tab-${tab}`).classList.add('active');
+                });
+            });
         }
 
         document.getElementById('saveSettingsBtn').addEventListener('click', saveSettings);
         document.getElementById('runQueuedBtn').addEventListener('click', runQueuedTasks);
         document.getElementById('cleanupCacheBtn').addEventListener('click', cleanupCache);
+        document.getElementById('refreshAllBtn').addEventListener('click', async () => {
+            await Promise.all([loadSettings(), refreshAdminData()]);
+            setStatus('后台数据已刷新。');
+        });
+        document.getElementById('userKeyword').addEventListener('input', renderUsers);
+        document.getElementById('userStatusFilter').addEventListener('change', renderUsers);
+        document.getElementById('cacheKeyword').addEventListener('input', renderCache);
+        document.getElementById('taskKeyword').addEventListener('input', renderTasks);
+        document.getElementById('taskStatusFilter').addEventListener('change', renderTasks);
+
+        bindTabs();
         loadSettings();
-        refreshAll();
+        refreshAdminData();
     </script>
 </body>
 </html>
