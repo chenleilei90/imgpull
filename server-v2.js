@@ -330,6 +330,154 @@ function queueDistributionTask(catalogImage, accessCode, userProjectId, triggerS
     return db.prepare('SELECT * FROM distribution_tasks WHERE id = ?').get(result.lastInsertRowid);
 }
 
+function markImageAsCached(catalogImage) {
+    const cacheFullName = buildLocalCacheName(catalogImage);
+    const cacheProject = getCacheProjectName();
+    db.prepare(`
+        UPDATE catalog_images
+        SET local_available = 1,
+            local_registry = ?,
+            local_namespace = ?,
+            local_repository = ?,
+            local_tag = ?,
+            local_full_name = ?,
+            cache_last_seen_at = CURRENT_TIMESTAMP,
+            cache_expires_at = ?,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+    `).run(
+        getDefaultHarborDomain(),
+        cacheProject,
+        catalogImage.repository,
+        catalogImage.tag,
+        cacheFullName,
+        computeCacheExpiresAt(),
+        catalogImage.id
+    );
+    return db.prepare('SELECT * FROM catalog_images WHERE id = ?').get(catalogImage.id);
+}
+
+function runDistributionTask(taskId) {
+    const task = db.prepare('SELECT * FROM distribution_tasks WHERE id = ?').get(taskId);
+    if (!task) {
+        return { success: false, error: '任务不存在' };
+    }
+
+    if (task.status === 'completed') {
+        return { success: true, task };
+    }
+
+    const catalogImage = db.prepare('SELECT * FROM catalog_images WHERE id = ?').get(task.catalog_image_id);
+    const accessCode = db.prepare('SELECT * FROM access_codes WHERE id = ?').get(task.access_code_id);
+
+    if (!catalogImage || !accessCode) {
+        db.prepare(`
+            UPDATE distribution_tasks
+            SET status = 'failed', finished_at = CURRENT_TIMESTAMP, last_error = ?
+            WHERE id = ?
+        `).run('镜像或用户不存在，无法执行任务', task.id);
+        return { success: false, error: '镜像或用户不存在，无法执行任务' };
+    }
+
+    db.prepare(`
+        UPDATE distribution_tasks
+        SET status = 'running', started_at = COALESCE(started_at, CURRENT_TIMESTAMP), last_error = NULL
+        WHERE id = ?
+    `).run(task.id);
+
+    let refreshedImage = catalogImage;
+    if (!catalogImage.local_available) {
+        refreshedImage = markImageAsCached(catalogImage);
+    } else {
+        db.prepare(`
+            UPDATE catalog_images
+            SET cache_last_seen_at = CURRENT_TIMESTAMP,
+                cache_expires_at = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        `).run(computeCacheExpiresAt(), catalogImage.id);
+        refreshedImage = db.prepare('SELECT * FROM catalog_images WHERE id = ?').get(catalogImage.id);
+    }
+
+    const targetFullName = buildUserImageName(refreshedImage, accessCode);
+    db.prepare(`
+        UPDATE distribution_tasks
+        SET status = 'completed',
+            cache_hit = ?,
+            cache_full_name = ?,
+            target_full_name = ?,
+            finished_at = CURRENT_TIMESTAMP,
+            last_error = NULL
+        WHERE id = ?
+    `).run(
+        refreshedImage.local_available ? 1 : 0,
+        refreshedImage.local_full_name || buildLocalCacheName(refreshedImage),
+        targetFullName,
+        task.id
+    );
+
+    return {
+        success: true,
+        task: db.prepare('SELECT * FROM distribution_tasks WHERE id = ?').get(task.id),
+        image: refreshedImage
+    };
+}
+
+function runQueuedTasks(limit) {
+    const rows = db.prepare(`
+        SELECT id
+        FROM distribution_tasks
+        WHERE status = 'queued'
+        ORDER BY requested_at ASC, id ASC
+        LIMIT ?
+    `).all(limit);
+
+    const executed = [];
+    rows.forEach((row) => {
+        executed.push(runDistributionTask(row.id));
+    });
+    return executed;
+}
+
+function cleanupExpiredCache() {
+    const retentionDays = getCacheRetentionDays();
+    if (retentionDays < 0) {
+        return { removed: 0, retentionDays, rows: [] };
+    }
+
+    const now = getNowSql();
+    const rows = db.prepare(`
+        SELECT c.*
+        FROM catalog_images c
+        LEFT JOIN distribution_tasks t
+            ON t.catalog_image_id = c.id
+           AND t.status IN ('queued', 'running')
+        WHERE c.local_available = 1
+          AND c.cache_expires_at IS NOT NULL
+          AND c.cache_expires_at <= ?
+          AND t.id IS NULL
+        ORDER BY c.cache_expires_at ASC, c.id ASC
+    `).all(now);
+
+    rows.forEach((row) => {
+        db.prepare(`
+            UPDATE catalog_images
+            SET local_available = 0,
+                local_registry = NULL,
+                local_namespace = NULL,
+                local_repository = NULL,
+                local_tag = NULL,
+                local_full_name = NULL,
+                cache_last_seen_at = NULL,
+                cache_expires_at = NULL,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        `).run(row.id);
+    });
+
+    return { removed: rows.length, retentionDays, rows };
+}
+
 function seedCatalogFromLegacy() {
     const legacyTable = db.prepare(`
         SELECT name FROM sqlite_master
@@ -813,6 +961,33 @@ app.get('/api/v2/admin/tasks', (req, res) => {
     });
 });
 
+app.post('/api/v2/admin/tasks/run-queued', (req, res) => {
+    const limit = Math.max(1, Math.min(Number(req.body.limit || req.query.limit || 10), 50));
+    const executed = runQueuedTasks(limit);
+    res.json({
+        success: true,
+        requestedLimit: limit,
+        executedCount: executed.length,
+        tasks: executed.map((item) => ({
+            success: item.success,
+            error: item.error || null,
+            task: serializeTask(item.task || null)
+        }))
+    });
+});
+
+app.post('/api/v2/admin/tasks/:taskId/run', (req, res) => {
+    const result = runDistributionTask(req.params.taskId);
+    if (!result.success) {
+        return res.status(400).json(result);
+    }
+    res.json({
+        success: true,
+        task: serializeTask(result.task),
+        image: result.image ? serializeCatalogImage(result.image, null, result.task) : null
+    });
+});
+
 app.post('/api/v2/admin/tasks/:taskId/status', (req, res) => {
     const task = db.prepare('SELECT * FROM distribution_tasks WHERE id = ?').get(req.params.taskId);
     if (!task) {
@@ -841,6 +1016,20 @@ app.post('/api/v2/admin/tasks/:taskId/status', (req, res) => {
     `).run(nextStatus, startedAt || null, finishedAt || null, req.body.lastError || null, task.id);
 
     res.json({ success: true });
+});
+
+app.post('/api/v2/admin/cache/cleanup', (req, res) => {
+    const result = cleanupExpiredCache();
+    res.json({
+        success: true,
+        removed: result.removed,
+        retentionDays: result.retentionDays,
+        images: result.rows.map((row) => ({
+            id: row.id,
+            displayName: row.display_name,
+            sourceFullName: row.source_full_name
+        }))
+    });
 });
 
 app.post('/api/v2/access-codes/:code/soft-delete', (req, res) => {
