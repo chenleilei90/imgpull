@@ -1,17 +1,17 @@
 # ImgPull
 
-ImgPull is a Docker image fetch and distribution service for domestic mirror delivery.
+ImgPull 是一个“海外容器镜像国内获取与分发平台”。
 
-Core flow:
+它的核心流程是：
 
-1. Users search for an image on the homepage.
-2. The system checks the local Harbor cache first.
-3. If the image is missing locally, the system falls back to Docker Hub.
-4. The image is stored in the default cache project.
-5. The image is then distributed to the user's dedicated namespace.
-6. The user copies a `docker`, `nerdctl`, or `crictl` command from the console and pulls it on their own server.
+1. 用户在首页或控制台搜索镜像。
+2. 系统优先查询本地 Harbor 默认缓存仓库。
+3. 如果本地没有命中，再回退到 Docker Hub 搜索。
+4. 镜像先进入默认缓存仓库。
+5. 系统再把镜像分发到用户自己的专属命名空间。
+6. 用户在控制台复制 `docker`、`nerdctl` 或 `crictl` 拉取命令，在自己的服务器上拉取镜像。
 
-## Current structure
+## 当前目录结构
 
 ```text
 imgpull-review/
@@ -28,92 +28,95 @@ imgpull-review/
 └─ server.js
 ```
 
-## First-time install
+## 首次安装
 
-The app now supports a first-run install wizard.
+系统已支持首装引导。
 
-When the system is not installed yet, opening the homepage will redirect to:
+未安装时，访问首页会自动跳转到：
 
 ```text
 /install
 ```
 
-The install wizard supports:
+安装页支持：
 
-- site title
-- site subtitle
-- admin email
-- SQLite path
-- MySQL 5 - 8 connection test
-- optional Harbor config
-- Harbor test connection
-- writing install config to `config/app.config.json`
+- 站点标题
+- 站点副标题
+- 管理员邮箱
+- SQLite 路径
+- MySQL 5 - 8 参数填写与连接测试
+- Harbor 可选配置
+- Harbor 连接测试
+- 将安装配置写入 `config/app.config.json`
 
-## SQLite note
+## 数据库说明
 
-The current codebase still keeps compatibility with the existing SQLite database file:
+### SQLite
+
+当前代码仍兼容仓库中的旧 SQLite 数据库：
 
 ```text
 kubeaszpull.db
 ```
 
-This is useful for:
+适合场景：
 
-- local testing
-- single-machine deployment
-- lightweight early-stage operation
+- 本地测试
+- 单机部署
+- 轻量初期运行
 
-But it is not recommended for high-concurrency production use.
+不建议用于：
 
-The install page already shows this as a warning.
+- 高并发生产环境
+- 多实例共享写入场景
 
-## MySQL note
+### MySQL
 
-The install layer already supports:
+当前版本已经支持：
 
-- MySQL parameter input
-- MySQL connection test
-- saving MySQL config
+- 安装时填写 MySQL 参数
+- MySQL 连接测试
+- MySQL 配置保存
 
-Current limitation:
+当前限制：
 
-- runtime business logic still primarily uses the existing SQLite-compatible path
-- MySQL is prepared as install-time configuration, but full runtime migration is still a follow-up task
+- 运行时主要业务逻辑仍然优先兼容 SQLite 路径
+- MySQL 目前属于“安装层准备完成”，还不是“运行层完全迁移完成”
 
-So the current MySQL status is:
+也就是说，当前 MySQL 状态是：
 
-- install-ready
-- test-ready
-- config-ready
-- not fully runtime-migrated yet
+- 可配置
+- 可测试
+- 可保存
+- 暂未完全接管运行时业务
 
-## Start
+## 启动方式
 
-Install dependencies:
+安装依赖：
 
 ```bash
 npm install
 ```
 
-Run:
+启动：
 
 ```bash
 npm start
 ```
 
-Default port:
+默认端口：
 
 ```text
 3001
 ```
 
-Override with env:
+自定义端口：
 
 ```bash
 PORT=8080 npm start
 ```
 
-## Main routes
+## 主要页面路径
 
 - `/install`
 - `/`
@@ -121,25 +124,25 @@ PORT=8080 npm start
 - `/deliveries`
 - `/admin`
 
-Legacy routes are still redirected:
+旧路径仍保留跳转兼容：
 
 - `/v2`
 - `/v2/console`
 - `/v2/deliveries`
 - `/v2/admin`
 
-## What has been normalized
+## 当前已完成整理
 
-- removed `v2` page filenames from the main flow
-- promoted homepage, console, deliveries, and admin into canonical filenames
-- added install wizard
-- added install-time DB test and Harbor test endpoints
-- added admin-side Harbor config save and test support
-- kept old route redirects to reduce breakage
+- 移除旧的 `v2` 页面文件命名
+- 将首页、控制台、交付页、后台改为正式入口文件
+- 新增首装引导
+- 新增安装阶段数据库测试与 Harbor 测试
+- 新增后台 Harbor 配置保存与连接测试
+- 保留旧路径跳转，减少升级时的页面断链
 
-## Next recommended work
+## 下一步建议
 
-1. Finish full runtime MySQL support instead of config-only preparation.
-2. Replace the logical task flow with real Harbor and Docker execution.
-3. Add SMTP delivery so purchase codes can be mailed automatically.
-4. Continue cleaning remaining legacy text and data model naming such as `user_projects_v2`.
+1. 完成运行时 MySQL 支持，而不只是安装与测试层支持。
+2. 将逻辑任务流替换为真实 Harbor / Docker 执行链路。
+3. 接入 SMTP，让串码购买后可以自动发邮件。
+4. 继续清理历史文案和部分旧数据模型命名。
