@@ -12,11 +12,10 @@
             --ink: #0f172a;
             --muted: #5f6f86;
             --brand: #0f6fff;
-            --brand-dark: #0b57ca;
             --teal: #0ea5a4;
-            --danger: #dc2626;
             --warn: #f59e0b;
             --ok: #16a34a;
+            --danger: #dc2626;
             --shadow: 0 24px 56px rgba(15, 23, 42, 0.1);
         }
         * { box-sizing: border-box; }
@@ -86,7 +85,13 @@
         .notice.warn { border-color: rgba(245, 158, 11, 0.3); background: rgba(255, 248, 235, 0.96); color: #92400e; }
         .notice.ok, .result.ok { border-color: rgba(22, 163, 74, 0.28); background: rgba(240, 253, 244, 0.96); color: #166534; }
         .notice.err, .result.err { border-color: rgba(220, 38, 38, 0.25); background: rgba(254, 242, 242, 0.96); color: #991b1b; }
-        .switch { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-weight: 700; }
+        .switch {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            font-weight: 700;
+        }
         .switch input { width: auto; margin: 0; }
         .footer-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 18px; }
         .small { font-size: 13px; color: var(--muted); }
@@ -111,17 +116,17 @@
             <article>
                 <span class="tag">首次安装</span>
                 <h1>先完成安装配置，再进入 ImgPull 正式首页。</h1>
-                <p>这一步会保存站点信息、数据库类型、可选 Harbor 配置，并生成系统的安装状态。默认兼容当前仓库里的 SQLite 数据文件，但安装页也支持填写 MySQL 5 - 8 参数并测试连接。</p>
+                <p>这一步会保存站点信息、数据库类型和可选的 Harbor 配置。系统默认兼容当前仓库中的 SQLite 数据文件，也支持填写 MySQL 5 - 8 参数并测试连接。</p>
                 <div class="list">
-                    <div class="list-item">如果你继续使用现有 SQLite 数据库，系统会提示这更适合轻量部署，不建议当成高并发生产数据库。</div>
-                    <div class="list-item">Harbor 配置可以现在填，也可以先跳过，后面去后台继续保存和测试。</div>
-                    <div class="list-item">安装完成后，首页、控制台、交付页和后台都将切换到正式文件名，不再使用 `v2` 页面路径。</div>
+                    <div class="list-item">如果继续使用现有 SQLite 数据库，系统会提示这更适合测试、单机或轻量部署环境。</div>
+                    <div class="list-item">Harbor 配置可以现在填写，也可以先跳过，后续去后台继续测试和保存。</div>
+                    <div class="list-item">安装完成后，首页、控制台、交付页和后台都会切换到正式文件名，不再依赖旧的 `v2` 页面路径。</div>
                 </div>
             </article>
             <aside class="notice warn">
                 <strong>安装前提醒</strong>
-                <div style="margin-top:8px;">1. SQLite 可以直接复用当前已有数据，但安全性、并发能力和运维能力都弱于独立数据库。</div>
-                <div>2. MySQL 测试连接已接入，推荐新部署优先准备 MySQL 5 - 8 环境。</div>
+                <div style="margin-top:8px;">1. SQLite 可以直接复用当前已有数据，但只建议用于测试、单机或轻量部署环境。</div>
+                <div>2. MySQL 连接测试已经接入，推荐新部署优先准备 MySQL 5 - 8 环境。</div>
                 <div>3. Harbor 不强制在安装阶段配置，跳过后仍可在后台测试与保存。</div>
                 <div id="statusBox" style="margin-top:10px;"></div>
             </aside>
@@ -162,7 +167,7 @@
             </div>
 
             <div id="sqliteNotice" class="notice warn" style="margin-top:14px;">
-                你当前选择的是 SQLite。它可以直接复用仓库里的现有 DB，但只建议用在测试、单机或轻量部署环境。
+                你当前选择的是 SQLite。它可以直接复用仓库中的现有数据库，但只建议用于测试、单机或轻量部署环境。
             </div>
 
             <div id="mysqlFields" class="grid hidden" style="margin-top:14px;">
@@ -269,7 +274,7 @@
             const response = await fetch('/api/install/status');
             const data = await response.json();
             if (data.installed) {
-                setStatus('系统已安装，正在准备跳转到首页。', 'ok');
+                setStatus('系统已安装，正在跳转到首页。', 'ok');
                 window.setTimeout(() => {
                     window.location.href = '/';
                 }, 900);
