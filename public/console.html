@@ -1,195 +1,597 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ImgPull 控制台</title>
-  <style>
-    :root {
-      --bg:#eef4fb; --panel:rgba(255,255,255,.92); --line:#d9e5f2; --ink:#0f172a; --muted:#607086;
-      --brand:#0f6fff; --brand-dark:#0b57ca; --teal:#0ea5a4; --ok:#16a34a; --warn:#f59e0b;
-    }
-    *{box-sizing:border-box} body{margin:0;font-family:"Noto Sans SC","Microsoft YaHei",sans-serif;color:var(--ink);background:linear-gradient(180deg,#f8fbff 0%,var(--bg) 100%)}
-    .wrap{max-width:1280px;margin:0 auto;padding:28px 20px 60px}
-    .topbar,.toolbar,.row,.card-actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-    .topbar{justify-content:space-between;margin-bottom:18px}
-    .topbar a,.btn{border:none;border-radius:14px;padding:12px 14px;background:linear-gradient(135deg,var(--brand) 0%,#3389ff 100%);color:#fff;text-decoration:none;cursor:pointer}
-    .btn.alt{background:linear-gradient(135deg,var(--teal) 0%,#18b9b8 100%)} .btn.ghost{background:#edf4ff;color:var(--brand);border:1px solid #cfe0ff}
-    .hero,.panel{background:var(--panel);border:1px solid var(--line);border-radius:24px;padding:20px;box-shadow:0 18px 40px rgba(15,23,42,.08)}
-    .hero{display:grid;grid-template-columns:1.2fr .8fr;gap:18px;margin-bottom:18px}
-    .grid{display:grid;grid-template-columns:180px 220px 1fr auto;gap:12px}
-    .layout{display:grid;grid-template-columns:1.15fr .85fr;gap:18px}
-    .stack{display:grid;gap:14px}
-    input,select{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#fff;font:inherit}
-    h1{margin:0 0 8px;font-size:34px} h2{margin:0;font-size:22px} p{margin:0;color:var(--muted);line-height:1.7}
-    .chip,.badge,.pill{display:inline-flex;align-items:center;padding:6px 12px;border-radius:999px;font-size:12px;border:1px solid rgba(15,111,255,.12)}
-    .chip{background:rgba(15,111,255,.08);color:var(--brand)} .badge{background:rgba(22,163,74,.1);color:var(--ok);border-color:rgba(22,163,74,.12)}
-    .badge.warn{background:rgba(245,158,11,.12);color:var(--warn);border-color:rgba(245,158,11,.18)} .pill{background:#f3f8ff;color:var(--brand);margin-right:6px;margin-top:6px}
-    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px} .stat{padding:14px;border-radius:16px;border:1px solid var(--line);background:#fff}
-    .stat strong{display:block;font-size:24px}
-    .table{width:100%;border-collapse:collapse} .table th,.table td{padding:12px 8px;border-bottom:1px solid #e6eef8;text-align:left;vertical-align:top}
-    .table th{color:var(--muted);font-weight:600}
-    .panel-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}
-    .empty{padding:22px;border:1px dashed var(--line);border-radius:16px;text-align:center;color:var(--muted);background:rgba(255,255,255,.7)}
-    .small{font-size:13px;color:var(--muted)} code{display:block;padding:10px 12px;background:#f3f8ff;border:1px solid #dde9f8;border-radius:12px;word-break:break-all;white-space:pre-wrap}
-    .picker{margin-top:10px;border:1px solid var(--line);border-radius:14px;padding:12px;background:#fff} .picker-list{display:grid;gap:8px;max-height:200px;overflow:auto;margin-top:8px}
-    .picker-item{display:flex;gap:8px;align-items:center;font-size:14px} .picker-item input{width:auto;margin:0}
-    .toast{position:fixed;right:18px;bottom:18px;background:#0f172a;color:#fff;padding:12px 16px;border-radius:14px;opacity:0;transform:translateY(8px);transition:.2s}
-    .toast.show{opacity:1;transform:translateY(0)}
-    @media (max-width:1080px){.hero,.layout{grid-template-columns:1fr}} @media (max-width:760px){.grid{grid-template-columns:1fr}.stats{grid-template-columns:1fr}.topbar{flex-direction:column;align-items:flex-start}}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ImgPull 控制台</title>
+    <style>
+        :root {
+            --bg:#eef4fb; --panel:rgba(255,255,255,.92); --line:#d9e5f2; --ink:#0f172a; --muted:#607086;
+            --brand:#0f6fff; --teal:#0ea5a4; --ok:#16a34a; --warn:#f59e0b; --danger:#dc2626;
+        }
+        *{box-sizing:border-box}
+        body{margin:0;font-family:"Noto Sans SC","Microsoft YaHei",sans-serif;color:var(--ink);background:linear-gradient(180deg,#f8fbff 0%,var(--bg) 100%)}
+        .wrap{max-width:1280px;margin:0 auto;padding:28px 20px 60px}
+        .topbar,.toolbar,.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+        .topbar{justify-content:space-between;margin-bottom:18px}
+        .topbar a,.btn{border:none;border-radius:14px;padding:12px 14px;background:linear-gradient(135deg,var(--brand) 0%,#3389ff 100%);color:#fff;text-decoration:none;cursor:pointer}
+        .btn.alt{background:linear-gradient(135deg,var(--teal) 0%,#18b9b8 100%)}
+        .btn.ghost{background:#edf4ff;color:var(--brand);border:1px solid #cfe0ff}
+        .panel{background:var(--panel);border:1px solid var(--line);border-radius:24px;padding:20px;box-shadow:0 18px 40px rgba(15,23,42,.08)}
+        .hero{display:grid;grid-template-columns:1.2fr .8fr;gap:18px;margin-bottom:18px}
+        .layout{display:grid;grid-template-columns:1.15fr .85fr;gap:18px}
+        .grid{display:grid;grid-template-columns:180px 220px 1fr auto;gap:12px}
+        .stack{display:grid;gap:14px}
+        input,select{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#fff;font:inherit}
+        h1{margin:0 0 8px;font-size:34px}
+        h2{margin:0;font-size:22px}
+        p{margin:0;color:var(--muted);line-height:1.7}
+        .chip,.badge,.pill{display:inline-flex;align-items:center;padding:6px 12px;border-radius:999px;font-size:12px}
+        .chip{background:rgba(15,111,255,.08);color:var(--brand);border:1px solid rgba(15,111,255,.12)}
+        .badge{background:rgba(22,163,74,.1);color:var(--ok);border:1px solid rgba(22,163,74,.14)}
+        .badge.warn{background:rgba(245,158,11,.12);color:var(--warn);border:1px solid rgba(245,158,11,.18)}
+        .pill{background:#f3f8ff;color:var(--brand);border:1px solid #dbe8fb;margin-right:6px;margin-top:6px}
+        .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+        .stat{padding:14px;border:1px solid var(--line);border-radius:16px;background:#fff}
+        .stat strong{display:block;font-size:24px}
+        .panel-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}
+        table{width:100%;border-collapse:collapse}
+        th,td{text-align:left;padding:12px 8px;border-bottom:1px solid #e6eef8;vertical-align:top}
+        th{color:var(--muted);font-weight:600}
+        .card{border:1px solid var(--line);border-radius:18px;padding:16px;background:#fff}
+        .empty{padding:22px;border:1px dashed var(--line);border-radius:16px;text-align:center;color:var(--muted);background:rgba(255,255,255,.7)}
+        .small{font-size:13px;color:var(--muted)}
+        code{display:block;padding:10px 12px;background:#f3f8ff;border:1px solid #dde9f8;border-radius:12px;word-break:break-all;white-space:pre-wrap;margin-top:8px}
+        .picker{margin-top:10px;border:1px solid var(--line);border-radius:14px;padding:12px;background:#fff}
+        .picker-list{display:grid;gap:8px;max-height:220px;overflow:auto;margin-top:8px}
+        .picker-item{display:flex;gap:8px;align-items:center;font-size:14px}
+        .picker-item input{width:auto;margin:0}
+        .toast{position:fixed;right:18px;bottom:18px;background:#0f172a;color:#fff;padding:12px 16px;border-radius:14px;opacity:0;transform:translateY(8px);transition:.2s}
+        .toast.show{opacity:1;transform:translateY(0)}
+        @media (max-width:1080px){.hero,.layout{grid-template-columns:1fr}}
+        @media (max-width:760px){.grid{grid-template-columns:1fr}.stats{grid-template-columns:1fr}.topbar{flex-direction:column;align-items:flex-start}}
+    </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="topbar">
-      <div><div class="small">ImgPull / 用户控制台</div><h1>搜索镜像、加入项目、复制专属拉取命令</h1></div>
-      <div class="toolbar"><a href="/">首页</a><a href="/deliveries">交付镜像</a><a href="/admin">后台</a></div>
+    <div class="wrap">
+        <div class="topbar">
+            <div>
+                <div class="small">ImgPull / 用户控制台</div>
+                <h1>搜索镜像、加入项目、复制专属拉取命令</h1>
+            </div>
+            <div class="toolbar">
+                <a href="/">首页</a>
+                <a href="/deliveries">交付镜像</a>
+                <a href="/admin">后台</a>
+            </div>
+        </div>
+
+        <section class="hero">
+            <article class="panel">
+                <div class="grid">
+                    <select id="searchScope">
+                        <option value="local">本地 Harbor</option>
+                        <option value="dockerhub">Docker Hub</option>
+                        <option value="all">综合搜索</option>
+                    </select>
+                    <input id="code" placeholder="输入串码">
+                    <input id="query" placeholder="搜索镜像，例如 nginx 或 calico/node">
+                    <button class="btn" id="searchBtn">搜索镜像</button>
+                </div>
+                <div class="toolbar" style="margin-top:12px">
+                    <span class="chip" id="namespaceInfo">命名空间：未验证</span>
+                    <span class="chip" id="visibilityInfo">仓库可见性：未确认</span>
+                    <span class="chip" id="searchModeInfo">搜索策略：默认缓存优先</span>
+                </div>
+                <div class="toolbar" style="margin-top:14px">
+                    <input id="projectName" placeholder="新项目名，例如 k8s-base" style="max-width:280px">
+                    <button class="btn alt" id="createProjectBtn">创建项目</button>
+                    <select id="projectSelect" style="max-width:260px">
+                        <option value="">先创建或选择项目</option>
+                    </select>
+                    <button class="btn ghost" id="refreshBtn">刷新控制台</button>
+                </div>
+                <div class="stats">
+                    <div class="stat"><strong id="projectTotalStat">0</strong><span class="small">我的项目</span></div>
+                    <div class="stat"><strong id="myImageTotalStat">0</strong><span class="small">我的镜像</span></div>
+                    <div class="stat"><strong id="deliveredStat">0</strong><span class="small">已交付</span></div>
+                </div>
+            </article>
+            <aside class="panel">
+                <div class="panel-head"><strong>交付说明</strong></div>
+                <p>平台先查默认缓存仓库，未命中时再查 Docker Hub。用户最终只拉自己的专属地址，不直接使用默认缓存仓库。</p>
+                <div class="small" id="pullHint" style="margin-top:12px">请先验证串码，系统会显示你的 Harbor 命名空间和最终交付地址。</div>
+            </aside>
+        </section>
+
+        <section class="layout">
+            <div class="stack">
+                <div class="panel">
+                    <div class="panel-head">
+                        <h2>搜索结果</h2>
+                        <span class="small">本地结果优先显示，已获取时按钮自动置灰</span>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>镜像名</th>
+                                <th>来源</th>
+                                <th>版本</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultRows">
+                            <tr><td colspan="5"><div class="empty">输入串码并搜索镜像后，这里会显示结果。</div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-head">
+                        <h2>当前项目镜像</h2>
+                        <span class="small" id="currentProjectInfo">还没选中项目</span>
+                    </div>
+                    <div id="projectImages" class="stack">
+                        <div class="empty">选择一个项目后，这里会显示项目镜像和状态。</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stack">
+                <div class="panel">
+                    <div class="panel-head">
+                        <h2>我的项目</h2>
+                        <span class="small" id="projectCountInfo">0 个项目</span>
+                    </div>
+                    <div id="projectList" class="stack">
+                        <div class="empty">还没有项目。</div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-head">
+                        <h2>我的镜像</h2>
+                        <span class="small">支持按项目和状态筛选</span>
+                    </div>
+                    <div class="toolbar" style="margin-bottom:12px">
+                        <select id="myImageStatusFilter" style="max-width:200px">
+                            <option value="all">全部状态</option>
+                            <option value="delivered">只看已交付</option>
+                            <option value="pending">只看待处理</option>
+                        </select>
+                        <select id="myImageProjectFilter" style="max-width:220px">
+                            <option value="">全部项目</option>
+                        </select>
+                    </div>
+                    <div id="myImages" class="stack">
+                        <div class="empty">还没有镜像加入到项目里。</div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-head">
+                        <h2>最近任务</h2>
+                        <span class="small">加入项目时自动排队</span>
+                    </div>
+                    <div id="taskList" class="stack">
+                        <div class="empty">还没有任务。</div>
+                    </div>
+                </div>
+            </div>
+        </section>
     </div>
 
-    <section class="hero">
-      <div>
-        <div class="grid">
-          <select id="searchScope"><option value="local">本地 Harbor</option><option value="dockerhub">Docker Hub</option><option value="all">综合搜索</option></select>
-          <input id="code" placeholder="输入串码">
-          <input id="query" placeholder="搜索镜像，例如 nginx 或 calico/node">
-          <button class="btn" id="searchBtn">搜索镜像</button>
-        </div>
-        <div class="toolbar" style="margin-top:12px">
-          <span class="chip" id="namespaceInfo">命名空间：未验证</span>
-          <span class="chip" id="visibilityInfo">仓库可见性：未确认</span>
-          <span class="chip" id="searchModeInfo">搜索策略：默认缓存优先</span>
-        </div>
-        <div class="toolbar" style="margin-top:14px">
-          <input id="projectName" placeholder="新项目名，例如 k8s-base" style="max-width:280px">
-          <button class="btn alt" id="createProjectBtn">创建项目</button>
-          <select id="projectSelect" style="max-width:260px"><option value="">先创建或选择项目</option></select>
-          <button class="btn ghost" id="refreshBtn">刷新控制台</button>
-        </div>
-        <div class="stats">
-          <div class="stat"><strong id="projectTotalStat">0</strong><span class="small">我的项目</span></div>
-          <div class="stat"><strong id="myImageTotalStat">0</strong><span class="small">我的镜像</span></div>
-          <div class="stat"><strong id="deliveredStat">0</strong><span class="small">已交付</span></div>
-        </div>
-      </div>
-      <div class="panel" style="padding:18px">
-        <div class="panel-head"><strong>交付说明</strong></div>
-        <p>平台先查默认缓存仓库，未命中时再查 Docker Hub。用户最终只拉自己的专属地址，不直接使用默认缓存仓库。</p>
-        <div class="small" id="pullHint" style="margin-top:12px">请先验证串码，系统会显示你的 Harbor 命名空间和最终交付地址。</div>
-      </div>
-    </section>
+    <div class="toast" id="toast">已复制</div>
 
-    <section class="layout">
-      <div class="stack">
-        <div class="panel">
-          <div class="panel-head"><h2>搜索结果</h2><span class="small">行级展示，已获取时按钮自动置灰</span></div>
-          <table class="table"><thead><tr><th>镜像名</th><th>来源</th><th>版本</th><th>拉取人数</th><th>状态</th><th>项目</th><th>操作</th></tr></thead><tbody id="resultRows"><tr><td colspan="7"><div class="empty">输入串码并搜索镜像后，这里会显示结果。</div></td></tr></tbody></table>
-        </div>
-        <div class="panel">
-          <div class="panel-head"><h2>当前项目镜像</h2><span class="small" id="currentProjectInfo">还没选中项目</span></div>
-          <div id="projectImages" class="stack"><div class="empty">选择一个项目后，这里会显示项目镜像和状态。</div></div>
-        </div>
-      </div>
-      <div class="stack">
-        <div class="panel">
-          <div class="panel-head"><h2>我的项目</h2><span class="small" id="projectCountInfo">0 个项目</span></div>
-          <div id="projectList" class="stack"><div class="empty">还没有项目。</div></div>
-        </div>
-        <div class="panel">
-          <div class="panel-head"><h2>我的镜像</h2><span class="small">支持按项目和状态筛选</span></div>
-          <div class="toolbar" style="margin-bottom:12px"><select id="myImageStatusFilter" style="max-width:200px"><option value="all">全部状态</option><option value="delivered">只看已交付</option><option value="pending">只看待处理</option></select><select id="myImageProjectFilter" style="max-width:220px"><option value="">全部项目</option></select></div>
-          <div id="myImages" class="stack"><div class="empty">还没有镜像加入到项目里。</div></div>
-        </div>
-        <div class="panel">
-          <div class="panel-head"><h2>最近任务</h2><span class="small">加入项目时自动排队</span></div>
-          <div id="taskList" class="stack"><div class="empty">还没有任务。</div></div>
-        </div>
-      </div>
-    </section>
-  </div>
+    <script>
+        const codeEl = document.getElementById('code');
+        const queryEl = document.getElementById('query');
+        const searchScopeEl = document.getElementById('searchScope');
+        const projectNameEl = document.getElementById('projectName');
+        const projectSelectEl = document.getElementById('projectSelect');
+        const namespaceInfoEl = document.getElementById('namespaceInfo');
+        const visibilityInfoEl = document.getElementById('visibilityInfo');
+        const searchModeInfoEl = document.getElementById('searchModeInfo');
+        const pullHintEl = document.getElementById('pullHint');
+        const resultRowsEl = document.getElementById('resultRows');
+        const projectListEl = document.getElementById('projectList');
+        const projectImagesEl = document.getElementById('projectImages');
+        const taskListEl = document.getElementById('taskList');
+        const myImagesEl = document.getElementById('myImages');
+        const currentProjectInfoEl = document.getElementById('currentProjectInfo');
+        const projectCountInfoEl = document.getElementById('projectCountInfo');
+        const projectTotalStatEl = document.getElementById('projectTotalStat');
+        const myImageTotalStatEl = document.getElementById('myImageTotalStat');
+        const deliveredStatEl = document.getElementById('deliveredStat');
+        const myImageStatusFilterEl = document.getElementById('myImageStatusFilter');
+        const myImageProjectFilterEl = document.getElementById('myImageProjectFilter');
+        const toastEl = document.getElementById('toast');
 
-  <div class="toast" id="toast">已复制</div>
+        let latestSettings = { harborDomain: 'harbor.wh02.com' };
+        let latestProjects = [];
+        let latestMyImages = [];
+        let currentProjectId = '';
 
-  <script>
-    const codeEl = document.getElementById('code');
-    const queryEl = document.getElementById('query');
-    const searchScopeEl = document.getElementById('searchScope');
-    const projectNameEl = document.getElementById('projectName');
-    const projectSelectEl = document.getElementById('projectSelect');
-    const namespaceInfoEl = document.getElementById('namespaceInfo');
-    const visibilityInfoEl = document.getElementById('visibilityInfo');
-    const searchModeInfoEl = document.getElementById('searchModeInfo');
-    const pullHintEl = document.getElementById('pullHint');
-    const resultRowsEl = document.getElementById('resultRows');
-    const projectListEl = document.getElementById('projectList');
-    const projectImagesEl = document.getElementById('projectImages');
-    const taskListEl = document.getElementById('taskList');
-    const myImagesEl = document.getElementById('myImages');
-    const currentProjectInfoEl = document.getElementById('currentProjectInfo');
-    const projectCountInfoEl = document.getElementById('projectCountInfo');
-    const projectTotalStatEl = document.getElementById('projectTotalStat');
-    const myImageTotalStatEl = document.getElementById('myImageTotalStat');
-    const deliveredStatEl = document.getElementById('deliveredStat');
-    const myImageStatusFilterEl = document.getElementById('myImageStatusFilter');
-    const myImageProjectFilterEl = document.getElementById('myImageProjectFilter');
-    const toastEl = document.getElementById('toast');
+        function showToast(message) {
+            toastEl.textContent = message;
+            toastEl.classList.add('show');
+            clearTimeout(showToast.timer);
+            showToast.timer = setTimeout(() => toastEl.classList.remove('show'), 1800);
+        }
 
-    let latestSettings = { harborDomain: 'harbor.wh02.com' };
-    let latestProjects = [];
-    let latestMyImages = [];
-    let latestTasks = [];
-    let currentProjectId = '';
+        async function copyText(text, message) {
+            try {
+                await navigator.clipboard.writeText(text);
+                showToast(message || '复制成功');
+            } catch (error) {
+                window.prompt('复制失败，请手动复制：', text);
+            }
+        }
 
-    const getCode = () => codeEl.value.trim();
-    const getToolOptions = () => '<option value="docker">docker</option><option value="nerdctl">nerdctl</option><option value="crictl">crictl</option>';
-    const statusClass = (status) => status === 'completed' ? 'badge' : status === 'failed' || status === 'cancelled' ? 'badge warn' : 'chip';
+        async function requestJson(url, options) {
+            const response = await fetch(url, options);
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || '请求失败');
+            }
+            return data;
+        }
 
-    function showToast(message){toastEl.textContent=message;toastEl.classList.add('show');clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>toastEl.classList.remove('show'),1800)}
-    async function copyText(text,message){try{await navigator.clipboard.writeText(text);showToast(message||'复制成功')}catch(error){window.prompt('复制失败，请手动复制：',text)}}
-    async function requestJson(url, options){const response=await fetch(url,options);const data=await response.json();if(!response.ok||!data.success) throw new Error(data.error||'请求失败');return data;}
-    function buildPullCommand(fullName,tool){return `${tool} pull ${fullName}`}
-    function buildLoginAndPullCommand(fullName,tool){return `${tool} login ${latestSettings.harborDomain}\n${tool} pull ${fullName}`}
-    function commandRow(fullName){if(!fullName) return ''; return `<div class="row" style="margin-top:8px"><select data-command-tool style="max-width:140px">${getToolOptions()}</select><button class="btn ghost" data-command-mode="pull" data-command-target="${fullName}">复制命令</button><button class="btn ghost" data-command-mode="login" data-command-target="${fullName}">复制登录+拉取</button></div>`}
-    function bindCommandButtons(scope){scope.querySelectorAll('[data-command-target]').forEach((button)=>{button.addEventListener('click',async()=>{const row=button.closest('.row');const tool=row?row.querySelector('[data-command-tool]').value:'docker';const fullName=button.getAttribute('data-command-target');const mode=button.getAttribute('data-command-mode');await copyText(mode==='login'?buildLoginAndPullCommand(fullName,tool):buildPullCommand(fullName,tool),mode==='login'?'登录加拉取命令已复制':'拉取命令已复制')})})}
+        function buildPullCommand(fullName, tool) {
+            return `${tool} pull ${fullName}`;
+        }
 
-    async function loadSettings(){const data=await requestJson('/api/v2/settings');latestSettings=data.settings||latestSettings}
-    async function loadMe(){const code=getCode();if(!code) throw new Error('请输入串码');const data=await requestJson(`/api/v2/me?code=${encodeURIComponent(code)}`);namespaceInfoEl.textContent=`命名空间：${data.accessCode.harborProjectName}`;visibilityInfoEl.textContent=`仓库可见性：${data.accessCode.repoVisibility || 'private'}`;pullHintEl.textContent=`你的专属命名空间是 ${data.accessCode.harborProjectName}，交付完成后即可复制登录和拉取命令。`;}
+        function buildLoginAndPullCommand(fullName, tool) {
+            return `${tool} login ${latestSettings.harborDomain}\n${tool} pull ${fullName}`;
+        }
 
-    function rebuildProjectOptions(){const current=projectSelectEl.value;projectSelectEl.innerHTML='<option value="">先创建或选择项目</option>';myImageProjectFilterEl.innerHTML='<option value="">全部项目</option>';latestProjects.forEach((project)=>{const o=document.createElement('option');o.value=project.id;o.textContent=project.name;projectSelectEl.appendChild(o);const p=document.createElement('option');p.value=project.name;p.textContent=project.name;myImageProjectFilterEl.appendChild(p)});if(current) projectSelectEl.value=current;projectCountInfoEl.textContent=`${latestProjects.length} 个项目`;projectTotalStatEl.textContent=String(latestProjects.length)}
+        function commandRow(fullName) {
+            if (!fullName) return '';
+            return `
+                <div class="row" style="margin-top:8px">
+                    <select data-command-tool style="max-width:140px">
+                        <option value="docker">docker</option>
+                        <option value="nerdctl">nerdctl</option>
+                        <option value="crictl">crictl</option>
+                    </select>
+                    <button class="btn ghost" data-command-mode="pull" data-command-target="${fullName}">复制命令</button>
+                    <button class="btn ghost" data-command-mode="login" data-command-target="${fullName}">复制登录+拉取</button>
+                </div>
+            `;
+        }
 
-    function renderProjectCards(){if(!latestProjects.length){projectListEl.innerHTML='<div class="empty">还没有项目。</div>';return;}projectListEl.innerHTML='';latestProjects.forEach((project)=>{const card=document.createElement('div');card.className='panel';card.style.padding='16px';card.innerHTML=`<div class="panel-head"><strong>${project.name}</strong><span class="small">${project.imageCount || 0} 个镜像</span></div><div class="toolbar"><button class="btn ghost" data-select-project="${project.id}">查看项目</button></div>`;card.querySelector('[data-select-project]').addEventListener('click',()=>{currentProjectId=String(project.id);projectSelectEl.value=String(project.id);loadProjectImages()});projectListEl.appendChild(card)})}
+        function bindCommandButtons(scope) {
+            scope.querySelectorAll('[data-command-target]').forEach((button) => {
+                button.addEventListener('click', async () => {
+                    const row = button.closest('.row');
+                    const tool = row ? row.querySelector('[data-command-tool]').value : 'docker';
+                    const fullName = button.getAttribute('data-command-target');
+                    const mode = button.getAttribute('data-command-mode');
+                    const text = mode === 'login'
+                        ? buildLoginAndPullCommand(fullName, tool)
+                        : buildPullCommand(fullName, tool);
+                    await copyText(text, mode === 'login' ? '登录加拉取命令已复制' : '拉取命令已复制');
+                });
+            });
+        }
 
-    async function loadProjects(){const data=await requestJson(`/api/v2/projects?code=${encodeURIComponent(getCode())}`);latestProjects=data.projects||[];rebuildProjectOptions();renderProjectCards()}
+        async function loadSettings() {
+            const data = await requestJson('/api/v2/settings');
+            latestSettings = data.settings || latestSettings;
+        }
 
-    async function createProject(){if(!getCode()||!projectNameEl.value.trim()) return alert('请输入串码和项目名');const data=await requestJson('/api/v2/projects',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:getCode(),name:projectNameEl.value.trim()})});projectNameEl.value='';currentProjectId=String(data.project.id);await loadProjects();projectSelectEl.value=currentProjectId;await loadProjectImages();showToast('项目创建成功')}
+        async function loadMe() {
+            const code = codeEl.value.trim();
+            if (!code) throw new Error('请输入串码');
+            const data = await requestJson(`/api/v2/me?code=${encodeURIComponent(code)}`);
+            namespaceInfoEl.textContent = `命名空间：${data.accessCode.harborProjectName}`;
+            visibilityInfoEl.textContent = `仓库可见性：${data.accessCode.visibility || 'private'}`;
+            pullHintEl.textContent = `你的专属命名空间是 ${data.accessCode.harborProjectName}，交付完成后即可复制登录和拉取命令。`;
+        }
 
-    function projectLabelHtml(item){const names=item.projectNames&&item.projectNames.length?item.projectNames:['默认项目'];return names.map((name)=>`<span class="pill">${name}</span>`).join('')}
+        function rebuildProjectOptions() {
+            projectSelectEl.innerHTML = '<option value="">先创建或选择项目</option>';
+            myImageProjectFilterEl.innerHTML = '<option value="">全部项目</option>';
+            latestProjects.forEach((project) => {
+                const option = document.createElement('option');
+                option.value = project.id;
+                option.textContent = project.name;
+                projectSelectEl.appendChild(option);
 
-    function buildProjectPicker(item){const wrap=document.createElement('div');wrap.className='picker';wrap.innerHTML=`<div class="small">项目归类，勾选后自动保存</div><input data-project-filter placeholder="输入组名快速匹配" style="margin-top:8px"><div class="picker-list" data-project-list></div>`;const filterEl=wrap.querySelector('[data-project-filter]');const listEl=wrap.querySelector('[data-project-list]');const renderList=(keyword='')=>{const selectedNames=new Set(item.projectNames&&item.projectNames.length?item.projectNames:['默认项目']);const options=[{id:0,name:'默认项目'},...latestProjects].filter((project)=>!keyword||project.name.toLowerCase().includes(keyword.toLowerCase()));listEl.innerHTML='';options.forEach((project)=>{const row=document.createElement('label');row.className='picker-item';row.innerHTML=`<input type="checkbox" value="${project.id}" ${selectedNames.has(project.name)?'checked':''}><span>${project.name}</span>`;row.querySelector('input').addEventListener('change',async()=>{const checkedIds=Array.from(listEl.querySelectorAll('input:checked')).map((input)=>Number(input.value)).filter((id)=>id>0);const data=await requestJson(`/api/v2/images/${item.id}/projects`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:getCode(),projectIds:checkedIds})});item.projectNames=data.selectedProjects.map((projectRow)=>projectRow.name);renderMyImages(latestMyImages);await loadProjects();showToast('项目归类已自动保存')});listEl.appendChild(row)})};filterEl.addEventListener('input',()=>renderList(filterEl.value));renderList('');return wrap}
+                const filterOption = document.createElement('option');
+                filterOption.value = project.name;
+                filterOption.textContent = project.name;
+                myImageProjectFilterEl.appendChild(filterOption);
+            });
+            projectCountInfoEl.textContent = `${latestProjects.length} 个项目`;
+            projectTotalStatEl.textContent = String(latestProjects.length);
+            if (currentProjectId) {
+                projectSelectEl.value = currentProjectId;
+            }
+        }
 
-    function renderMyImages(images){latestMyImages=images;myImageTotalStatEl.textContent=String(images.length);deliveredStatEl.textContent=String(images.filter((item)=>item.delivered).length);const statusFilter=myImageStatusFilterEl.value;const projectFilter=myImageProjectFilterEl.value;const rows=images.filter((item)=>{const matchStatus=statusFilter==='all'||(statusFilter==='delivered'?item.delivered:!item.delivered);const matchProject=!projectFilter||(item.projectNames||[]).includes(projectFilter);return matchStatus&&matchProject});if(!rows.length){myImagesEl.innerHTML='<div class="empty">当前筛选条件下没有镜像。</div>';return;}myImagesEl.innerHTML='';rows.forEach((item)=>{const card=document.createElement('div');card.className='panel';card.style.padding='16px';card.innerHTML=`<div class="panel-head"><strong>${item.displayName}</strong><span class="${item.delivered?'badge':'chip'}">${item.delivered?'已交付':(item.latestTask?item.latestTask.status:'待处理')}</span></div><div>${projectLabelHtml(item)}</div><code style="margin-top:8px">最终拉取：${item.userTarget?item.userTarget.fullName:'暂不可用'}</code><code style="margin-top:8px">源镜像：${item.source.fullName}</code>${commandRow(item.userTarget?item.userTarget.fullName:'')}`;bindCommandButtons(card);card.appendChild(buildProjectPicker(item));myImagesEl.appendChild(card)})}
+        function renderProjectCards() {
+            if (!latestProjects.length) {
+                projectListEl.innerHTML = '<div class="empty">还没有项目。</div>';
+                return;
+            }
+            projectListEl.innerHTML = '';
+            latestProjects.forEach((project) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="panel-head">
+                        <strong>${project.name}</strong>
+                        <span class="small">${project.imageCount || 0} 个镜像</span>
+                    </div>
+                    <div class="toolbar">
+                        <button class="btn ghost" data-select-project="${project.id}">查看项目</button>
+                    </div>
+                `;
+                card.querySelector('[data-select-project]').addEventListener('click', () => {
+                    currentProjectId = String(project.id);
+                    projectSelectEl.value = String(project.id);
+                    loadProjectImages();
+                });
+                projectListEl.appendChild(card);
+            });
+        }
 
-    async function loadMyImages(){const data=await requestJson(`/api/v2/my-images?code=${encodeURIComponent(getCode())}`);renderMyImages(data.images||[])}
+        async function loadProjects() {
+            const data = await requestJson(`/api/v2/projects?code=${encodeURIComponent(codeEl.value.trim())}`);
+            latestProjects = data.projects || [];
+            rebuildProjectOptions();
+            renderProjectCards();
+        }
 
-    function renderTasks(tasks){latestTasks=tasks;if(!tasks.length){taskListEl.innerHTML='<div class="empty">还没有任务。</div>';return;}taskListEl.innerHTML='';tasks.forEach((task)=>{const card=document.createElement('div');card.className='panel';card.style.padding='16px';card.innerHTML=`<div class="panel-head"><strong>${task.displayName}</strong><span class="${statusClass(task.status)}">${task.status}</span></div><div class="small">项目：${task.projectName||'-'}</div><code style="margin-top:8px">目标地址：${task.targetFullName||'-'}</code>${commandRow(task.targetFullName||'')}`;bindCommandButtons(card);taskListEl.appendChild(card)})}
+        async function createProject() {
+            if (!codeEl.value.trim() || !projectNameEl.value.trim()) {
+                return alert('请输入串码和项目名');
+            }
+            const data = await requestJson('/api/v2/projects', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: codeEl.value.trim(), name: projectNameEl.value.trim() })
+            });
+            projectNameEl.value = '';
+            currentProjectId = String(data.project.id);
+            await loadProjects();
+            await loadProjectImages();
+            showToast('项目创建成功');
+        }
 
-    async function loadTasks(){const data=await requestJson(`/api/v2/tasks?code=${encodeURIComponent(getCode())}`);renderTasks(data.tasks||[])}
+        function projectLabelHtml(item) {
+            const names = item.projectNames && item.projectNames.length ? item.projectNames : ['默认项目'];
+            return names.map((name) => `<span class="pill">${name}</span>`).join('');
+        }
 
-    async function loadProjectImages(){const projectId=currentProjectId||projectSelectEl.value;if(!projectId){currentProjectInfoEl.textContent='还没选中项目';projectImagesEl.innerHTML='<div class="empty">选择一个项目后，这里会显示项目镜像和状态。</div>';return;}const data=await requestJson(`/api/v2/projects/${projectId}/images?code=${encodeURIComponent(getCode())}`);currentProjectInfoEl.textContent=`${data.project.name} / ${data.images.length} 个镜像`;if(!data.images.length){projectImagesEl.innerHTML='<div class="empty">这个项目里还没有镜像。</div>';return;}projectImagesEl.innerHTML='';data.images.forEach((item)=>{const task=item.latestTask;const card=document.createElement('div');card.className='panel';card.style.padding='16px';card.innerHTML=`<div class="panel-head"><strong>${item.displayName}</strong><span class="${statusClass(task?task.status:'queued')}">${task?task.status:'待处理'}</span></div><code>源镜像：${item.source.fullName}</code><code style="margin-top:8px">交付地址：${item.userTarget?item.userTarget.fullName:'暂不可用'}</code>${commandRow(item.userTarget?item.userTarget.fullName:'')}<div class="card-actions" style="margin-top:10px"><button class="btn alt" data-redistribute="${item.id}">重新分发</button><button class="btn ghost" data-remove="${item.id}">从项目移除</button></div>`;bindCommandButtons(card);card.querySelector('[data-redistribute]').addEventListener('click',async()=>{await requestJson(`/api/v2/projects/${projectId}/images/${item.id}/redistribute`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:getCode()})});showToast('已重新加入分发队列');await refreshAll()});card.querySelector('[data-remove]').addEventListener('click',async()=>{await requestJson(`/api/v2/projects/${projectId}/images/${item.id}/remove`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:getCode()})});showToast('已从项目移除');await refreshAll()});projectImagesEl.appendChild(card)})}
+        function buildProjectPicker(item) {
+            const wrap = document.createElement('div');
+            wrap.className = 'picker';
+            wrap.innerHTML = `
+                <div class="small">项目归类，勾选后自动保存</div>
+                <input data-project-filter placeholder="输入组名快速匹配" style="margin-top:8px">
+                <div class="picker-list" data-project-list></div>
+            `;
+            const filterEl = wrap.querySelector('[data-project-filter]');
+            const listEl = wrap.querySelector('[data-project-list]');
 
-    function renderResultRows(results){if(!results.length){resultRowsEl.innerHTML='<tr><td colspan="7"><div class="empty">没有搜索到镜像。</div></td></tr>';return;}resultRowsEl.innerHTML='';results.forEach((item)=>{const isAcquired=item.alreadyOwned||item.alreadyDelivered;const tr=document.createElement('tr');tr.innerHTML=`<td><strong>${item.displayName}</strong></td><td>${item.sourceType==='local'?'本地 Harbor':'Docker Hub'}</td><td>${item.source.tag||'-'}</td><td>${item.pullCount||'-'}</td><td><span class="${item.local.available?'badge':'chip'}">${item.local.available?'已缓存':'未缓存'}</span></td><td>${(item.projectNames||['默认项目']).join(' / ')}</td><td><div class="row"><button class="btn ${isAcquired?'ghost':''}" ${isAcquired?'disabled':''} data-add-image="${item.id}">${isAcquired?'已获取':'获取镜像'}</button></div></td>`;const btn=tr.querySelector('[data-add-image]');if(btn&&!isAcquired){btn.addEventListener('click',async()=>{const projectId=projectSelectEl.value||currentProjectId;if(!projectId) return alert('请先选择一个项目');await requestJson(`/api/v2/projects/${projectId}/images`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:getCode(),catalogImageId:item.id,image:{sourceType:item.sourceType,registry:item.source.registry,namespace:item.source.namespace,repository:item.source.repository,tag:item.source.tag,digest:item.source.digest,description:item.description,localAvailable:item.local.available,localRegistry:item.local.registry,localNamespace:item.local.namespace,localRepository:item.local.repository,localTag:item.local.tag,localFullName:item.local.fullName}})});showToast('镜像已加入项目并排队分发');await refreshAll()})}resultRowsEl.appendChild(tr)})}
+            const renderList = (keyword = '') => {
+                const selectedNames = new Set(item.projectNames && item.projectNames.length ? item.projectNames : ['默认项目']);
+                const options = [{ id: 0, name: '默认项目' }, ...latestProjects]
+                    .filter((project) => !keyword || project.name.toLowerCase().includes(keyword.toLowerCase()));
+                listEl.innerHTML = '';
+                options.forEach((project) => {
+                    const row = document.createElement('label');
+                    row.className = 'picker-item';
+                    row.innerHTML = `
+                        <input type="checkbox" value="${project.id}" ${selectedNames.has(project.name) ? 'checked' : ''}>
+                        <span>${project.name}</span>
+                    `;
+                    row.querySelector('input').addEventListener('change', async () => {
+                        const checkedIds = Array.from(listEl.querySelectorAll('input:checked'))
+                            .map((input) => Number(input.value))
+                            .filter((id) => id > 0);
+                        const data = await requestJson(`/api/v2/images/${item.id}/projects`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ code: codeEl.value.trim(), projectIds: checkedIds })
+                        });
+                        item.projectNames = data.selectedProjects.map((projectRow) => projectRow.name);
+                        renderMyImages(latestMyImages);
+                        await loadProjects();
+                        showToast('项目归类已自动保存');
+                    });
+                    listEl.appendChild(row);
+                });
+            };
 
-    async function search(){if(!getCode()||!queryEl.value.trim()) return alert('请输入串码和搜索词');await loadMe();const data=await requestJson(`/api/v2/search/images?code=${encodeURIComponent(getCode())}&q=${encodeURIComponent(queryEl.value.trim())}&scope=${encodeURIComponent(searchScopeEl.value)}`);searchModeInfoEl.textContent=`搜索策略：${data.searchMode === 'cache-only-hit' ? '默认缓存命中，未查 Docker Hub' : '默认缓存未命中，已查 Docker Hub'}`;renderResultRows(data.results||[])}
+            filterEl.addEventListener('input', () => renderList(filterEl.value));
+            renderList('');
+            return wrap;
+        }
 
-    async function refreshAll(){await Promise.all([loadSettings(),loadMe(),loadProjects(),loadMyImages(),loadTasks()]);await loadProjectImages()}
+        function renderMyImages(images) {
+            latestMyImages = images;
+            myImageTotalStatEl.textContent = String(images.length);
+            deliveredStatEl.textContent = String(images.filter((item) => item.delivered).length);
 
-    document.getElementById('searchBtn').addEventListener('click',()=>search().catch((error)=>alert(error.message||'搜索失败')));
-    document.getElementById('createProjectBtn').addEventListener('click',()=>createProject().catch((error)=>alert(error.message||'创建项目失败')));
-    document.getElementById('refreshBtn').addEventListener('click',()=>refreshAll().catch((error)=>alert(error.message||'刷新失败')));
-    projectSelectEl.addEventListener('change',()=>{currentProjectId=projectSelectEl.value;loadProjectImages().catch((error)=>alert(error.message||'加载项目失败'))});
-    myImageStatusFilterEl.addEventListener('change',()=>renderMyImages(latestMyImages));
-    myImageProjectFilterEl.addEventListener('change',()=>renderMyImages(latestMyImages));
+            const statusFilter = myImageStatusFilterEl.value;
+            const projectFilter = myImageProjectFilterEl.value;
+            const rows = images.filter((item) => {
+                const matchStatus = statusFilter === 'all' || (statusFilter === 'delivered' ? item.delivered : !item.delivered);
+                const matchProject = !projectFilter || (item.projectNames || []).includes(projectFilter);
+                return matchStatus && matchProject;
+            });
 
-    const paramCode=new URLSearchParams(window.location.search).get('code'); if(paramCode){codeEl.value=paramCode;refreshAll().catch(()=>{})}
-  </script>
+            if (!rows.length) {
+                myImagesEl.innerHTML = '<div class="empty">当前筛选条件下没有镜像。</div>';
+                return;
+            }
+
+            myImagesEl.innerHTML = '';
+            rows.forEach((item) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="panel-head">
+                        <strong>${item.displayName}</strong>
+                        <span class="${item.delivered ? 'badge' : 'chip'}">${item.delivered ? '已交付' : (item.latestTask ? item.latestTask.status : '待处理')}</span>
+                    </div>
+                    <div>${projectLabelHtml(item)}</div>
+                    <code>最终拉取：${item.userTarget ? item.userTarget.fullName : '暂不可用'}</code>
+                    <code>源镜像：${item.source.fullName}</code>
+                    ${commandRow(item.userTarget ? item.userTarget.fullName : '')}
+                `;
+                bindCommandButtons(card);
+                card.appendChild(buildProjectPicker(item));
+                myImagesEl.appendChild(card);
+            });
+        }
+
+        async function loadMyImages() {
+            const data = await requestJson(`/api/v2/my-images?code=${encodeURIComponent(codeEl.value.trim())}`);
+            renderMyImages(data.images || []);
+        }
+
+        function renderTasks(tasks) {
+            if (!tasks.length) {
+                taskListEl.innerHTML = '<div class="empty">还没有任务。</div>';
+                return;
+            }
+            taskListEl.innerHTML = '';
+            tasks.forEach((task) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="panel-head">
+                        <strong>${task.displayName}</strong>
+                        <span class="${task.status === 'completed' ? 'badge' : 'chip'}">${task.status}</span>
+                    </div>
+                    <div class="small">项目：${task.projectName || '-'}</div>
+                    <code>目标地址：${task.targetFullName || '-'}</code>
+                    ${commandRow(task.targetFullName || '')}
+                `;
+                bindCommandButtons(card);
+                taskListEl.appendChild(card);
+            });
+        }
+
+        async function loadTasks() {
+            const data = await requestJson(`/api/v2/tasks?code=${encodeURIComponent(codeEl.value.trim())}`);
+            renderTasks(data.tasks || []);
+        }
+
+        function renderResults(results) {
+            if (!results.length) {
+                resultRowsEl.innerHTML = '<tr><td colspan="5"><div class="empty">没有搜索到镜像。</div></td></tr>';
+                return;
+            }
+            resultRowsEl.innerHTML = '';
+            results.forEach((item) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${item.displayName}</strong></td>
+                    <td>${item.sourceType === 'local' ? '本地 Harbor' : 'Docker Hub'}</td>
+                    <td>${item.source.tag || '-'}</td>
+                    <td><span class="${item.local.available ? 'badge' : 'chip'}">${item.local.available ? '已缓存' : '未缓存'}</span></td>
+                    <td><button class="btn" data-add-image="${item.id}">获取镜像</button></td>
+                `;
+                tr.querySelector('[data-add-image]').addEventListener('click', async () => {
+                    const projectId = projectSelectEl.value || currentProjectId;
+                    if (!projectId) return alert('请先选择一个项目');
+                    await requestJson(`/api/v2/projects/${projectId}/images`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            code: codeEl.value.trim(),
+                            catalogImageId: item.id,
+                            image: {
+                                sourceType: item.sourceType,
+                                registry: item.source.registry,
+                                namespace: item.source.namespace,
+                                repository: item.source.repository,
+                                tag: item.source.tag,
+                                digest: item.source.digest,
+                                description: item.description,
+                                localAvailable: item.local.available,
+                                localRegistry: item.local.registry,
+                                localNamespace: item.local.namespace,
+                                localRepository: item.local.repository,
+                                localTag: item.local.tag,
+                                localFullName: item.local.fullName
+                            }
+                        })
+                    });
+                    showToast('镜像已加入项目并排队分发');
+                    await refreshAll();
+                });
+                resultRowsEl.appendChild(tr);
+            });
+        }
+
+        async function search() {
+            if (!codeEl.value.trim() || !queryEl.value.trim()) {
+                return alert('请输入串码和搜索词');
+            }
+            await loadMe();
+            const data = await requestJson(`/api/v2/search/images?code=${encodeURIComponent(codeEl.value.trim())}&q=${encodeURIComponent(queryEl.value.trim())}&scope=${encodeURIComponent(searchScopeEl.value)}`);
+            searchModeInfoEl.textContent = `搜索策略：${data.searchMode === 'cache-only-hit' ? '默认缓存命中，未查 Docker Hub' : '默认缓存未命中，已查 Docker Hub'}`;
+            renderResults(data.results || []);
+        }
+
+        async function loadProjectImages() {
+            const projectId = currentProjectId || projectSelectEl.value;
+            if (!projectId) {
+                currentProjectInfoEl.textContent = '还没选中项目';
+                projectImagesEl.innerHTML = '<div class="empty">选择一个项目后，这里会显示项目镜像和状态。</div>';
+                return;
+            }
+            const data = await requestJson(`/api/v2/projects/${projectId}/images?code=${encodeURIComponent(codeEl.value.trim())}`);
+            currentProjectInfoEl.textContent = `${data.project.name} / ${data.images.length} 个镜像`;
+            if (!data.images.length) {
+                projectImagesEl.innerHTML = '<div class="empty">这个项目里还没有镜像。</div>';
+                return;
+            }
+            projectImagesEl.innerHTML = '';
+            data.images.forEach((item) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="panel-head">
+                        <strong>${item.displayName}</strong>
+                        <span class="${item.latestTask && item.latestTask.status === 'completed' ? 'badge' : 'chip'}">${item.latestTask ? item.latestTask.status : '待处理'}</span>
+                    </div>
+                    <code>源镜像：${item.source.fullName}</code>
+                    <code>交付地址：${item.userTarget ? item.userTarget.fullName : '暂不可用'}</code>
+                    ${commandRow(item.userTarget ? item.userTarget.fullName : '')}
+                `;
+                bindCommandButtons(card);
+                projectImagesEl.appendChild(card);
+            });
+        }
+
+        async function refreshAll() {
+            await Promise.all([loadSettings(), loadMe(), loadProjects(), loadMyImages(), loadTasks()]);
+            await loadProjectImages();
+        }
+
+        document.getElementById('searchBtn').addEventListener('click', () => search().catch((error) => alert(error.message || '搜索失败')));
+        document.getElementById('createProjectBtn').addEventListener('click', () => createProject().catch((error) => alert(error.message || '创建项目失败')));
+        document.getElementById('refreshBtn').addEventListener('click', () => refreshAll().catch((error) => alert(error.message || '刷新失败')));
+        projectSelectEl.addEventListener('change', () => {
+            currentProjectId = projectSelectEl.value;
+            loadProjectImages().catch((error) => alert(error.message || '加载项目失败'));
+        });
+        myImageStatusFilterEl.addEventListener('change', () => renderMyImages(latestMyImages));
+        myImageProjectFilterEl.addEventListener('change', () => renderMyImages(latestMyImages));
+
+        const paramCode = new URLSearchParams(window.location.search).get('code');
+        if (paramCode) {
+            codeEl.value = paramCode;
+            refreshAll().catch(() => {});
+        }
+    </script>
 </body>
 </html>
