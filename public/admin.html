@@ -1,149 +1,720 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ImgPull 管理后台</title>
-  <style>
-    :root {--bg:#eef4fb;--panel:rgba(255,255,255,.92);--line:#d9e5f2;--ink:#0f172a;--muted:#607086;--brand:#0f6fff;--brand-dark:#0b57ca;--teal:#0ea5a4;--danger:#dc2626;--ok:#16a34a}
-    *{box-sizing:border-box} body{margin:0;font-family:"Noto Sans SC","Microsoft YaHei",sans-serif;color:var(--ink);background:linear-gradient(180deg,#f8fbff 0%,var(--bg) 100%)}
-    .wrap{max-width:1360px;margin:0 auto;padding:28px 20px 56px}.topbar,.toolbar,.tabs,.table-actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center}.topbar{justify-content:space-between;margin-bottom:18px}
-    .topbar a,.btn{border:none;border-radius:14px;padding:12px 14px;background:linear-gradient(135deg,var(--brand) 0%,#3389ff 100%);color:#fff;text-decoration:none;cursor:pointer}.btn.alt{background:linear-gradient(135deg,var(--teal) 0%,#18b9b8 100%)}.btn.warn{background:linear-gradient(135deg,var(--danger) 0%,#ef4444 100%)}.btn.ghost{background:#edf4ff;color:var(--brand);border:1px solid #cfe0ff}
-    .grid{display:grid;grid-template-columns:repeat(6,1fr);gap:14px}.panel,.metric{background:var(--panel);border:1px solid var(--line);border-radius:24px;box-shadow:0 18px 40px rgba(15,23,42,.08)}.panel{margin-top:18px;padding:20px}.metric{padding:18px}.metric strong{display:block;font-size:28px;margin-bottom:6px}
-    .split{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,.75fr);gap:18px}.stack{display:grid;gap:14px}.detail-card{padding:16px;border-radius:18px;border:1px solid var(--line);background:#fff}.detail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-    input,select,textarea{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#fff;font:inherit}.settings{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;align-items:end}
-    .tabs button{width:auto}.tabs .active{background:linear-gradient(135deg,var(--teal) 0%,#18b9b8 100%)}.tab-panel{display:none}.tab-panel.active{display:block}.panel-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}
-    .badge{display:inline-block;padding:4px 10px;border-radius:999px;font-size:12px;background:rgba(15,111,255,.08);color:var(--brand);border:1px solid rgba(15,111,255,.12)}.badge.ok{background:rgba(22,163,74,.1);color:var(--ok);border-color:rgba(22,163,74,.14)}.badge.warn{background:rgba(220,38,38,.1);color:var(--danger);border-color:rgba(220,38,38,.14)}
-    .muted{color:var(--muted)} .status-box{margin-top:12px;padding:12px 14px;border:1px dashed var(--line);border-radius:14px;color:var(--muted);background:rgba(255,255,255,.68)}
-    table{width:100%;border-collapse:collapse} th,td{text-align:left;padding:12px 8px;border-bottom:1px solid #e6eef8;vertical-align:top} th{color:var(--muted);font-weight:600}
-    .clickable-row{cursor:pointer}.clickable-row:hover{background:rgba(15,111,255,.04)} .mini-list{display:grid;gap:10px}.mini-item{padding:12px;border:1px solid var(--line);border-radius:14px;background:#fff}
-    @media (max-width:1180px){.grid{grid-template-columns:repeat(3,1fr)}.settings{grid-template-columns:repeat(2,1fr)}.split{grid-template-columns:1fr}} @media (max-width:760px){.grid,.settings,.detail-grid{grid-template-columns:1fr}.topbar{flex-direction:column;align-items:flex-start}}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ImgPull 管理后台</title>
+    <style>
+        :root {
+            --bg: #eef4fb;
+            --panel: rgba(255,255,255,.92);
+            --line: #d9e5f2;
+            --ink: #0f172a;
+            --muted: #607086;
+            --brand: #0f6fff;
+            --teal: #0ea5a4;
+            --danger: #dc2626;
+            --ok: #16a34a;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+            color: var(--ink);
+            background: linear-gradient(180deg, #f8fbff 0%, var(--bg) 100%);
+        }
+        .wrap { max-width: 1360px; margin: 0 auto; padding: 28px 20px 56px; }
+        .topbar, .toolbar, .tabs, .table-actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+        .topbar { justify-content: space-between; margin-bottom: 18px; }
+        .topbar a, .btn {
+            border: none;
+            border-radius: 14px;
+            padding: 12px 14px;
+            background: linear-gradient(135deg, var(--brand) 0%, #3389ff 100%);
+            color: #fff;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .btn.alt { background: linear-gradient(135deg, var(--teal) 0%, #18b9b8 100%); }
+        .btn.warn { background: linear-gradient(135deg, var(--danger) 0%, #ef4444 100%); }
+        .btn.ghost { background: #edf4ff; color: var(--brand); border: 1px solid #cfe0ff; }
+        .grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; }
+        .panel, .metric {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+        }
+        .panel { margin-top: 18px; padding: 20px; }
+        .metric { padding: 18px; }
+        .metric strong { display: block; font-size: 28px; margin-bottom: 6px; }
+        .settings { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; align-items: end; }
+        .split { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr); gap: 18px; }
+        .stack { display: grid; gap: 14px; }
+        .detail-card {
+            padding: 16px;
+            border-radius: 18px;
+            border: 1px solid var(--line);
+            background: #fff;
+        }
+        .detail-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: #fff;
+            font: inherit;
+        }
+        .tabs button { width: auto; }
+        .tabs .active { background: linear-gradient(135deg, var(--teal) 0%, #18b9b8 100%); }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+        .panel-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            background: rgba(15,111,255,.08);
+            color: var(--brand);
+            border: 1px solid rgba(15,111,255,.12);
+        }
+        .badge.ok { background: rgba(22,163,74,.1); color: var(--ok); border-color: rgba(22,163,74,.14); }
+        .badge.warn { background: rgba(220,38,38,.1); color: var(--danger); border-color: rgba(220,38,38,.14); }
+        .muted { color: var(--muted); }
+        .status-box {
+            margin-top: 12px;
+            padding: 12px 14px;
+            border: 1px dashed var(--line);
+            border-radius: 14px;
+            color: var(--muted);
+            background: rgba(255,255,255,.68);
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th, td {
+            text-align: left;
+            padding: 12px 8px;
+            border-bottom: 1px solid #e6eef8;
+            vertical-align: top;
+        }
+        th { color: var(--muted); font-weight: 600; }
+        .clickable-row { cursor: pointer; }
+        .clickable-row:hover { background: rgba(15,111,255,.04); }
+        .mini-list { display: grid; gap: 10px; }
+        .mini-item {
+            padding: 12px;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: #fff;
+        }
+        @media (max-width: 1180px) {
+            .grid { grid-template-columns: repeat(3, 1fr); }
+            .settings { grid-template-columns: repeat(2, 1fr); }
+            .split { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 760px) {
+            .grid, .settings, .detail-grid { grid-template-columns: 1fr; }
+            .topbar { flex-direction: column; align-items: flex-start; }
+        }
+    </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="topbar">
-      <div><div class="muted">ImgPull / 管理后台</div><h1 style="margin:0 0 6px">按用户、缓存、任务和系统设置分开的正式后台</h1></div>
-      <div class="toolbar"><a href="/">首页</a><a href="/console">用户控制台</a></div>
+    <div class="wrap">
+        <div class="topbar">
+            <div>
+                <div class="muted">ImgPull / 管理后台</div>
+                <h1 style="margin:0 0 6px">按用户、缓存、任务和系统设置分开的正式后台</h1>
+            </div>
+            <div class="toolbar">
+                <a href="/">首页</a>
+                <a href="/console">用户控制台</a>
+            </div>
+        </div>
+
+        <section class="grid">
+            <div class="metric"><strong id="catalogCount">-</strong><span>目录镜像</span></div>
+            <div class="metric"><strong id="localCount">-</strong><span>默认缓存镜像</span></div>
+            <div class="metric"><strong id="userCount">-</strong><span>有效用户</span></div>
+            <div class="metric"><strong id="deletedUserCount">-</strong><span>缓删用户</span></div>
+            <div class="metric"><strong id="projectCount">-</strong><span>用户项目</span></div>
+            <div class="metric"><strong id="queuedCount">-</strong><span>排队任务</span></div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-head">
+                <h2 style="margin:0">系统设置</h2>
+                <span class="muted">支持站点信息、 Harbor 配置、缓存保留和 Docker Hub 搜索开关</span>
+            </div>
+            <div class="settings">
+                <label><div class="muted">站点标题</div><input id="siteTitle"></label>
+                <label><div class="muted">副标题</div><input id="siteSubtitle"></label>
+                <label><div class="muted">ICP备案号</div><input id="icpBeian"></label>
+                <label><div class="muted">Harbor 域名</div><input id="harborDomain"></label>
+                <label><div class="muted">Harbor API 地址</div><input id="harborBaseUrl"></label>
+                <label><div class="muted">Harbor 用户名</div><input id="harborUsername"></label>
+                <label><div class="muted">Harbor 密码</div><input id="harborPassword" type="password"></label>
+                <label><div class="muted">默认缓存仓库</div><input id="cacheProjectName"></label>
+                <label><div class="muted">缓存保留天数</div><input id="cacheRetentionDays" placeholder="-1 / 0 / 30"></label>
+                <label><div class="muted">用户仓库可见性</div><select id="defaultUserRepoVisibility"><option value="private">private</option><option value="public">public</option></select></label>
+            </div>
+            <div class="toolbar" style="margin-top:12px">
+                <label class="muted"><input id="dockerhubSearchEnabled" type="checkbox" style="width:auto;margin-right:8px">开启 Docker Hub 兜底搜索</label>
+                <label class="muted"><input id="harborEnabled" type="checkbox" style="width:auto;margin-right:8px">启用 Harbor 配置</label>
+            </div>
+            <div class="toolbar" style="margin-top:12px">
+                <button class="btn alt" id="testHarborBtn">测试 Harbor 连接</button>
+                <button class="btn" id="saveSettingsBtn">保存系统设置</button>
+                <button class="btn alt" id="runQueuedBtn">执行排队任务</button>
+                <button class="btn alt" id="cleanupCacheBtn">清理过期缓存</button>
+                <button class="btn ghost" id="refreshAllBtn">刷新后台数据</button>
+            </div>
+            <div class="status-box" id="actionStatus">这里会显示后台操作结果。</div>
+        </section>
+
+        <section class="panel">
+            <div class="tabs">
+                <button class="btn active" data-tab="users">用户管理</button>
+                <button class="btn ghost" data-tab="cache">缓存镜像</button>
+                <button class="btn ghost" data-tab="tasks">分发任务</button>
+                <button class="btn ghost" data-tab="retention">30 天缓删</button>
+            </div>
+
+            <div id="tab-users" class="tab-panel active">
+                <div class="split">
+                    <div>
+                        <div class="panel-head">
+                            <h2 style="margin:0">用户与串码</h2>
+                            <div class="toolbar">
+                                <input id="userKeyword" placeholder="按串码、邮箱、命名空间筛选" style="max-width:240px">
+                                <select id="userStatusFilter" style="max-width:180px">
+                                    <option value="all">全部状态</option>
+                                    <option value="active">active</option>
+                                    <option value="deleted">deleted</option>
+                                    <option value="pending">pending</option>
+                                </select>
+                            </div>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>用户</th>
+                                    <th>命名空间</th>
+                                    <th>项目 / 镜像</th>
+                                    <th>最近使用</th>
+                                    <th>到期 / 缓删</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="userRows"></tbody>
+                        </table>
+                    </div>
+                    <div class="stack">
+                        <div class="detail-card">
+                            <div class="panel-head">
+                                <strong>用户详情</strong>
+                                <span class="muted" id="detailStatus">未选中用户</span>
+                            </div>
+                            <div id="userDetailEmpty" class="muted">点击左侧用户后，这里会显示串码、邮箱、命名空间、项目数和镜像数。</div>
+                            <div id="userDetailContent" style="display:none">
+                                <div class="detail-grid">
+                                    <div><div class="muted">串码</div><strong id="detailCode">-</strong></div>
+                                    <div><div class="muted">命名空间</div><strong id="detailNamespace">-</strong></div>
+                                    <div><div class="muted">邮箱</div><strong id="detailEmail">-</strong></div>
+                                    <div><div class="muted">项目 / 镜像</div><strong id="detailCounts">-</strong></div>
+                                    <div><div class="muted">最近使用</div><strong id="detailLastUsed">-</strong></div>
+                                    <div><div class="muted">过期 / 缓删</div><strong id="detailExpire">-</strong></div>
+                                </div>
+                                <div class="table-actions" style="margin-top:12px">
+                                    <button class="btn warn" id="detailDeleteBtn">软删除用户</button>
+                                    <button class="btn alt" id="detailRestoreBtn">恢复用户</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="detail-card">
+                            <div class="panel-head">
+                                <strong>最近任务</strong>
+                                <span class="muted">最近 6 条</span>
+                            </div>
+                            <div class="mini-list" id="userTaskList">
+                                <div class="muted">选中一个用户后，这里会展示她的任务。</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-cache" class="tab-panel">
+                <div class="panel-head">
+                    <h2 style="margin:0">默认缓存镜像</h2>
+                    <input id="cacheKeyword" placeholder="按镜像名或缓存地址筛选" style="max-width:260px">
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>镜像</th>
+                            <th>缓存地址</th>
+                            <th>最后命中</th>
+                            <th>过期时间</th>
+                            <th>来源</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cacheRows"></tbody>
+                </table>
+            </div>
+
+            <div id="tab-tasks" class="tab-panel">
+                <div class="panel-head">
+                    <h2 style="margin:0">分发任务</h2>
+                    <div class="toolbar">
+                        <input id="taskKeyword" placeholder="按串码、项目、镜像筛选" style="max-width:240px">
+                        <select id="taskStatusFilter" style="max-width:180px">
+                            <option value="all">全部状态</option>
+                            <option value="queued">queued</option>
+                            <option value="running">running</option>
+                            <option value="completed">completed</option>
+                            <option value="failed">failed</option>
+                            <option value="cancelled">cancelled</option>
+                        </select>
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>状态</th>
+                            <th>用户</th>
+                            <th>项目</th>
+                            <th>镜像</th>
+                            <th>目标地址</th>
+                            <th>请求时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="taskRows"></tbody>
+                </table>
+            </div>
+
+            <div id="tab-retention" class="tab-panel">
+                <div class="panel-head">
+                    <h2 style="margin:0">30 天缓删用户</h2>
+                    <span class="muted">删除后保留 30 天，期间可恢复。</span>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>串码</th>
+                            <th>邮箱</th>
+                            <th>删除时间</th>
+                            <th>最终清理时间</th>
+                        </tr>
+                    </thead>
+                    <tbody id="retentionRows"></tbody>
+                </table>
+            </div>
+        </section>
     </div>
 
-    <section class="grid">
-      <div class="metric"><strong id="catalogCount">-</strong><span>目录镜像</span></div>
-      <div class="metric"><strong id="localCount">-</strong><span>默认缓存镜像</span></div>
-      <div class="metric"><strong id="userCount">-</strong><span>有效用户</span></div>
-      <div class="metric"><strong id="deletedUserCount">-</strong><span>缓删用户</span></div>
-      <div class="metric"><strong id="projectCount">-</strong><span>用户项目</span></div>
-      <div class="metric"><strong id="queuedCount">-</strong><span>排队任务</span></div>
-    </section>
+    <script>
+        const actionStatusEl = document.getElementById('actionStatus');
+        let allUsers = [], allTasks = [], allCacheImages = [], allRetentionRows = [], selectedUserCode = '';
 
-    <section class="panel">
-      <div class="panel-head"><h2 style="margin:0">系统设置</h2><span class="muted">支持站点信息、Harbor 配置、缓存保留和 Docker Hub 开关</span></div>
-      <div class="settings">
-        <label><div class="muted">站点标题</div><input id="siteTitle"></label>
-        <label><div class="muted">副标题</div><input id="siteSubtitle"></label>
-        <label><div class="muted">ICP备案号</div><input id="icpBeian"></label>
-        <label><div class="muted">Harbor 域名</div><input id="harborDomain"></label>
-        <label><div class="muted">Harbor API 地址</div><input id="harborBaseUrl"></label>
-        <label><div class="muted">Harbor 用户名</div><input id="harborUsername"></label>
-        <label><div class="muted">Harbor 密码</div><input id="harborPassword" type="password"></label>
-        <label><div class="muted">默认缓存仓库</div><input id="cacheProjectName"></label>
-        <label><div class="muted">缓存保留天数</div><input id="cacheRetentionDays" placeholder="-1 / 0 / 30"></label>
-        <label><div class="muted">用户仓库可见性</div><select id="defaultUserRepoVisibility"><option value="private">private</option><option value="public">public</option></select></label>
-      </div>
-      <div class="toolbar" style="margin-top:12px"><label class="muted"><input id="dockerhubSearchEnabled" type="checkbox" style="width:auto;margin-right:8px">开启 Docker Hub 兜底搜索</label><label class="muted"><input id="harborEnabled" type="checkbox" style="width:auto;margin-right:8px">启用 Harbor 配置</label></div>
-      <div class="toolbar" style="margin-top:12px"><button class="btn alt" id="testHarborBtn">测试 Harbor 连接</button><button class="btn" id="saveSettingsBtn">保存系统设置</button><button class="btn alt" id="runQueuedBtn">执行排队任务</button><button class="btn alt" id="cleanupCacheBtn">清理过期缓存</button><button class="btn ghost" id="refreshAllBtn">刷新后台数据</button></div>
-      <div class="status-box" id="actionStatus">这里会显示后台操作结果。</div>
-    </section>
+        const setStatus = (message) => actionStatusEl.textContent = message;
+        const badgeClass = (status) => status === 'completed' || status === 'active'
+            ? 'badge ok'
+            : status === 'failed' || status === 'deleted' || status === 'cancelled'
+                ? 'badge warn'
+                : 'badge';
 
-    <section class="panel">
-      <div class="tabs"><button class="btn active" data-tab="users">用户管理</button><button class="btn ghost" data-tab="cache">缓存镜像</button><button class="btn ghost" data-tab="tasks">分发任务</button><button class="btn ghost" data-tab="retention">30 天缓删</button></div>
+        async function requestJson(url, options) {
+            const response = await fetch(url, options);
+            const data = await response.json();
+            if (!response.ok || !data.success) throw new Error(data.error || '请求失败');
+            return data;
+        }
 
-      <div id="tab-users" class="tab-panel active">
-        <div class="split">
-          <div>
-            <div class="panel-head"><h2 style="margin:0">用户与串码</h2><div class="toolbar"><input id="userKeyword" placeholder="按串码、邮箱、命名空间筛选" style="max-width:240px"><select id="userStatusFilter" style="max-width:180px"><option value="all">全部状态</option><option value="active">active</option><option value="deleted">deleted</option><option value="pending">pending</option></select></div></div>
-            <table><thead><tr><th>用户</th><th>命名空间</th><th>项目/镜像</th><th>最近使用</th><th>到期/缓删</th><th>操作</th></tr></thead><tbody id="userRows"></tbody></table>
-          </div>
-          <div class="stack">
-            <div class="detail-card">
-              <div class="panel-head"><strong>用户详情</strong><span class="muted" id="detailStatus">未选中用户</span></div>
-              <div id="userDetailEmpty" class="muted">点击左侧用户后，这里会显示串码、邮箱、命名空间、项目数和镜像数。</div>
-              <div id="userDetailContent" style="display:none">
-                <div class="detail-grid">
-                  <div><div class="muted">串码</div><strong id="detailCode">-</strong></div>
-                  <div><div class="muted">命名空间</div><strong id="detailNamespace">-</strong></div>
-                  <div><div class="muted">邮箱</div><strong id="detailEmail">-</strong></div>
-                  <div><div class="muted">项目 / 镜像</div><strong id="detailCounts">-</strong></div>
-                  <div><div class="muted">最近使用</div><strong id="detailLastUsed">-</strong></div>
-                  <div><div class="muted">过期 / 缓删</div><strong id="detailExpire">-</strong></div>
-                </div>
-                <div class="table-actions" style="margin-top:12px"><button class="btn warn" id="detailDeleteBtn">软删除用户</button><button class="btn alt" id="detailRestoreBtn">恢复用户</button></div>
-              </div>
-            </div>
-            <div class="detail-card"><div class="panel-head"><strong>最近任务</strong><span class="muted">最近 6 条</span></div><div class="mini-list" id="userTaskList"><div class="muted">选中一个用户后，这里会展示她的任务。</div></div></div>
-          </div>
-        </div>
-      </div>
+        async function loadSummary() {
+            const data = await requestJson('/api/v2/admin/summary');
+            document.getElementById('catalogCount').textContent = data.summary.catalogCount;
+            document.getElementById('localCount').textContent = data.summary.localCatalogCount;
+            document.getElementById('userCount').textContent = data.summary.userCount;
+            document.getElementById('deletedUserCount').textContent = data.summary.deletedUserCount;
+            document.getElementById('projectCount').textContent = data.summary.projectCount;
+            document.getElementById('queuedCount').textContent = data.summary.queuedTaskCount;
+        }
 
-      <div id="tab-cache" class="tab-panel">
-        <div class="panel-head"><h2 style="margin:0">默认缓存镜像</h2><input id="cacheKeyword" placeholder="按镜像名或缓存地址筛选" style="max-width:260px"></div>
-        <table><thead><tr><th>镜像</th><th>缓存地址</th><th>最后命中</th><th>过期时间</th><th>来源</th></tr></thead><tbody id="cacheRows"></tbody></table>
-      </div>
+        async function loadSettings() {
+            const data = await requestJson('/api/v2/settings');
+            const s = data.settings || {};
+            document.getElementById('siteTitle').value = s.siteTitle || '';
+            document.getElementById('siteSubtitle').value = s.siteSubtitle || '';
+            document.getElementById('icpBeian').value = s.icpBeian || '';
+            document.getElementById('harborDomain').value = s.harborDomain || '';
+            document.getElementById('harborBaseUrl').value = s.harborBaseUrl || '';
+            document.getElementById('harborUsername').value = s.harborUsername || '';
+            document.getElementById('harborPassword').value = s.harborPassword || '';
+            document.getElementById('cacheProjectName').value = s.cacheProjectName || '';
+            document.getElementById('cacheRetentionDays').value = s.cacheRetentionDays ?? '';
+            document.getElementById('defaultUserRepoVisibility').value = s.defaultUserRepoVisibility || 'private';
+            document.getElementById('dockerhubSearchEnabled').checked = !!s.dockerhubSearchEnabled;
+            document.getElementById('harborEnabled').checked = !!s.harborEnabled;
+        }
 
-      <div id="tab-tasks" class="tab-panel">
-        <div class="panel-head"><h2 style="margin:0">分发任务</h2><div class="toolbar"><input id="taskKeyword" placeholder="按串码、项目、镜像筛选" style="max-width:240px"><select id="taskStatusFilter" style="max-width:180px"><option value="all">全部状态</option><option value="queued">queued</option><option value="running">running</option><option value="completed">completed</option><option value="failed">failed</option><option value="cancelled">cancelled</option></select></div></div>
-        <table><thead><tr><th>状态</th><th>用户</th><th>项目</th><th>镜像</th><th>目标地址</th><th>请求时间</th><th>操作</th></tr></thead><tbody id="taskRows"></tbody></table>
-      </div>
+        async function saveSettings() {
+            await requestJson('/api/v2/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    siteTitle: document.getElementById('siteTitle').value.trim(),
+                    siteSubtitle: document.getElementById('siteSubtitle').value.trim(),
+                    icpBeian: document.getElementById('icpBeian').value.trim(),
+                    harborDomain: document.getElementById('harborDomain').value.trim(),
+                    harborBaseUrl: document.getElementById('harborBaseUrl').value.trim(),
+                    harborUsername: document.getElementById('harborUsername').value.trim(),
+                    harborPassword: document.getElementById('harborPassword').value,
+                    harborEnabled: document.getElementById('harborEnabled').checked,
+                    cacheProjectName: document.getElementById('cacheProjectName').value.trim(),
+                    cacheRetentionDays: document.getElementById('cacheRetentionDays').value.trim(),
+                    defaultUserRepoVisibility: document.getElementById('defaultUserRepoVisibility').value,
+                    dockerhubSearchEnabled: document.getElementById('dockerhubSearchEnabled').checked
+                })
+            });
+            setStatus('系统设置已保存。');
+            await Promise.all([loadSummary(), loadSettings(), loadCache()]);
+        }
 
-      <div id="tab-retention" class="tab-panel">
-        <div class="panel-head"><h2 style="margin:0">30 天缓删用户</h2><span class="muted">删除后保留 30 天，期间可恢复。</span></div>
-        <table><thead><tr><th>串码</th><th>邮箱</th><th>删除时间</th><th>最终清理时间</th></tr></thead><tbody id="retentionRows"></tbody></table>
-      </div>
-    </section>
-  </div>
+        async function testHarborSettings() {
+            await requestJson('/api/v2/settings/test-harbor', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    harborBaseUrl: document.getElementById('harborBaseUrl').value.trim(),
+                    harborUsername: document.getElementById('harborUsername').value.trim(),
+                    harborPassword: document.getElementById('harborPassword').value
+                })
+            });
+            setStatus('Harbor 连接测试成功。');
+        }
 
-  <script>
-    const actionStatusEl = document.getElementById('actionStatus');
-    let allUsers = [], allTasks = [], allCacheImages = [], allRetentionRows = [], selectedUserCode = '';
-    const setStatus = (message) => actionStatusEl.textContent = message;
-    const badgeClass = (status) => status === 'completed' || status === 'active' ? 'badge ok' : status === 'failed' || status === 'deleted' || status === 'cancelled' ? 'badge warn' : 'badge';
-    async function requestJson(url, options){const response=await fetch(url,options);const data=await response.json();if(!response.ok||!data.success) throw new Error(data.error||'请求失败');return data;}
+        function getSelectedUser() {
+            return allUsers.find((item) => item.code === selectedUserCode) || null;
+        }
 
-    async function loadSummary(){const data=await requestJson('/api/v2/admin/summary');document.getElementById('catalogCount').textContent=data.summary.catalogCount;document.getElementById('localCount').textContent=data.summary.localCatalogCount;document.getElementById('userCount').textContent=data.summary.userCount;document.getElementById('deletedUserCount').textContent=data.summary.deletedUserCount;document.getElementById('projectCount').textContent=data.summary.projectCount;document.getElementById('queuedCount').textContent=data.summary.queuedTaskCount}
-    async function loadSettings(){const data=await requestJson('/api/v2/settings');const s=data.settings||{};document.getElementById('siteTitle').value=s.siteTitle||'';document.getElementById('siteSubtitle').value=s.siteSubtitle||'';document.getElementById('icpBeian').value=s.icpBeian||'';document.getElementById('harborDomain').value=s.harborDomain||'';document.getElementById('harborBaseUrl').value=s.harborBaseUrl||'';document.getElementById('harborUsername').value=s.harborUsername||'';document.getElementById('harborPassword').value=s.harborPassword||'';document.getElementById('cacheProjectName').value=s.cacheProjectName||'';document.getElementById('cacheRetentionDays').value=s.cacheRetentionDays??'';document.getElementById('defaultUserRepoVisibility').value=s.defaultUserRepoVisibility||'private';document.getElementById('dockerhubSearchEnabled').checked=!!s.dockerhubSearchEnabled;document.getElementById('harborEnabled').checked=!!s.harborEnabled}
-    async function saveSettings(){await requestJson('/api/v2/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({siteTitle:document.getElementById('siteTitle').value.trim(),siteSubtitle:document.getElementById('siteSubtitle').value.trim(),icpBeian:document.getElementById('icpBeian').value.trim(),harborDomain:document.getElementById('harborDomain').value.trim(),harborBaseUrl:document.getElementById('harborBaseUrl').value.trim(),harborUsername:document.getElementById('harborUsername').value.trim(),harborPassword:document.getElementById('harborPassword').value,harborEnabled:document.getElementById('harborEnabled').checked,cacheProjectName:document.getElementById('cacheProjectName').value.trim(),cacheRetentionDays:document.getElementById('cacheRetentionDays').value.trim(),defaultUserRepoVisibility:document.getElementById('defaultUserRepoVisibility').value,dockerhubSearchEnabled:document.getElementById('dockerhubSearchEnabled').checked})});setStatus('系统设置已保存。');await Promise.all([loadSummary(),loadSettings(),loadCache()])}
-    async function testHarborSettings(){await requestJson('/api/v2/settings/test-harbor',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({harborBaseUrl:document.getElementById('harborBaseUrl').value.trim(),harborUsername:document.getElementById('harborUsername').value.trim(),harborPassword:document.getElementById('harborPassword').value})});setStatus('Harbor 连接测试成功。')}
+        function renderSelectedUserDetails() {
+            const user = getSelectedUser();
+            const emptyEl = document.getElementById('userDetailEmpty');
+            const contentEl = document.getElementById('userDetailContent');
+            const taskListEl = document.getElementById('userTaskList');
 
-    function renderSelectedUserDetails(){const user=allUsers.find((item)=>item.code===selectedUserCode);const emptyEl=document.getElementById('userDetailEmpty');const contentEl=document.getElementById('userDetailContent');const taskListEl=document.getElementById('userTaskList');if(!user){document.getElementById('detailStatus').textContent='未选中用户';emptyEl.style.display='block';contentEl.style.display='none';taskListEl.innerHTML='<div class="muted">选中一个用户后，这里会展示她的任务。</div>';return;}emptyEl.style.display='none';contentEl.style.display='block';document.getElementById('detailStatus').textContent=user.status;document.getElementById('detailCode').textContent=user.code;document.getElementById('detailNamespace').textContent=user.harborProjectName;document.getElementById('detailEmail').textContent=user.email||'-';document.getElementById('detailCounts').textContent=`${user.projectCount} / ${user.imageCount}`;document.getElementById('detailLastUsed').textContent=user.lastUsed||'暂无';document.getElementById('detailExpire').textContent=`${user.expireAt||'-'} / ${user.purgeAfter||'-'}`;document.getElementById('detailDeleteBtn').style.display=user.status==='deleted'?'none':'inline-block';document.getElementById('detailRestoreBtn').style.display=user.status==='deleted'?'inline-block':'none';const userTasks=allTasks.filter((task)=>task.accessCode===user.code).slice(0,6);taskListEl.innerHTML=userTasks.length?'':'<div class="muted">这个用户最近没有任务。</div>';userTasks.forEach((task)=>{const div=document.createElement('div');div.className='mini-item';div.innerHTML=`<div style="display:flex;justify-content:space-between;gap:10px"><strong>${task.displayName}</strong><span class="${badgeClass(task.status)}">${task.status}</span></div><div class="muted">项目：${task.projectName||'-'}</div><div class="muted">目标：${task.targetFullName||'-'}</div>`;taskListEl.appendChild(div)})}
-    async function softDeleteUser(code){await requestJson(`/api/v2/access-codes/${encodeURIComponent(code)}/soft-delete`,{method:'POST'});setStatus(`用户 ${code} 已进入 30 天缓删期。`);await refreshAdminData()}
-    async function restoreUser(code){await requestJson(`/api/v2/access-codes/${encodeURIComponent(code)}/restore`,{method:'POST'});setStatus(`用户 ${code} 已恢复。`);await refreshAdminData()}
+            if (!user) {
+                document.getElementById('detailStatus').textContent = '未选中用户';
+                emptyEl.style.display = 'block';
+                contentEl.style.display = 'none';
+                taskListEl.innerHTML = '<div class="muted">选中一个用户后，这里会展示她最近的任务。</div>';
+                return;
+            }
 
-    function renderUsers(){const keyword=document.getElementById('userKeyword').value.trim().toLowerCase();const statusFilter=document.getElementById('userStatusFilter').value;const tbody=document.getElementById('userRows');const rows=allUsers.filter((user)=>{const matchKeyword=!keyword||[user.code,user.email,user.harborProjectName].filter(Boolean).some((value)=>String(value).toLowerCase().includes(keyword));const matchStatus=statusFilter==='all'||user.status===statusFilter;return matchKeyword&&matchStatus});tbody.innerHTML='';if(!rows.length){tbody.innerHTML='<tr><td colspan="6" class="muted">没有匹配到用户。</td></tr>';selectedUserCode='';return renderSelectedUserDetails()}rows.forEach((user)=>{const tr=document.createElement('tr');tr.className='clickable-row';if(user.code===selectedUserCode) tr.style.background='rgba(15,111,255,.05)';tr.innerHTML=`<td><strong>${user.code}</strong><div class="muted">${user.email||'-'}</div><div class="${badgeClass(user.status)}">${user.status}</div></td><td>${user.harborProjectName}</td><td>${user.projectCount} / ${user.imageCount}</td><td>${user.lastUsed||'-'}</td><td>${user.expireAt||'-'}<br><span class="muted">${user.purgeAfter||'-'}</span></td><td>${user.status==='deleted'?`<button class="btn alt" data-restore="${user.code}">恢复</button>`:`<button class="btn warn" data-delete="${user.code}">软删除</button>`}</td>`;tr.addEventListener('click',(event)=>{if(event.target.closest('button')) return;selectedUserCode=user.code;renderUsers()});tbody.appendChild(tr)});tbody.querySelectorAll('[data-delete]').forEach((button)=>button.addEventListener('click',()=>softDeleteUser(button.getAttribute('data-delete')).catch((error)=>setStatus(error.message||'删除失败'))));tbody.querySelectorAll('[data-restore]').forEach((button)=>button.addEventListener('click',()=>restoreUser(button.getAttribute('data-restore')).catch((error)=>setStatus(error.message||'恢复失败'))));renderSelectedUserDetails()}
-    async function loadUsers(){const data=await requestJson('/api/v2/admin/users');allUsers=data.users||[];renderUsers()}
+            emptyEl.style.display = 'none';
+            contentEl.style.display = 'block';
+            document.getElementById('detailStatus').textContent = user.status;
+            document.getElementById('detailCode').textContent = user.code;
+            document.getElementById('detailNamespace').textContent = user.harborProjectName;
+            document.getElementById('detailEmail').textContent = user.email || '-';
+            document.getElementById('detailCounts').textContent = `${user.projectCount} / ${user.imageCount}`;
+            document.getElementById('detailLastUsed').textContent = user.lastUsed || '暂无';
+            document.getElementById('detailExpire').textContent = `${user.expireAt || '-'} / ${user.purgeAfter || '-'}`;
+            document.getElementById('detailDeleteBtn').style.display = user.status === 'deleted' ? 'none' : 'inline-block';
+            document.getElementById('detailRestoreBtn').style.display = user.status === 'deleted' ? 'inline-block' : 'none';
 
-    function renderCache(){const keyword=document.getElementById('cacheKeyword').value.trim().toLowerCase();const tbody=document.getElementById('cacheRows');const rows=allCacheImages.filter((item)=>!keyword||[item.displayName,item.source.fullName,item.local.fullName].filter(Boolean).some((value)=>String(value).toLowerCase().includes(keyword)));tbody.innerHTML='';if(!rows.length){tbody.innerHTML='<tr><td colspan="5" class="muted">没有缓存镜像。</td></tr>';return;}rows.forEach((item)=>{const tr=document.createElement('tr');tr.innerHTML=`<td><strong>${item.displayName}</strong><div class="muted">${item.source.fullName}</div></td><td>${item.local.fullName||'-'}</td><td>${item.local.cacheLastSeenAt||'-'}</td><td>${item.local.cacheExpiresAt||'永久保留'}</td><td><span class="${item.sourceType==='local'?'badge ok':'badge'}">${item.sourceType}</span></td>`;tbody.appendChild(tr)})}
-    async function loadCache(){const data=await requestJson('/api/v2/cache/images');allCacheImages=data.images||[];renderCache()}
+            const userTasks = allTasks.filter((task) => task.accessCode === user.code).slice(0, 6);
+            if (!userTasks.length) {
+                taskListEl.innerHTML = '<div class="muted">这个用户最近没有任务。</div>';
+                return;
+            }
 
-    async function taskStatusAction(taskId,mode,payload={}){if(mode==='run'){await requestJson(`/api/v2/admin/tasks/${taskId}/run`,{method:'POST'})}else{await requestJson(`/api/v2/admin/tasks/${taskId}/status`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})}}
-    function renderTasks(){const keyword=document.getElementById('taskKeyword').value.trim().toLowerCase();const statusFilter=document.getElementById('taskStatusFilter').value;const tbody=document.getElementById('taskRows');const rows=allTasks.filter((task)=>{const matchKeyword=!keyword||[task.accessCode,task.projectName,task.displayName,task.targetFullName].filter(Boolean).some((value)=>String(value).toLowerCase().includes(keyword));const matchStatus=statusFilter==='all'||task.status===statusFilter;return matchKeyword&&matchStatus});tbody.innerHTML='';if(!rows.length){tbody.innerHTML='<tr><td colspan="7" class="muted">没有任务。</td></tr>';return;}rows.forEach((task)=>{const tr=document.createElement('tr');tr.innerHTML=`<td><span class="${badgeClass(task.status)}">${task.status}</span></td><td>${task.accessCode}</td><td>${task.projectName||'-'}</td><td>${task.displayName}</td><td>${task.targetFullName||'-'}</td><td>${task.requestedAt||'-'}</td><td><div class="table-actions">${task.status==='queued'?`<button class="btn alt" data-run="${task.id}">执行</button>`:''}${task.status==='failed'?`<button class="btn alt" data-reset="${task.id}">重置</button>`:''}${task.status==='queued'||task.status==='running'?`<button class="btn warn" data-cancel="${task.id}">取消</button>`:''}</div></td>`;tbody.appendChild(tr)});tbody.querySelectorAll('[data-run]').forEach((button)=>button.addEventListener('click',async()=>{await taskStatusAction(button.getAttribute('data-run'),'run');setStatus('任务已执行。');await refreshAdminData()}));tbody.querySelectorAll('[data-reset]').forEach((button)=>button.addEventListener('click',async()=>{await taskStatusAction(button.getAttribute('data-reset'),'status',{status:'queued',lastError:null});setStatus('任务已重置为 queued。');await refreshAdminData()}));tbody.querySelectorAll('[data-cancel]').forEach((button)=>button.addEventListener('click',async()=>{await taskStatusAction(button.getAttribute('data-cancel'),'status',{status:'cancelled',lastError:'Cancelled by admin'});setStatus('任务已取消。');await refreshAdminData()}))}
-    async function loadTasks(){const data=await requestJson('/api/v2/admin/tasks');allTasks=data.tasks||[];renderTasks();renderSelectedUserDetails()}
+            taskListEl.innerHTML = '';
+            userTasks.forEach((task) => {
+                const div = document.createElement('div');
+                div.className = 'mini-item';
+                div.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; gap:10px;">
+                        <strong>${task.displayName}</strong>
+                        <span class="badge ${badgeClass(task.status)}">${task.status}</span>
+                    </div>
+                    <div class="muted">项目：${task.projectName || '-'}</div>
+                    <div class="muted">目标：${task.targetFullName || '-'}</div>
+                `;
+                taskListEl.appendChild(div);
+            });
+        }
 
-    function renderRetention(){const tbody=document.getElementById('retentionRows');tbody.innerHTML='';if(!allRetentionRows.length){tbody.innerHTML='<tr><td colspan="4" class="muted">没有处于缓删期的用户。</td></tr>';return;}allRetentionRows.forEach((row)=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${row.code}</td><td>${row.email||'-'}</td><td>${row.deleted_at||'-'}</td><td>${row.purge_after||'-'}</td>`;tbody.appendChild(tr)})}
-    async function loadRetention(){const data=await requestJson('/api/v2/retention/pending-purge');allRetentionRows=data.rows||[];renderRetention()}
-    async function runQueuedTasks(){const data=await requestJson('/api/v2/admin/tasks/run-queued',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({limit:10})});setStatus(`本次执行了 ${data.executedCount} 个排队任务。`);await refreshAdminData()}
-    async function cleanupCache(){const data=await requestJson('/api/v2/admin/cache/cleanup',{method:'POST',headers:{'Content-Type':'application/json'}});setStatus(`缓存清理完成，移除了 ${data.removed} 个过期镜像。`);await refreshAdminData()}
-    async function refreshAdminData(){await Promise.all([loadSummary(),loadUsers(),loadCache(),loadTasks(),loadRetention()])}
-    function bindTabs(){document.querySelectorAll('[data-tab]').forEach((button)=>{button.addEventListener('click',()=>{document.querySelectorAll('[data-tab]').forEach((item)=>{item.classList.remove('active');item.classList.add('ghost')});document.querySelectorAll('.tab-panel').forEach((panel)=>panel.classList.remove('active'));button.classList.add('active');button.classList.remove('ghost');document.getElementById(`tab-${button.getAttribute('data-tab')}`).classList.add('active')})})}
+        async function softDeleteUser(code) {
+            await requestJson(`/api/v2/access-codes/${encodeURIComponent(code)}/soft-delete`, { method: 'POST' });
+            setStatus(`用户 ${code} 已进入 30 天缓删期。`);
+            await refreshAdminData();
+        }
 
-    document.getElementById('saveSettingsBtn').addEventListener('click',()=>saveSettings().catch((error)=>setStatus(error.message||'保存失败')));
-    document.getElementById('testHarborBtn').addEventListener('click',()=>testHarborSettings().catch((error)=>setStatus(error.message||'Harbor 测试失败')));
-    document.getElementById('runQueuedBtn').addEventListener('click',()=>runQueuedTasks().catch((error)=>setStatus(error.message||'执行失败')));
-    document.getElementById('cleanupCacheBtn').addEventListener('click',()=>cleanupCache().catch((error)=>setStatus(error.message||'清理失败')));
-    document.getElementById('refreshAllBtn').addEventListener('click',()=>Promise.all([loadSettings(),refreshAdminData()]).then(()=>setStatus('后台数据已刷新。')).catch((error)=>setStatus(error.message||'刷新失败')));
-    document.getElementById('userKeyword').addEventListener('input',renderUsers); document.getElementById('userStatusFilter').addEventListener('change',renderUsers); document.getElementById('cacheKeyword').addEventListener('input',renderCache); document.getElementById('taskKeyword').addEventListener('input',renderTasks); document.getElementById('taskStatusFilter').addEventListener('change',renderTasks);
-    document.getElementById('detailDeleteBtn').addEventListener('click',()=>selectedUserCode&&softDeleteUser(selectedUserCode).catch((error)=>setStatus(error.message||'删除失败'))); document.getElementById('detailRestoreBtn').addEventListener('click',()=>selectedUserCode&&restoreUser(selectedUserCode).catch((error)=>setStatus(error.message||'恢复失败')));
+        async function restoreUser(code) {
+            await requestJson(`/api/v2/access-codes/${encodeURIComponent(code)}/restore`, { method: 'POST' });
+            setStatus(`用户 ${code} 已恢复。`);
+            await refreshAdminData();
+        }
 
-    bindTabs(); Promise.all([loadSettings(),refreshAdminData()]).catch((error)=>setStatus(error.message||'后台初始化失败。'));
-  </script>
+        function renderUsers() {
+            const keyword = document.getElementById('userKeyword').value.trim().toLowerCase();
+            const statusFilter = document.getElementById('userStatusFilter').value;
+            const tbody = document.getElementById('userRows');
+            tbody.innerHTML = '';
+
+            const rows = allUsers.filter((user) => {
+                const matchesKeyword = !keyword || [user.code, user.email, user.harborProjectName]
+                    .filter(Boolean)
+                    .some((value) => String(value).toLowerCase().includes(keyword));
+                const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
+                return matchesKeyword && matchesStatus;
+            });
+
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="muted">没有匹配到用户。</td></tr>';
+                selectedUserCode = '';
+                renderSelectedUserDetails();
+                return;
+            }
+
+            rows.forEach((user) => {
+                const tr = document.createElement('tr');
+                tr.className = 'clickable-row';
+                if (user.code === selectedUserCode) {
+                    tr.style.background = 'rgba(15,111,255,.05)';
+                }
+                tr.innerHTML = `
+                    <td><strong>${user.code}</strong><div class="muted">${user.email || '-'}</div><div class="badge ${badgeClass(user.status)}">${user.status}</div></td>
+                    <td>${user.harborProjectName}</td>
+                    <td>${user.projectCount} / ${user.imageCount}</td>
+                    <td>${user.lastUsed || '-'}</td>
+                    <td>${user.expireAt || '-'}<br><span class="muted">${user.purgeAfter || '-'}</span></td>
+                    <td>${user.status === 'deleted'
+                        ? `<button class="btn alt" data-restore="${user.code}">恢复</button>`
+                        : `<button class="btn warn" data-delete="${user.code}">软删除</button>`}</td>
+                `;
+                tr.addEventListener('click', (event) => {
+                    if (event.target.closest('button')) return;
+                    selectedUserCode = user.code;
+                    renderUsers();
+                });
+                tbody.appendChild(tr);
+            });
+
+            tbody.querySelectorAll('[data-delete]').forEach((button) => {
+                button.addEventListener('click', async () => softDeleteUser(button.getAttribute('data-delete')));
+            });
+            tbody.querySelectorAll('[data-restore]').forEach((button) => {
+                button.addEventListener('click', async () => restoreUser(button.getAttribute('data-restore')));
+            });
+
+            renderSelectedUserDetails();
+        }
+
+        async function loadUsers() {
+            const data = await requestJson('/api/v2/admin/users');
+            allUsers = data.users || [];
+            renderUsers();
+        }
+
+        function renderCache() {
+            const keyword = document.getElementById('cacheKeyword').value.trim().toLowerCase();
+            const tbody = document.getElementById('cacheRows');
+            tbody.innerHTML = '';
+
+            const rows = allCacheImages.filter((item) => !keyword || [item.displayName, item.source.fullName, item.local.fullName]
+                .filter(Boolean)
+                .some((value) => String(value).toLowerCase().includes(keyword)));
+
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="5" class="muted">没有缓存镜像。</td></tr>';
+                return;
+            }
+
+            rows.forEach((item) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${item.displayName}</strong><div class="muted">${item.source.fullName}</div></td>
+                    <td>${item.local.fullName || '-'}</td>
+                    <td>${item.local.cacheLastSeenAt || '-'}</td>
+                    <td>${item.local.cacheExpiresAt || '永久保留'}</td>
+                    <td><span class="badge ${item.sourceType === 'local' ? 'ok' : ''}">${item.sourceType}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function loadCache() {
+            const data = await requestJson('/api/v2/cache/images');
+            allCacheImages = data.images || [];
+            renderCache();
+        }
+
+        async function taskStatusAction(taskId, mode, payload = {}) {
+            if (mode === 'run') {
+                await requestJson(`/api/v2/admin/tasks/${taskId}/run`, { method: 'POST' });
+            } else {
+                await requestJson(`/api/v2/admin/tasks/${taskId}/status`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            }
+        }
+
+        function renderTasks() {
+            const keyword = document.getElementById('taskKeyword').value.trim().toLowerCase();
+            const statusFilter = document.getElementById('taskStatusFilter').value;
+            const tbody = document.getElementById('taskRows');
+            tbody.innerHTML = '';
+
+            const rows = allTasks.filter((task) => {
+                const matchesKeyword = !keyword || [task.accessCode, task.projectName, task.displayName, task.targetFullName]
+                    .filter(Boolean)
+                    .some((value) => String(value).toLowerCase().includes(keyword));
+                const matchesStatus = statusFilter === 'all' || task.status === statusFilter;
+                return matchesKeyword && matchesStatus;
+            });
+
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="muted">没有任务。</td></tr>';
+                return;
+            }
+
+            rows.forEach((task) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><span class="badge ${badgeClass(task.status)}">${task.status}</span></td>
+                    <td>${task.accessCode}</td>
+                    <td>${task.projectName || '-'}</td>
+                    <td>${task.displayName}</td>
+                    <td>${task.targetFullName || '-'}</td>
+                    <td>${task.requestedAt || '-'}</td>
+                    <td>
+                        <div class="table-actions">
+                            ${task.status === 'queued' ? `<button class="btn alt" data-run="${task.id}">执行</button>` : ''}
+                            ${task.status === 'failed' ? `<button class="btn alt" data-reset="${task.id}">重置</button>` : ''}
+                            ${(task.status === 'queued' || task.status === 'running') ? `<button class="btn warn" data-cancel="${task.id}">取消</button>` : ''}
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            tbody.querySelectorAll('[data-run]').forEach((button) => {
+                button.addEventListener('click', async () => {
+                    await taskStatusAction(button.getAttribute('data-run'), 'run');
+                    setStatus('任务已执行。');
+                    await refreshAdminData();
+                });
+            });
+            tbody.querySelectorAll('[data-reset]').forEach((button) => {
+                button.addEventListener('click', async () => {
+                    await taskStatusAction(button.getAttribute('data-reset'), 'status', { status: 'queued', lastError: null });
+                    setStatus('任务已重置为 queued。');
+                    await refreshAdminData();
+                });
+            });
+            tbody.querySelectorAll('[data-cancel]').forEach((button) => {
+                button.addEventListener('click', async () => {
+                    await taskStatusAction(button.getAttribute('data-cancel'), 'status', { status: 'cancelled', lastError: 'Cancelled by admin' });
+                    setStatus('任务已取消。');
+                    await refreshAdminData();
+                });
+            });
+        }
+
+        async function loadTasks() {
+            const data = await requestJson('/api/v2/admin/tasks');
+            allTasks = data.tasks || [];
+            renderTasks();
+            renderSelectedUserDetails();
+        }
+
+        function renderRetention() {
+            const tbody = document.getElementById('retentionRows');
+            tbody.innerHTML = '';
+            if (!allRetentionRows.length) {
+                tbody.innerHTML = '<tr><td colspan="4" class="muted">没有处于缓删期的用户。</td></tr>';
+                return;
+            }
+            allRetentionRows.forEach((row) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${row.code}</td><td>${row.email || '-'}</td><td>${row.deleted_at || '-'}</td><td>${row.purge_after || '-'}</td>`;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function loadRetention() {
+            const data = await requestJson('/api/v2/retention/pending-purge');
+            allRetentionRows = data.rows || [];
+            renderRetention();
+        }
+
+        async function runQueuedTasks() {
+            const data = await requestJson('/api/v2/admin/tasks/run-queued', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ limit: 10 })
+            });
+            setStatus(`本次执行了 ${data.executedCount} 个排队任务。`);
+            await refreshAdminData();
+        }
+
+        async function cleanupCache() {
+            const data = await requestJson('/api/v2/admin/cache/cleanup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            setStatus(`缓存清理完成，移除了 ${data.removed} 个过期镜像。`);
+            await refreshAdminData();
+        }
+
+        async function refreshAdminData() {
+            await Promise.all([loadSummary(), loadUsers(), loadCache(), loadTasks(), loadRetention()]);
+        }
+
+        function bindTabs() {
+            document.querySelectorAll('[data-tab]').forEach((button) => {
+                button.addEventListener('click', () => {
+                    document.querySelectorAll('[data-tab]').forEach((item) => {
+                        item.classList.remove('active');
+                        item.classList.add('ghost');
+                    });
+                    document.querySelectorAll('.tab-panel').forEach((panel) => panel.classList.remove('active'));
+                    button.classList.add('active');
+                    button.classList.remove('ghost');
+                    document.getElementById(`tab-${button.getAttribute('data-tab')}`).classList.add('active');
+                });
+            });
+        }
+
+        document.getElementById('saveSettingsBtn').addEventListener('click', () => saveSettings().catch((error) => setStatus(error.message || '保存失败')));
+        document.getElementById('testHarborBtn').addEventListener('click', () => testHarborSettings().catch((error) => setStatus(error.message || 'Harbor 测试失败')));
+        document.getElementById('runQueuedBtn').addEventListener('click', () => runQueuedTasks().catch((error) => setStatus(error.message || '执行失败')));
+        document.getElementById('cleanupCacheBtn').addEventListener('click', () => cleanupCache().catch((error) => setStatus(error.message || '清理失败')));
+        document.getElementById('refreshAllBtn').addEventListener('click', () => Promise.all([loadSettings(), refreshAdminData()]).then(() => setStatus('后台数据已刷新。')).catch((error) => setStatus(error.message || '刷新失败')));
+        document.getElementById('userKeyword').addEventListener('input', renderUsers);
+        document.getElementById('userStatusFilter').addEventListener('change', renderUsers);
+        document.getElementById('cacheKeyword').addEventListener('input', renderCache);
+        document.getElementById('taskKeyword').addEventListener('input', renderTasks);
+        document.getElementById('taskStatusFilter').addEventListener('change', renderTasks);
+        document.getElementById('detailDeleteBtn').addEventListener('click', () => selectedUserCode && softDeleteUser(selectedUserCode).catch((error) => setStatus(error.message || '删除失败')));
+        document.getElementById('detailRestoreBtn').addEventListener('click', () => selectedUserCode && restoreUser(selectedUserCode).catch((error) => setStatus(error.message || '恢复失败')));
+
+        bindTabs();
+        Promise.all([loadSettings(), refreshAdminData()]).catch((error) => {
+            setStatus(error.message || '后台初始化失败。');
+        });
+    </script>
 </body>
 </html>
