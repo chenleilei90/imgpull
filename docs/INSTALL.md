@@ -143,6 +143,9 @@ kubeaszpull.db
 - 安装页 Harbor 可选配置
 - 后台 Harbor 配置保存
 - Harbor 连接测试
+- 后台 SMTP 配置保存
+- SMTP 连接测试
+- 购买串码后按配置尝试发送邮件
 
 当前限制：
 
