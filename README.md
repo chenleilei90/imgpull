@@ -70,6 +70,10 @@ $env:PORT=8080
 npm start
 ```
 
+详细安装说明见：
+
+- [docs/INSTALL.md](docs/INSTALL.md)
+
 ## 首次安装
 
 系统已支持首装引导。
@@ -160,4 +164,4 @@ kubeaszpull.db
 1. 完善 MySQL 运行时支持，而不只是安装与测试层支持。
 2. 接入真实 Harbor / Docker 的 `pull -> cache -> tag/push` 执行链路。
 3. 接入 SMTP 邮件服务，让购买串码后自动发送邮件。
-4. 继续补充后台广告位、SEO、备案和内容管理能力。
+4. 继续补充后台广告位、SEO、备案和内容管理能力.
