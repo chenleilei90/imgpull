@@ -173,7 +173,7 @@
 
         <div class="grid-2">
             <section class="section">
-                <h2>站点与 Harbor 设置</h2>
+                <h2>站点、Harbor 与邮件设置</h2>
                 <div class="field-grid">
                     <input id="siteTitle" placeholder="站点标题">
                     <input id="siteSubtitle" placeholder="站点副标题">
@@ -193,12 +193,27 @@
                         <option value="1">启用 Docker Hub 搜索</option>
                         <option value="0">关闭 Docker Hub 搜索</option>
                     </select>
+                    <select id="smtpEnabled">
+                        <option value="0">关闭 SMTP 邮件发送</option>
+                        <option value="1">启用 SMTP 邮件发送</option>
+                    </select>
+                    <input id="smtpHost" placeholder="SMTP 主机，例如 smtp.qq.com">
+                    <input id="smtpPort" placeholder="SMTP 端口，例如 465">
+                    <select id="smtpSecure">
+                        <option value="1">SMTP 使用 SSL/TLS</option>
+                        <option value="0">SMTP 不使用 SSL/TLS</option>
+                    </select>
+                    <input id="smtpUser" placeholder="SMTP 用户名">
+                    <input id="smtpPassword" type="password" placeholder="SMTP 密码或授权码">
+                    <input id="smtpFromName" placeholder="发件人名称，例如 ImgPull">
+                    <input id="smtpFromEmail" placeholder="发件邮箱，例如 noreply@example.com">
                     <textarea id="siteDescription" class="full" rows="3" placeholder="站点描述"></textarea>
                     <input id="footerLinks" class="full" placeholder="友情链接，多个可用逗号分隔">
                 </div>
                 <div class="toolbar">
                     <button id="saveSettingsBtn" type="button">保存设置</button>
                     <button id="testHarborBtn" class="alt" type="button">测试 Harbor</button>
+                    <button id="testSmtpBtn" class="alt" type="button">测试 SMTP</button>
                     <button id="runTasksBtn" class="ghost" type="button">执行排队任务</button>
                     <button id="cleanupBtn" class="ghost" type="button">清理过期缓存</button>
                 </div>
@@ -323,6 +338,14 @@
             document.getElementById('harborPassword').value = settings.harborPassword || '';
             document.getElementById('cacheProjectName').value = settings.cacheProjectName || '';
             document.getElementById('cacheRetentionDays').value = settings.cacheRetentionDays ?? -1;
+            document.getElementById('smtpEnabled').value = settings.smtpEnabled ? '1' : '0';
+            document.getElementById('smtpHost').value = settings.smtpHost || '';
+            document.getElementById('smtpPort').value = settings.smtpPort ?? 465;
+            document.getElementById('smtpSecure').value = settings.smtpSecure ? '1' : '0';
+            document.getElementById('smtpUser').value = settings.smtpUser || '';
+            document.getElementById('smtpPassword').value = settings.smtpPassword || '';
+            document.getElementById('smtpFromName').value = settings.smtpFromName || '';
+            document.getElementById('smtpFromEmail').value = settings.smtpFromEmail || '';
             document.getElementById('defaultVisibility').value = settings.defaultUserRepoVisibility || 'private';
             document.getElementById('dockerhubSearchEnabled').value = settings.dockerhubSearchEnabled ? '1' : '0';
         }
@@ -373,9 +396,9 @@
             }
             body.innerHTML = rows.map((row) => `
                 <tr>
-                    <td><strong>${row.displayName}</strong><div class="small">${row.local.fullName || row.source.fullName}</div></td>
-                    <td>${row.local.cacheExpiresAt || '未设置'}</td>
-                    <td>${row.local.cacheLastSeenAt || '未记录'}</td>
+                    <td><strong>${row.displayName}</strong><div class="small">${row.localFullName || row.sourceFullName}</div></td>
+                    <td>${row.cacheExpiresAt || '未设置'}</td>
+                    <td>${row.cacheLastSeenAt || '未记录'}</td>
                 </tr>
             `).join('');
         }
@@ -412,6 +435,14 @@
                 harborEnabled: !!document.getElementById('harborBaseUrl').value.trim(),
                 cacheProjectName: document.getElementById('cacheProjectName').value.trim(),
                 cacheRetentionDays: document.getElementById('cacheRetentionDays').value.trim(),
+                smtpEnabled: document.getElementById('smtpEnabled').value === '1',
+                smtpHost: document.getElementById('smtpHost').value.trim(),
+                smtpPort: document.getElementById('smtpPort').value.trim(),
+                smtpSecure: document.getElementById('smtpSecure').value === '1',
+                smtpUser: document.getElementById('smtpUser').value.trim(),
+                smtpPassword: document.getElementById('smtpPassword').value,
+                smtpFromName: document.getElementById('smtpFromName').value.trim(),
+                smtpFromEmail: document.getElementById('smtpFromEmail').value.trim(),
                 defaultUserRepoVisibility: document.getElementById('defaultVisibility').value,
                 dockerhubSearchEnabled: document.getElementById('dockerhubSearchEnabled').value === '1'
             };
@@ -443,6 +474,27 @@
                     })
                 });
                 setNotice(data.message || 'Harbor 连接测试成功。');
+            } catch (error) {
+                setNotice(error.message);
+            }
+        }
+
+        async function testSmtp() {
+            try {
+                const payload = settingsPayload();
+                const data = await fetchJson('/api/v2/settings/test-smtp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        smtpHost: payload.smtpHost,
+                        smtpPort: payload.smtpPort,
+                        smtpSecure: payload.smtpSecure,
+                        smtpUser: payload.smtpUser,
+                        smtpPassword: payload.smtpPassword,
+                        smtpFromEmail: payload.smtpFromEmail
+                    })
+                });
+                setNotice(data.message || 'SMTP 连接测试成功。');
             } catch (error) {
                 setNotice(error.message);
             }
@@ -487,6 +539,7 @@
 
         document.getElementById('saveSettingsBtn').addEventListener('click', saveSettings);
         document.getElementById('testHarborBtn').addEventListener('click', testHarbor);
+        document.getElementById('testSmtpBtn').addEventListener('click', testSmtp);
         document.getElementById('runTasksBtn').addEventListener('click', runQueued);
         document.getElementById('cleanupBtn').addEventListener('click', cleanupCache);
 
