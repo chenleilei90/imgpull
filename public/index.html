@@ -160,7 +160,7 @@
                     <div class="card" style="padding:18px;">
                         <div class="tag ok">购买串码</div>
                         <h3 style="margin:0 0 8px;">购买后立即获得授权串码</h3>
-                        <p style="margin-bottom:14px;">填写邮箱后可生成新的授权串码。当前版本优先在页面直接展示和复制，后续接入 SMTP 后也可同步发到邮箱。</p>
+                        <p style="margin-bottom:14px;">填写邮箱后可生成新的授权串码。若后台已启用 SMTP，系统会同时把串码发送到购买邮箱。</p>
                         <div class="grid" style="grid-template-columns:1fr 190px;margin-top:0;">
                             <input id="purchaseEmail" placeholder="请输入购买邮箱，例如 ops@example.com">
                             <button id="purchaseBtn" class="alt" type="button">生成并显示串码</button>
@@ -287,7 +287,7 @@
                 return;
             }
 
-            showStatus(`串码校验成功，正在进入命名空间 ${data.accessCode.harborProjectName} 的控制台...`);
+            showStatus(`串码校验成功，正在进入命名空间 ${data.me.harborProjectName} 的控制台...`);
             window.location.href = `/console?code=${encodeURIComponent(code)}`;
         }
 
@@ -326,7 +326,7 @@
             purchaseSuccessEl.style.display = 'block';
             purchaseCodeEl.textContent = purchase.code || '-';
             purchaseEmailHintEl.textContent = purchase.emailMessage || `购买邮箱：${purchase.email || email}`;
-            purchaseStatusEl.textContent = '串码已生成，支持直接复制。';
+            purchaseStatusEl.textContent = purchase.emailSent ? '串码已生成，并已发送到邮箱。' : '串码已生成，支持直接复制。';
         }
 
         document.getElementById('enterBtn').addEventListener('click', enterConsole);
