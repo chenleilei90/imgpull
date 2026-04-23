@@ -4,19 +4,19 @@
 
 - Node.js 18 或更高版本
 - 支持 Windows、Linux、macOS
-- 如需对接 Harbor，请准备：
+- 如果要对接 Harbor，请准备：
   - Harbor 地址
   - Harbor 账号
   - Harbor 密码
-- 如需测试或使用 MySQL，请准备：
+- 如果要测试或使用 MySQL，请准备：
   - MySQL 5 到 8 的主机、端口、库名、账号、密码
-- 如需开启邮件发送，请准备：
+- 如果要开启邮件发送，请准备：
   - SMTP 主机
   - SMTP 端口
   - SMTP 用户名
   - SMTP 密码或授权码
   - 发件邮箱
-- 如需开启真实镜像执行链路，请确认部署机已安装 Docker，并且服务进程有权限执行：
+- 如果要开启真实镜像执行链路，请确认部署机器已经安装 Docker，并且服务进程有权限执行：
   - `docker login`
   - `docker pull`
   - `docker tag`
@@ -136,7 +136,7 @@ kubeaszpull.db
 
 ### MySQL
 
-当前版本已支持：
+当前版本已经支持：
 
 - 安装时填写 MySQL 参数
 - 安装页测试 MySQL 连接
@@ -149,7 +149,7 @@ kubeaszpull.db
 
 ## 7. Harbor、SMTP 与执行链路说明
 
-当前版本已支持：
+当前版本已经支持：
 
 - Harbor 配置保存
 - Harbor 连接测试
@@ -161,6 +161,7 @@ kubeaszpull.db
   - `docker pull`
   - `docker tag`
   - `docker push`
+- 后台自动轮询执行排队任务
 
 当前限制：
 

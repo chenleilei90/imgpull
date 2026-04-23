@@ -2,11 +2,11 @@
 
 ImgPull 是一个“海外容器镜像国内获取与分发平台”。
 
-它的目标很直接：
+它的核心流程是：
 
-1. 用户搜索需要的镜像。
+1. 用户搜索镜像。
 2. 系统优先检查本地 Harbor 默认缓存仓库。
-3. 本地未命中时，再回退到 Docker Hub。
+3. 本地没有时，再回源到 Docker Hub。
 4. 镜像先进入默认缓存仓库。
 5. 系统再把镜像分发到用户自己的专属命名空间。
 6. 用户在控制台复制 `docker`、`nerdctl` 或 `crictl` 拉取命令，在自己的服务器上拉取镜像。
@@ -14,7 +14,7 @@ ImgPull 是一个“海外容器镜像国内获取与分发平台”。
 ## 目录结构
 
 ```text
-imgpull-review/
+imgpull/
 ├─ config/
 ├─ docs/
 │  └─ INSTALL.md
@@ -33,10 +33,14 @@ imgpull-review/
 
 - Node.js 18 或更高版本
 - Windows、Linux、macOS 均可运行
-- 如需使用 Harbor 联动，请准备 Harbor 地址、账号和密码
-- 如需使用 MySQL，请准备 MySQL 5 到 8 的连接信息
-- 如需使用邮件发送，请准备 SMTP 主机、端口、账号和发件邮箱
-- 如需使用真实镜像分发，请确认部署机已安装 Docker 并可执行 `docker login / pull / tag / push`
+- 如果要接 Harbor，请准备 Harbor 地址、账号和密码
+- 如果要测试或使用 MySQL，请准备 MySQL 5 到 8 的连接信息
+- 如果要启用邮件发送，请准备 SMTP 主机、端口、账号、密码和发件邮箱
+- 如果要启用真实分发链路，请确认部署机器已经安装 Docker，并且服务进程有权限执行：
+  - `docker login`
+  - `docker pull`
+  - `docker tag`
+  - `docker push`
 
 ## 安装方式
 
@@ -123,7 +127,7 @@ config/app.config.json
 
 ### MySQL
 
-当前版本已支持：
+当前版本已经支持：
 
 - 安装时填写 MySQL 参数
 - 安装页测试 MySQL 连接
@@ -132,7 +136,7 @@ config/app.config.json
 当前限制：
 
 - 运行时主业务逻辑仍以 SQLite 兼容路径为主
-- MySQL 目前已具备安装配置能力，但运行时仍未完全切换
+- MySQL 目前已具备安装配置能力，但运行时还未完全切换
 
 ## 主要页面
 
@@ -166,6 +170,7 @@ config/app.config.json
   - `docker pull`
   - `docker tag`
   - `docker push`
+- 支持后台自动轮询执行排队任务
 
 ## 当前建议
 

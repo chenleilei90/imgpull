@@ -2131,7 +2131,35 @@ app.get('/api/v2/cache/images', (req, res) => {
     });
 });
 
+function startBackgroundWorkers() {
+    const execution = getExecutionConfigFromSettings();
+    if (!execution.enabled) {
+        console.log('[worker] distribution worker disabled');
+        return;
+    }
+
+    const intervalMs = 20000;
+    const batchLimit = 2;
+    console.log(`[worker] distribution worker started, every ${intervalMs / 1000}s, batch ${batchLimit}`);
+
+    setInterval(() => {
+        try {
+            const result = runQueuedTasks(batchLimit);
+            if (result.length) {
+                console.log(`[worker] executed ${result.length} queued task(s)`);
+            }
+        } catch (error) {
+            console.error('[worker] distribution worker failed:', error.message);
+        }
+    }, intervalMs);
+}
+
+startBackgroundWorkers();
+
 app.listen(port, '0.0.0.0', () => {
+    if (appConfig?.database?.type === 'mysql') {
+        console.warn('[startup] MySQL is configured, but runtime compatibility still follows the current SQLite-first path.');
+    }
     console.log(`ImgPull listening on http://localhost:${port}`);
 });
 
