@@ -6,8 +6,8 @@
     <title>ImgPull 后台管理</title>
     <style>
         :root {
-            --bg: #edf4fb;
-            --panel: rgba(255,255,255,0.94);
+            --bg: #eef4fb;
+            --panel: rgba(255,255,255,0.96);
             --line: #d8e4f1;
             --ink: #0f172a;
             --muted: #5f6f86;
@@ -15,6 +15,7 @@
             --teal: #0ea5a4;
             --ok: #16a34a;
             --warn: #f59e0b;
+            --bad: #dc2626;
             --shadow: 0 24px 56px rgba(15,23,42,0.1);
         }
         * { box-sizing: border-box; }
@@ -27,7 +28,7 @@
                 radial-gradient(circle at 90% 12%, rgba(14,165,164,0.14), transparent 26%),
                 linear-gradient(180deg, #f8fbff 0%, var(--bg) 100%);
         }
-        .wrap { max-width: 1320px; margin: 0 auto; padding: 28px 20px 56px; }
+        .wrap { max-width: 1360px; margin: 0 auto; padding: 28px 20px 56px; }
         .topbar {
             display: flex;
             justify-content: space-between;
@@ -97,11 +98,8 @@
             padding: 16px;
         }
         .metric strong { display: block; font-size: 26px; }
-        .grid-2, .grid-3 {
-            display: grid;
-            gap: 18px;
-        }
-        .grid-2 { grid-template-columns: 1.2fr 0.8fr; }
+        .grid-2, .grid-3 { display: grid; gap: 18px; }
+        .grid-2 { grid-template-columns: 1.25fr 0.75fr; }
         .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
         .field-grid {
             display: grid;
@@ -140,6 +138,19 @@
         th { background: #f7fbff; color: #4f6078; font-weight: 700; }
         tr:last-child td { border-bottom: none; }
         .small { font-size: 12px; color: var(--muted); }
+        .status {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            background: rgba(15,111,255,0.08);
+            color: var(--brand);
+        }
+        .status.ok { background: rgba(22,163,74,0.12); color: var(--ok); }
+        .status.warn { background: rgba(245,158,11,0.12); color: var(--warn); }
+        .status.bad { background: rgba(220,38,38,0.12); color: var(--bad); }
         @media (max-width: 1080px) {
             .stats, .grid-2, .grid-3, .field-grid { grid-template-columns: 1fr; }
         }
@@ -150,12 +161,13 @@
         <div class="topbar">
             <div>
                 <div class="tag">后台管理</div>
-                <h1>站点设置、用户管理、任务和缓存概览</h1>
-                <p>这里主要用于维护站点基础设置、Harbor 配置、缓存镜像、分发任务和用户串码状态。</p>
+                <h1>站点设置、用户管理、任务和缓存总览</h1>
+                <p>这里主要用于维护站点基础设置、Harbor 配置、SMTP 邮件、执行链路、缓存镜像和分发任务。</p>
             </div>
             <div style="display:flex;gap:10px;flex-wrap:wrap;">
                 <a class="button ghost" href="/">首页</a>
                 <a class="button ghost" href="/console">用户控制台</a>
+                <a class="button ghost" href="/deliveries">交付镜像</a>
             </div>
         </div>
 
@@ -165,7 +177,7 @@
                 <div class="metric"><div class="small">镜像目录</div><strong id="catalogCount">-</strong></div>
                 <div class="metric"><div class="small">本地缓存</div><strong id="localCount">-</strong></div>
                 <div class="metric"><div class="small">有效用户</div><strong id="userCount">-</strong></div>
-                <div class="metric"><div class="small">已删除用户</div><strong id="deletedUserCount">-</strong></div>
+                <div class="metric"><div class="small">待清理用户</div><strong id="deletedUserCount">-</strong></div>
                 <div class="metric"><div class="small">项目总数</div><strong id="projectCount">-</strong></div>
                 <div class="metric"><div class="small">排队任务</div><strong id="queuedTaskCount">-</strong></div>
             </div>
@@ -173,7 +185,7 @@
 
         <div class="grid-2">
             <section class="section">
-                <h2>站点、Harbor 与邮件设置</h2>
+                <h2>站点、Harbor、邮件与执行链路设置</h2>
                 <div class="field-grid">
                     <input id="siteTitle" placeholder="站点标题">
                     <input id="siteSubtitle" placeholder="站点副标题">
@@ -184,6 +196,7 @@
                         <option value="private">用户仓库私有</option>
                         <option value="public">用户仓库公开</option>
                     </select>
+
                     <input id="harborDomain" placeholder="Harbor 域名">
                     <input id="harborBaseUrl" placeholder="Harbor 地址，例如 https://harbor.example.com">
                     <input id="cacheProjectName" placeholder="默认缓存仓库名">
@@ -193,6 +206,7 @@
                         <option value="1">启用 Docker Hub 搜索</option>
                         <option value="0">关闭 Docker Hub 搜索</option>
                     </select>
+
                     <select id="smtpEnabled">
                         <option value="0">关闭 SMTP 邮件发送</option>
                         <option value="1">启用 SMTP 邮件发送</option>
@@ -207,6 +221,14 @@
                     <input id="smtpPassword" type="password" placeholder="SMTP 密码或授权码">
                     <input id="smtpFromName" placeholder="发件人名称，例如 ImgPull">
                     <input id="smtpFromEmail" placeholder="发件邮箱，例如 noreply@example.com">
+
+                    <select id="executorEnabled">
+                        <option value="0">关闭真实执行链路</option>
+                        <option value="1">启用真实执行链路</option>
+                    </select>
+                    <input id="dockerBinary" placeholder="Docker 可执行文件，例如 docker">
+                    <div></div>
+
                     <textarea id="siteDescription" class="full" rows="3" placeholder="站点描述"></textarea>
                     <input id="footerLinks" class="full" placeholder="友情链接，多个可用逗号分隔">
                 </div>
@@ -214,10 +236,11 @@
                     <button id="saveSettingsBtn" type="button">保存设置</button>
                     <button id="testHarborBtn" class="alt" type="button">测试 Harbor</button>
                     <button id="testSmtpBtn" class="alt" type="button">测试 SMTP</button>
+                    <button id="testExecutorBtn" class="alt" type="button">测试执行链路</button>
                     <button id="runTasksBtn" class="ghost" type="button">执行排队任务</button>
                     <button id="cleanupBtn" class="ghost" type="button">清理过期缓存</button>
                 </div>
-                <div id="settingsNotice" class="notice">加载设置中...</div>
+                <div id="settingsNotice" class="notice">正在加载后台设置...</div>
             </section>
 
             <section class="section">
@@ -228,7 +251,7 @@
                             <tr>
                                 <th>串码</th>
                                 <th>删除时间</th>
-                                <th>彻底清理时间</th>
+                                <th>最终清理时间</th>
                             </tr>
                         </thead>
                         <tbody id="retentionBody">
@@ -303,6 +326,21 @@
             document.getElementById('settingsNotice').textContent = message;
         }
 
+        function renderStatus(value) {
+            const text = String(value || '').trim();
+            const map = {
+                active: ['ok', '有效'],
+                deleted: ['bad', '已删除'],
+                queued: ['warn', '排队中'],
+                running: ['warn', '执行中'],
+                completed: ['ok', '已完成'],
+                failed: ['bad', '失败'],
+                cancelled: ['bad', '已取消']
+            };
+            const [klass, label] = map[text] || ['', text || '-'];
+            return `<span class="status ${klass}">${label}</span>`;
+        }
+
         async function fetchJson(url, options) {
             const response = await fetch(url, options);
             const data = await response.json();
@@ -346,6 +384,8 @@
             document.getElementById('smtpPassword').value = settings.smtpPassword || '';
             document.getElementById('smtpFromName').value = settings.smtpFromName || '';
             document.getElementById('smtpFromEmail').value = settings.smtpFromEmail || '';
+            document.getElementById('executorEnabled').value = settings.executorEnabled ? '1' : '0';
+            document.getElementById('dockerBinary').value = settings.dockerBinary || 'docker';
             document.getElementById('defaultVisibility').value = settings.defaultUserRepoVisibility || 'private';
             document.getElementById('dockerhubSearchEnabled').value = settings.dockerhubSearchEnabled ? '1' : '0';
         }
@@ -361,7 +401,7 @@
             body.innerHTML = rows.map((row) => `
                 <tr>
                     <td><strong>${row.code}</strong><div class="small">${row.email || '-'}</div></td>
-                    <td>${row.status}</td>
+                    <td>${renderStatus(row.status)}</td>
                     <td>${row.harborProjectName}</td>
                     <td>${row.imageCount}</td>
                 </tr>
@@ -378,9 +418,9 @@
             }
             body.innerHTML = rows.map((row) => `
                 <tr>
-                    <td><strong>${row.displayName}</strong><div class="small">${row.projectName || '默认项目'}</div></td>
-                    <td>${row.status}</td>
-                    <td>${row.accessCode}</td>
+                    <td><strong>${row.displayName || row.upstreamFullName}</strong></td>
+                    <td>${renderStatus(row.status)}</td>
+                    <td>${row.accessCode || '-'}</td>
                     <td class="small">${row.targetFullName || '-'}</td>
                 </tr>
             `).join('');
@@ -396,9 +436,9 @@
             }
             body.innerHTML = rows.map((row) => `
                 <tr>
-                    <td><strong>${row.displayName}</strong><div class="small">${row.localFullName || row.sourceFullName}</div></td>
-                    <td>${row.cacheExpiresAt || '未设置'}</td>
-                    <td>${row.cacheLastSeenAt || '未记录'}</td>
+                    <td><strong>${row.localFullName || row.sourceFullName}</strong></td>
+                    <td>${row.cacheExpiresAt || '永久'}</td>
+                    <td>${row.cacheLastSeenAt || '-'}</td>
                 </tr>
             `).join('');
         }
@@ -413,7 +453,7 @@
             }
             body.innerHTML = rows.map((row) => `
                 <tr>
-                    <td>${row.code}</td>
+                    <td><strong>${row.code}</strong><div class="small">${row.email || '-'}</div></td>
                     <td>${row.deleted_at || '-'}</td>
                     <td>${row.purge_after || '-'}</td>
                 </tr>
@@ -443,6 +483,8 @@
                 smtpPassword: document.getElementById('smtpPassword').value,
                 smtpFromName: document.getElementById('smtpFromName').value.trim(),
                 smtpFromEmail: document.getElementById('smtpFromEmail').value.trim(),
+                executorEnabled: document.getElementById('executorEnabled').value === '1',
+                dockerBinary: document.getElementById('dockerBinary').value.trim(),
                 defaultUserRepoVisibility: document.getElementById('defaultVisibility').value,
                 dockerhubSearchEnabled: document.getElementById('dockerhubSearchEnabled').value === '1'
             };
@@ -500,15 +542,30 @@
             }
         }
 
+        async function testExecutor() {
+            try {
+                const payload = settingsPayload();
+                const data = await fetchJson('/api/v2/settings/test-executor', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        dockerBinary: payload.dockerBinary
+                    })
+                });
+                setNotice(data.message || '执行链路测试成功。');
+            } catch (error) {
+                setNotice(error.message);
+            }
+        }
+
         async function runQueued() {
             try {
                 const data = await fetchJson('/api/v2/admin/tasks/run-queued', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ limit: 10 })
+                    headers: { 'Content-Type': 'application/json' }
                 });
-                setNotice(`已执行 ${data.executedCount} 个排队任务。`);
-                await Promise.all([loadSummary(), loadTasks()]);
+                setNotice(`排队任务执行完成，本次处理 ${data.executedCount || 0} 条记录。`);
+                await Promise.all([loadTasks(), loadCache(), loadSummary()]);
             } catch (error) {
                 setNotice(error.message);
             }
@@ -540,6 +597,7 @@
         document.getElementById('saveSettingsBtn').addEventListener('click', saveSettings);
         document.getElementById('testHarborBtn').addEventListener('click', testHarbor);
         document.getElementById('testSmtpBtn').addEventListener('click', testSmtp);
+        document.getElementById('testExecutorBtn').addEventListener('click', testExecutor);
         document.getElementById('runTasksBtn').addEventListener('click', runQueued);
         document.getElementById('cleanupBtn').addEventListener('click', cleanupCache);
 

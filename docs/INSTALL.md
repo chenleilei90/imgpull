@@ -2,14 +2,25 @@
 
 ## 1. 环境要求
 
-- Node.js 18 及以上
+- Node.js 18 或更高版本
 - 支持 Windows、Linux、macOS
-- 如需接入 Harbor，请准备：
+- 如需对接 Harbor，请准备：
   - Harbor 地址
-  - Harbor 管理账号
+  - Harbor 账号
   - Harbor 密码
-- 如需安装时测试 MySQL，请准备：
+- 如需测试或使用 MySQL，请准备：
   - MySQL 5 到 8 的主机、端口、库名、账号、密码
+- 如需开启邮件发送，请准备：
+  - SMTP 主机
+  - SMTP 端口
+  - SMTP 用户名
+  - SMTP 密码或授权码
+  - 发件邮箱
+- 如需开启真实镜像执行链路，请确认部署机已安装 Docker，并且服务进程有权限执行：
+  - `docker login`
+  - `docker pull`
+  - `docker tag`
+  - `docker push`
 
 ## 2. 安装依赖
 
@@ -23,13 +34,13 @@ npm install
 npm start
 ```
 
-默认监听端口：
+默认端口：
 
 ```text
 3001
 ```
 
-如需自定义端口：
+自定义端口：
 
 Linux / macOS:
 
@@ -58,7 +69,7 @@ http://127.0.0.1:3001
 /install
 ```
 
-安装页需要填写的内容包括：
+安装页需要填写：
 
 - 站点标题
 - 站点副标题
@@ -92,10 +103,10 @@ config/app.config.json
 - 首页：`/`
 - 安装页：`/install`
 - 用户控制台：`/console`
-- 交付镜像页：`/deliveries`
+- 已交付镜像页：`/deliveries`
 - 后台管理页：`/admin`
 
-旧路径仍兼容跳转：
+兼容入口仍保留：
 
 - `/v2`
 - `/v2/console`
@@ -133,41 +144,34 @@ kubeaszpull.db
 
 当前限制：
 
-- 运行时主逻辑仍以 SQLite 兼容路径为主
-- 也就是说，MySQL 目前主要完成了安装和测试层支持，还没有把整套业务运行时完全切过去
+- 运行时主业务逻辑仍以 SQLite 兼容路径为主
+- MySQL 目前主要完成了安装和测试层支持，运行时还未完全切换
 
-## 7. Harbor 说明
+## 7. Harbor、SMTP 与执行链路说明
 
 当前版本已支持：
 
-- 安装页 Harbor 可选配置
-- 后台 Harbor 配置保存
+- Harbor 配置保存
 - Harbor 连接测试
-- 后台 SMTP 配置保存
+- SMTP 配置保存
 - SMTP 连接测试
 - 购买串码后按配置尝试发送邮件
+- 后台启用真实执行链路后，通过 Docker 执行：
+  - `docker login`
+  - `docker pull`
+  - `docker tag`
+  - `docker push`
 
 当前限制：
 
-- 真实 Harbor API 联动仍需继续完善
-- `pull -> cache -> tag/push` 的真实执行链路仍在后续补齐
+- 真实 Harbor API 级同步仍需继续完善
+- 真实执行链路已经接上，但仍建议先在测试环境验证 Docker 权限、Harbor 权限和仓库路径策略
 
-## 8. 当前可用能力
+## 8. 部署建议
 
-- 首页输入串码
-- 首页购买串码
-- 用户控制台镜像搜索
-- 用户项目管理
-- 我的镜像查看
-- 交付镜像查看
-- 后台基础设置
-- 后台 Harbor 设置
-- 后台缓存与任务概览
+建议按下面顺序试跑：
 
-## 9. 部署建议
-
-建议先按下面顺序试跑：
-
-1. 先用 SQLite 跑通完整安装流程
-2. 再在后台补 Harbor 配置并测试连接
-3. 等业务流程确认稳定后，再继续推进 MySQL 运行时支持和真实 Harbor 执行链路
+1. 先用 SQLite 跑通完整安装流程。
+2. 再在后台补 Harbor、SMTP 和执行链路配置，并逐项测试。
+3. 先用一个测试镜像验证分发任务。
+4. 等业务流程稳定后，再继续推进 MySQL 运行时支持。

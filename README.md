@@ -2,11 +2,11 @@
 
 ImgPull 是一个“海外容器镜像国内获取与分发平台”。
 
-它的目标很明确：
+它的目标很直接：
 
 1. 用户搜索需要的镜像。
 2. 系统优先检查本地 Harbor 默认缓存仓库。
-3. 如果本地没有命中，再回退到 Docker Hub 搜索。
+3. 本地未命中时，再回退到 Docker Hub。
 4. 镜像先进入默认缓存仓库。
 5. 系统再把镜像分发到用户自己的专属命名空间。
 6. 用户在控制台复制 `docker`、`nerdctl` 或 `crictl` 拉取命令，在自己的服务器上拉取镜像。
@@ -16,26 +16,29 @@ ImgPull 是一个“海外容器镜像国内获取与分发平台”。
 ```text
 imgpull-review/
 ├─ config/
-│  └─ app.config.json
+├─ docs/
+│  └─ INSTALL.md
 ├─ public/
 │  ├─ install.html
 │  ├─ index.html
 │  ├─ console.html
 │  ├─ deliveries.html
 │  └─ admin.html
-├─ kubeaszpull.db
 ├─ package.json
+├─ README.md
 └─ server.js
 ```
 
-## 安装要求
+## 环境要求
 
-- Node.js 18 及以上
+- Node.js 18 或更高版本
 - Windows、Linux、macOS 均可运行
-- 如需使用 Harbor 联动，请准备 Harbor 管理地址、账号和密码
-- 如需使用 MySQL，请准备 MySQL 5 到 MySQL 8 的连接信息
+- 如需使用 Harbor 联动，请准备 Harbor 地址、账号和密码
+- 如需使用 MySQL，请准备 MySQL 5 到 8 的连接信息
+- 如需使用邮件发送，请准备 SMTP 主机、端口、账号和发件邮箱
+- 如需使用真实镜像分发，请确认部署机已安装 Docker 并可执行 `docker login / pull / tag / push`
 
-## 安装步骤
+## 安装方式
 
 1. 安装依赖
 
@@ -70,13 +73,11 @@ $env:PORT=8080
 npm start
 ```
 
-详细安装说明见：
+更完整的安装说明见：
 
 - [docs/INSTALL.md](docs/INSTALL.md)
 
 ## 首次安装
-
-系统已支持首装引导。
 
 未安装时，访问首页会自动跳转到：
 
@@ -84,7 +85,7 @@ npm start
 /install
 ```
 
-安装页支持以下内容：
+安装页支持：
 
 - 站点标题
 - 站点副标题
@@ -96,25 +97,26 @@ npm start
 - MySQL 主机、端口、数据库、用户名、密码
 - Harbor 可选配置
 - Harbor 连接测试
-- 将安装配置写入 `config/app.config.json`
+
+安装配置会保存到：
+
+```text
+config/app.config.json
+```
 
 ## 数据库说明
 
 ### SQLite
 
-当前项目继续兼容仓库里的历史 SQLite 数据库：
+当前版本继续兼容仓库里的历史 SQLite 数据。
 
-```text
-kubeaszpull.db
-```
-
-适合场景：
+适合：
 
 - 本地测试
 - 单机部署
 - 轻量试运行
 
-不建议用于：
+不建议直接用于：
 
 - 高并发生产环境
 - 多实例共享写入场景
@@ -130,7 +132,7 @@ kubeaszpull.db
 当前限制：
 
 - 运行时主业务逻辑仍以 SQLite 兼容路径为主
-- 也就是说，MySQL 目前已经具备“安装配置能力”，但运行时支持还没有完全切换完成
+- MySQL 目前已具备安装配置能力，但运行时仍未完全切换
 
 ## 主要页面
 
@@ -140,7 +142,7 @@ kubeaszpull.db
 - `/deliveries` 已交付镜像页
 - `/admin` 管理后台
 
-旧路径仍保留兼容跳转：
+兼容入口仍保留：
 
 - `/v2`
 - `/v2/console`
@@ -158,10 +160,15 @@ kubeaszpull.db
 - 首页支持串码输入与购买串码
 - 用户控制台支持镜像搜索、项目管理、我的镜像、任务查看
 - 交付页支持复制专属镜像拉取命令
-- 后台支持基础设置、Harbor 配置、缓存与任务概览
+- 后台支持基础设置、Harbor 配置、SMTP 配置、执行链路配置、缓存与任务概览
+- 支持将排队任务推进成真实的 Docker 执行链路
+  - `docker login`
+  - `docker pull`
+  - `docker tag`
+  - `docker push`
 
-## 下一步建议
+## 当前建议
 
-1. 完善 MySQL 运行时支持，而不只是安装与测试层支持。
-2. 接入真实 Harbor / Docker 的 `pull -> cache -> tag/push` 执行链路。
-3. 继续补充后台广告位、SEO、备案和内容管理能力。
+1. 继续完善 MySQL 运行时支持，而不只是安装与测试层支持。
+2. 继续补 Harbor API 级同步和任务日志细化能力。
+3. 继续补后台广告位、SEO、备案和内容管理能力。
