@@ -6,253 +6,476 @@
     <title>ImgPull 安装向导</title>
     <style>
         :root {
-            --bg: #edf4fb;
-            --panel: rgba(255, 255, 255, 0.94);
-            --line: #d8e4f1;
-            --ink: #0f172a;
-            --muted: #5f6f86;
-            --brand: #0f6fff;
-            --teal: #0ea5a4;
+            --bg: #f3f5f7;
+            --panel: #ffffff;
+            --panel-soft: #fafbfd;
+            --line: #d9dee5;
+            --line-strong: #c5ccd6;
+            --text: #1f2328;
+            --muted: #667085;
+            --brand: #1677ff;
+            --brand-soft: #e8f1ff;
             --ok: #16a34a;
-            --warn: #f59e0b;
-            --danger: #dc2626;
-            --shadow: 0 24px 56px rgba(15, 23, 42, 0.1);
+            --warn: #d97706;
+            --bad: #dc2626;
         }
+
         * { box-sizing: border-box; }
+
         body {
             margin: 0;
             font-family: "Microsoft YaHei", "Noto Sans SC", sans-serif;
-            color: var(--ink);
-            background:
-                radial-gradient(circle at 12% 10%, rgba(15, 111, 255, 0.18), transparent 28%),
-                radial-gradient(circle at 88% 12%, rgba(14, 165, 164, 0.14), transparent 26%),
-                linear-gradient(180deg, #f9fbff 0%, var(--bg) 100%);
+            background: var(--bg);
+            color: var(--text);
         }
-        .wrap { max-width: 1160px; margin: 0 auto; padding: 28px 20px 56px; }
-        .hero, .section {
+
+        .page {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+            padding: 16px 20px;
             background: var(--panel);
             border: 1px solid var(--line);
-            border-radius: 26px;
-            box-shadow: var(--shadow);
-            backdrop-filter: blur(10px);
         }
-        .hero {
-            display: grid;
-            grid-template-columns: 1.15fr 0.85fr;
-            gap: 18px;
-            padding: 26px;
-        }
-        .section { margin-top: 18px; padding: 24px; }
-        .tag {
-            display: inline-block;
-            padding: 5px 10px;
-            border-radius: 999px;
-            background: rgba(15, 111, 255, 0.12);
-            color: var(--brand);
-            font-size: 12px;
+
+        .brand {
+            font-size: 26px;
             font-weight: 700;
-            margin-bottom: 12px;
+            color: #111827;
         }
-        h1 { margin: 0 0 12px; font-size: 40px; line-height: 1.1; letter-spacing: -0.03em; }
-        h2 { margin: 0 0 12px; font-size: 22px; }
-        p { margin: 0; color: var(--muted); line-height: 1.8; }
-        .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
-        .field { display: grid; gap: 8px; }
-        .field.full { grid-column: 1 / -1; }
-        label { font-size: 14px; font-weight: 700; }
-        input, select, button, textarea {
-            width: 100%;
-            padding: 13px 14px;
-            border-radius: 16px;
-            border: 1px solid var(--line);
-            font: inherit;
+
+        .subtitle {
+            margin-top: 4px;
+            color: var(--muted);
+            font-size: 14px;
         }
-        input, select, textarea { background: #fff; color: var(--ink); }
-        button {
-            border: none;
-            cursor: pointer;
-            color: #fff;
-            background: linear-gradient(135deg, var(--brand) 0%, #3389ff 100%);
-            box-shadow: 0 14px 28px rgba(15, 111, 255, 0.18);
-        }
-        button.alt {
-            background: linear-gradient(135deg, var(--teal) 0%, #18b9b8 100%);
-            box-shadow: 0 14px 28px rgba(14, 165, 164, 0.18);
-        }
-        button.ghost {
+
+        .version {
+            padding: 6px 12px;
+            background: var(--brand-soft);
             color: var(--brand);
-            background: rgba(15, 111, 255, 0.08);
-            border: 1px solid rgba(15, 111, 255, 0.16);
-            box-shadow: none;
+            border: 1px solid #cfe0ff;
+            font-size: 12px;
         }
-        .list { display: grid; gap: 10px; }
-        .list .item, .notice {
-            padding: 14px 16px;
-            border-radius: 16px;
+
+        .layout {
+            display: grid;
+            grid-template-columns: 240px minmax(0, 1fr);
+            gap: 16px;
+        }
+
+        .sidebar,
+        .content {
+            background: var(--panel);
             border: 1px solid var(--line);
-            background: rgba(255, 255, 255, 0.96);
+        }
+
+        .sidebar {
+            padding: 20px 0;
+        }
+
+        .content {
+            padding: 0;
+        }
+
+        .step-title {
+            padding: 0 20px 14px;
+            font-size: 15px;
+            font-weight: 700;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .steps {
+            list-style: none;
+            margin: 0;
+            padding: 12px 0 0;
+        }
+
+        .steps li {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            padding: 12px 20px;
+            color: var(--muted);
+            border-left: 3px solid transparent;
+        }
+
+        .steps li.active {
+            background: #f7faff;
+            border-left-color: var(--brand);
+            color: var(--brand);
+            font-weight: 700;
+        }
+
+        .step-num {
+            width: 28px;
+            height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: #eef2f7;
+            color: #475467;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .steps li.active .step-num {
+            background: var(--brand);
+            color: #fff;
+        }
+
+        .content-head {
+            padding: 18px 22px;
+            border-bottom: 1px solid var(--line);
+            background: var(--panel-soft);
+        }
+
+        .content-head h1 {
+            margin: 0 0 6px;
+            font-size: 24px;
+        }
+
+        .content-head p {
+            margin: 0;
             color: var(--muted);
             line-height: 1.7;
+            font-size: 14px;
         }
-        .notice.ok { border-color: rgba(22, 163, 74, 0.28); background: rgba(240, 253, 244, 0.96); color: #166534; }
-        .notice.warn { border-color: rgba(245, 158, 11, 0.28); background: rgba(255, 248, 235, 0.96); color: #92400e; }
-        .notice.err { border-color: rgba(220, 38, 38, 0.28); background: rgba(254, 242, 242, 0.96); color: #991b1b; }
-        .toolbar { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
-        .toolbar button { width: auto; min-width: 160px; }
-        .switch {
+
+        .section {
+            padding: 22px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .section:last-child {
+            border-bottom: none;
+        }
+
+        .section h2 {
+            margin: 0 0 14px;
+            font-size: 18px;
+        }
+
+        .tips-box {
+            padding: 14px 16px;
+            border: 1px solid var(--line);
+            background: var(--panel-soft);
+            color: var(--muted);
+            line-height: 1.8;
+            font-size: 13px;
+        }
+
+        .tips-box strong {
+            color: var(--text);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px 16px;
+        }
+
+        .field {
+            display: grid;
+            gap: 6px;
+        }
+
+        .field.full {
+            grid-column: 1 / -1;
+        }
+
+        .field label {
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .field-note {
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        input,
+        select,
+        button {
+            width: 100%;
+            min-height: 40px;
+            padding: 10px 12px;
+            border: 1px solid var(--line-strong);
+            border-radius: 0;
+            font: inherit;
+            background: #fff;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--brand);
+            box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.08);
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 14px;
+        }
+
+        button {
+            width: auto;
+            cursor: pointer;
+            background: #fff;
+            color: var(--text);
+        }
+
+        button.primary {
+            background: var(--brand);
+            border-color: var(--brand);
+            color: #fff;
+        }
+
+        button.primary:hover {
+            background: #0f68e8;
+        }
+
+        .inline-check {
             display: flex;
             align-items: center;
             gap: 10px;
-            margin: 6px 0 14px;
-            font-weight: 700;
+            padding: 10px 12px;
+            border: 1px solid var(--line);
+            background: var(--panel-soft);
+            margin-bottom: 14px;
+            font-size: 14px;
         }
-        .switch input { width: auto; margin: 0; }
-        .hidden { display: none; }
-        .foot {
-            display: flex;
-            justify-content: space-between;
-            gap: 16px;
-            margin-top: 18px;
+
+        .inline-check input {
+            width: auto;
+            min-height: auto;
+            margin: 0;
+        }
+
+        .notice {
+            margin-top: 12px;
+            padding: 12px 14px;
+            border: 1px solid var(--line);
+            background: var(--panel-soft);
             color: var(--muted);
+            line-height: 1.7;
             font-size: 13px;
+            white-space: pre-wrap;
         }
-        @media (max-width: 920px) {
-            .hero, .grid { grid-template-columns: 1fr; }
-            .toolbar { flex-direction: column; }
-            .toolbar button { width: 100%; }
-            .foot { flex-direction: column; }
+
+        .notice.ok {
+            border-color: #b7e2c2;
+            background: #f0fdf4;
+            color: #166534;
+        }
+
+        .notice.warn {
+            border-color: #f4d6a6;
+            background: #fff7ed;
+            color: #9a3412;
+        }
+
+        .notice.err {
+            border-color: #efc2c2;
+            background: #fef2f2;
+            color: #991b1b;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 900px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .toolbar {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="wrap">
-        <section class="hero">
-            <article>
-                <span class="tag">首次安装</span>
-                <h1>先完成安装配置，再进入 ImgPull 正式页面</h1>
-                <p>首次启动时，系统会在这里写入站点配置、数据库类型和可选的 Harbor 连接信息。当前版本支持 SQLite 和 MySQL 5 到 8 二选一，Harbor 配置可在安装时填写，也可以先跳过，安装完成后再到后台补充。</p>
-                <div class="list" style="margin-top:16px;">
-                    <div class="item">SQLite 兼容当前仓库已有数据，适合轻量部署和本地测试。</div>
-                    <div class="item">MySQL 已支持安装阶段的连接测试与配置保存，但运行时主逻辑仍以 SQLite 兼容路径为主。</div>
-                    <div class="item">Harbor 建议在安装时先测通地址、账号和密码，后面镜像分发会直接使用这里的配置。</div>
-                </div>
-            </article>
-            <aside class="notice warn">
-                <strong>安装前说明</strong>
-                <div style="margin-top:8px;">1. 如果你暂时只想把系统跑起来，建议先选 SQLite。</div>
-                <div>2. 如果你计划后面接真实 Harbor，同步把 Harbor 配置测通会更省事。</div>
-                <div>3. 首次安装完成后，首页会自动切换成正式前台入口。</div>
+    <div class="page">
+        <div class="topbar">
+            <div>
+                <div class="brand">ImgPull 安装向导</div>
+                <div class="subtitle">按步骤完成基础配置后，即可进入前台和后台。</div>
+            </div>
+            <div class="version">初始化安装</div>
+        </div>
+
+        <div class="layout">
+            <aside class="sidebar">
+                <div class="step-title">安装步骤</div>
+                <ul class="steps">
+                    <li class="active">
+                        <span class="step-num">1</span>
+                        <span>阅读说明</span>
+                    </li>
+                    <li class="active">
+                        <span class="step-num">2</span>
+                        <span>填写基础信息</span>
+                    </li>
+                    <li class="active">
+                        <span class="step-num">3</span>
+                        <span>配置数据库</span>
+                    </li>
+                    <li class="active">
+                        <span class="step-num">4</span>
+                        <span>可选配置 Harbor</span>
+                    </li>
+                    <li class="active">
+                        <span class="step-num">5</span>
+                        <span>完成安装</span>
+                    </li>
+                </ul>
             </aside>
-        </section>
 
-        <section class="section">
-            <h2>基础信息</h2>
-            <div class="grid">
-                <div class="field">
-                    <label for="siteTitle">站点标题</label>
-                    <input id="siteTitle" placeholder="例如：ImgPull 镜像分发平台">
+            <main class="content">
+                <div class="content-head">
+                    <h1>欢迎安装 ImgPull</h1>
+                    <p>这个页面只做安装该做的事，不展示多余视觉效果。你先把站点信息、数据库和 Harbor 配置填好，系统会保存到本地配置文件，之后再进入首页和后台继续细化设置。</p>
                 </div>
-                <div class="field">
-                    <label for="siteSubtitle">站点副标题</label>
-                    <input id="siteSubtitle" placeholder="例如：海外镜像国内获取与分发服务">
-                </div>
-                <div class="field full">
-                    <label for="adminEmail">管理员邮箱</label>
-                    <input id="adminEmail" type="email" placeholder="例如：admin@example.com">
-                </div>
-            </div>
-        </section>
 
-        <section class="section">
-            <h2>数据库配置</h2>
-            <div class="grid">
-                <div class="field">
-                    <label for="databaseType">数据库类型</label>
-                    <select id="databaseType">
-                        <option value="sqlite">SQLite（推荐先跑通）</option>
-                        <option value="mysql">MySQL 5 - 8</option>
-                    </select>
-                </div>
-                <div class="field" id="sqliteField">
-                    <label for="sqlitePath">SQLite 文件路径</label>
-                    <input id="sqlitePath" value="kubeaszpull.db">
-                </div>
-            </div>
+                <section class="section">
+                    <h2>安装说明</h2>
+                    <div class="tips-box">
+                        <div><strong>推荐顺序：</strong>先用 SQLite 跑通安装和基础功能，再考虑切换 MySQL。</div>
+                        <div><strong>Harbor 配置：</strong>可以在安装时填写，也可以先跳过，安装完成后到后台再补。</div>
+                        <div><strong>当前状态：</strong>MySQL 已支持安装阶段测试和保存，但运行时主链路仍优先走 SQLite 兼容路径。</div>
+                    </div>
+                </section>
 
-            <div id="mysqlFields" class="grid hidden" style="margin-top:14px;">
-                <div class="field">
-                    <label for="mysqlHost">MySQL 主机</label>
-                    <input id="mysqlHost" placeholder="127.0.0.1">
-                </div>
-                <div class="field">
-                    <label for="mysqlPort">MySQL 端口</label>
-                    <input id="mysqlPort" value="3306">
-                </div>
-                <div class="field">
-                    <label for="mysqlDatabase">数据库名</label>
-                    <input id="mysqlDatabase" placeholder="imgpull">
-                </div>
-                <div class="field">
-                    <label for="mysqlUser">用户名</label>
-                    <input id="mysqlUser" placeholder="root">
-                </div>
-                <div class="field full">
-                    <label for="mysqlPassword">密码</label>
-                    <input id="mysqlPassword" type="password" placeholder="请输入数据库密码">
-                </div>
-            </div>
+                <section class="section">
+                    <h2>基础信息</h2>
+                    <div class="form-grid">
+                        <div class="field">
+                            <label for="siteTitle">站点标题</label>
+                            <input id="siteTitle" placeholder="例如：ImgPull 镜像分发平台">
+                        </div>
+                        <div class="field">
+                            <label for="siteSubtitle">站点副标题</label>
+                            <input id="siteSubtitle" placeholder="例如：海外镜像国内获取与分发服务">
+                        </div>
+                        <div class="field full">
+                            <label for="adminEmail">管理员邮箱</label>
+                            <input id="adminEmail" type="email" placeholder="例如：admin@example.com">
+                            <div class="field-note">后续可用于系统通知、串码管理联系和后台配置说明。</div>
+                        </div>
+                    </div>
+                </section>
 
-            <div class="toolbar">
-                <button id="testDbBtn" class="alt" type="button">测试数据库连接</button>
-            </div>
-            <div id="dbResult" class="notice" style="margin-top:14px;">安装向导会先测试数据库连接，成功后再保存正式配置。</div>
-        </section>
+                <section class="section">
+                    <h2>数据库配置</h2>
+                    <div class="form-grid">
+                        <div class="field">
+                            <label for="databaseType">数据库类型</label>
+                            <select id="databaseType">
+                                <option value="sqlite">SQLite</option>
+                                <option value="mysql">MySQL 5 - 8</option>
+                            </select>
+                        </div>
+                        <div class="field" id="sqliteField">
+                            <label for="sqlitePath">SQLite 文件路径</label>
+                            <input id="sqlitePath" value="kubeaszpull.db">
+                        </div>
+                    </div>
 
-        <section class="section">
-            <h2>Harbor 配置</h2>
-            <label class="switch">
-                <input id="harborEnabled" type="checkbox" checked>
-                安装时同时配置 Harbor
-            </label>
+                    <div id="mysqlFields" class="form-grid hidden" style="margin-top: 14px;">
+                        <div class="field">
+                            <label for="mysqlHost">MySQL 主机</label>
+                            <input id="mysqlHost" placeholder="127.0.0.1">
+                        </div>
+                        <div class="field">
+                            <label for="mysqlPort">MySQL 端口</label>
+                            <input id="mysqlPort" value="3306">
+                        </div>
+                        <div class="field">
+                            <label for="mysqlDatabase">数据库名</label>
+                            <input id="mysqlDatabase" placeholder="imgpull">
+                        </div>
+                        <div class="field">
+                            <label for="mysqlUser">用户名</label>
+                            <input id="mysqlUser" placeholder="root">
+                        </div>
+                        <div class="field full">
+                            <label for="mysqlPassword">密码</label>
+                            <input id="mysqlPassword" type="password" placeholder="请输入数据库密码">
+                        </div>
+                    </div>
 
-            <div id="harborFields" class="grid">
-                <div class="field">
-                    <label for="harborBaseUrl">Harbor 地址</label>
-                    <input id="harborBaseUrl" placeholder="例如：https://harbor.example.com">
-                </div>
-                <div class="field">
-                    <label for="harborCacheProject">默认缓存仓库</label>
-                    <input id="harborCacheProject" value="cache">
-                </div>
-                <div class="field">
-                    <label for="harborUsername">Harbor 用户名</label>
-                    <input id="harborUsername" placeholder="例如：admin">
-                </div>
-                <div class="field">
-                    <label for="harborPassword">Harbor 密码</label>
-                    <input id="harborPassword" type="password" placeholder="请输入 Harbor 密码">
-                </div>
-            </div>
+                    <div class="toolbar">
+                        <button id="testDbBtn" type="button">测试数据库连接</button>
+                    </div>
+                    <div id="dbResult" class="notice">安装前建议先测试数据库连接，确保当前参数可用。</div>
+                </section>
 
-            <div class="toolbar">
-                <button id="testHarborBtn" class="alt" type="button">测试 Harbor 连接</button>
-            </div>
-            <div id="harborResult" class="notice" style="margin-top:14px;">如果你暂时不想配置 Harbor，可以取消勾选，安装完成后再去后台补充。</div>
-        </section>
+                <section class="section">
+                    <h2>Harbor 配置</h2>
+                    <label class="inline-check">
+                        <input id="harborEnabled" type="checkbox" checked>
+                        <span>安装时同时配置 Harbor</span>
+                    </label>
 
-        <section class="section">
-            <h2>完成安装</h2>
-            <p>点击“保存并完成安装”后，系统会写入 `config/app.config.json`，并跳转到前台首页。</p>
-            <div class="toolbar">
-                <button id="submitBtn" type="button">保存并完成安装</button>
-                <button id="refreshBtn" class="ghost" type="button">刷新当前状态</button>
-            </div>
-            <div id="submitResult" class="notice" style="margin-top:14px;">当前尚未提交安装配置。</div>
-            <div class="foot">
-                <span>提示：SQLite 适合先跑通功能，但不建议直接用于高并发生产环境。</span>
-                <span>安装完成后可继续进入后台配置 Harbor、备案、SEO 等信息。</span>
-            </div>
-        </section>
+                    <div id="harborFields" class="form-grid">
+                        <div class="field">
+                            <label for="harborBaseUrl">Harbor 地址</label>
+                            <input id="harborBaseUrl" placeholder="例如：https://harbor.example.com">
+                        </div>
+                        <div class="field">
+                            <label for="harborCacheProject">默认缓存仓库</label>
+                            <input id="harborCacheProject" value="cache">
+                        </div>
+                        <div class="field">
+                            <label for="harborUsername">Harbor 用户名</label>
+                            <input id="harborUsername" placeholder="例如：admin">
+                        </div>
+                        <div class="field">
+                            <label for="harborPassword">Harbor 密码</label>
+                            <input id="harborPassword" type="password" placeholder="请输入 Harbor 密码">
+                        </div>
+                    </div>
+
+                    <div class="toolbar">
+                        <button id="testHarborBtn" type="button">测试 Harbor 连接</button>
+                    </div>
+                    <div id="harborResult" class="notice">如果你暂时不想配置 Harbor，可以取消勾选，安装完成后再到后台补充。</div>
+                </section>
+
+                <section class="section">
+                    <h2>完成安装</h2>
+                    <div class="tips-box">
+                        安装完成后，系统会写入 <code>config/app.config.json</code>，并自动跳转到首页。
+                    </div>
+                    <div class="toolbar">
+                        <button id="submitBtn" class="primary" type="button">保存并完成安装</button>
+                        <button id="refreshBtn" type="button">刷新当前状态</button>
+                    </div>
+                    <div id="submitResult" class="notice">当前尚未提交安装配置。</div>
+                </section>
+            </main>
+        </div>
     </div>
 
     <script>
@@ -266,6 +489,12 @@
             const el = document.getElementById(id);
             el.className = `notice${type ? ` ${type}` : ''}`;
             el.textContent = message;
+        }
+
+        function normalizeApiMessage(message, fallback) {
+            if (!message) return fallback;
+            if (/[\u4e00-\u9fa5]/.test(message)) return message;
+            return fallback;
         }
 
         function getPayload() {
@@ -303,7 +532,7 @@
             const response = await fetch('/api/install/status');
             const data = await response.json();
             if (data.installed) {
-                setNotice('submitResult', '系统已安装完成，即将跳转到首页。', 'ok');
+                setNotice('submitResult', '系统已安装完成，正在跳转到首页。', 'ok');
                 window.location.href = '/';
                 return;
             }
@@ -331,7 +560,7 @@
             renderHarborFields();
 
             if ((data.warnings || []).length) {
-                setNotice('dbResult', data.warnings.join(' '), 'warn');
+                setNotice('dbResult', 'SQLite 当前适合轻量部署和测试环境，如需后续高并发再切换 MySQL。', 'warn');
             }
         }
 
@@ -353,15 +582,18 @@
             });
             const data = await response.json();
             if (response.ok && data.success) {
-                setNotice('dbResult', data.message || '数据库连接测试成功。', 'ok');
+                const okMessage = payload.databaseType === 'mysql'
+                    ? 'MySQL 连接测试成功。'
+                    : 'SQLite 连接测试成功。';
+                setNotice('dbResult', normalizeApiMessage(data.message, okMessage), 'ok');
                 return;
             }
-            setNotice('dbResult', data.error || '数据库连接测试失败。', 'err');
+            setNotice('dbResult', normalizeApiMessage(data.error, '数据库连接测试失败，请检查参数。'), 'err');
         }
 
         async function testHarbor() {
             if (!harborEnabledEl.checked) {
-                setNotice('harborResult', '当前未启用 Harbor 配置，可直接继续安装。', 'warn');
+                setNotice('harborResult', '当前未启用 Harbor 配置，可以直接继续安装。', 'warn');
                 return;
             }
             setNotice('harborResult', '正在测试 Harbor 连接，请稍候...', '');
@@ -377,10 +609,10 @@
             });
             const data = await response.json();
             if (response.ok && data.success) {
-                setNotice('harborResult', data.message || 'Harbor 连接测试成功。', 'ok');
+                setNotice('harborResult', normalizeApiMessage(data.message, 'Harbor 连接测试成功。'), 'ok');
                 return;
             }
-            setNotice('harborResult', data.error || 'Harbor 连接测试失败。', 'err');
+            setNotice('harborResult', normalizeApiMessage(data.error, 'Harbor 连接测试失败，请检查地址、账号和密码。'), 'err');
         }
 
         async function submitInstall() {
@@ -399,7 +631,7 @@
                 }, 900);
                 return;
             }
-            setNotice('submitResult', data.error || '安装失败，请检查配置后重试。', 'err');
+            setNotice('submitResult', normalizeApiMessage(data.error, '安装失败，请检查填写内容后重试。'), 'err');
         }
 
         databaseTypeEl.addEventListener('change', renderDatabaseFields);
