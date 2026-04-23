@@ -8,43 +8,44 @@
         :root {
             --bg: #edf4fb;
             --panel: rgba(255, 255, 255, 0.94);
-            --line: #d9e5f2;
+            --line: #d8e4f1;
             --ink: #0f172a;
             --muted: #5f6f86;
             --brand: #0f6fff;
             --teal: #0ea5a4;
-            --warn: #f59e0b;
             --ok: #16a34a;
+            --warn: #f59e0b;
             --danger: #dc2626;
             --shadow: 0 24px 56px rgba(15, 23, 42, 0.1);
         }
         * { box-sizing: border-box; }
         body {
             margin: 0;
-            font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+            font-family: "Microsoft YaHei", "Noto Sans SC", sans-serif;
             color: var(--ink);
             background:
-                radial-gradient(circle at 10% 10%, rgba(15, 111, 255, 0.18), transparent 28%),
-                radial-gradient(circle at 90% 12%, rgba(14, 165, 164, 0.14), transparent 24%),
+                radial-gradient(circle at 12% 10%, rgba(15, 111, 255, 0.18), transparent 28%),
+                radial-gradient(circle at 88% 12%, rgba(14, 165, 164, 0.14), transparent 26%),
                 linear-gradient(180deg, #f9fbff 0%, var(--bg) 100%);
         }
-        .wrap { max-width: 1120px; margin: 0 auto; padding: 28px 20px 48px; }
+        .wrap { max-width: 1160px; margin: 0 auto; padding: 28px 20px 56px; }
         .hero, .section {
             background: var(--panel);
             border: 1px solid var(--line);
             border-radius: 26px;
-            padding: 24px;
             box-shadow: var(--shadow);
-            backdrop-filter: blur(12px);
+            backdrop-filter: blur(10px);
         }
-        .hero { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 18px; }
-        .section { margin-top: 18px; }
-        h1 { margin: 0 0 10px; font-size: 38px; letter-spacing: -0.03em; }
-        h2 { margin: 0 0 12px; font-size: 22px; }
-        p { margin: 0; color: var(--muted); line-height: 1.8; }
+        .hero {
+            display: grid;
+            grid-template-columns: 1.15fr 0.85fr;
+            gap: 18px;
+            padding: 26px;
+        }
+        .section { margin-top: 18px; padding: 24px; }
         .tag {
             display: inline-block;
-            padding: 4px 10px;
+            padding: 5px 10px;
             border-radius: 999px;
             background: rgba(15, 111, 255, 0.12);
             color: var(--brand);
@@ -52,21 +53,25 @@
             font-weight: 700;
             margin-bottom: 12px;
         }
+        h1 { margin: 0 0 12px; font-size: 40px; line-height: 1.1; letter-spacing: -0.03em; }
+        h2 { margin: 0 0 12px; font-size: 22px; }
+        p { margin: 0; color: var(--muted); line-height: 1.8; }
         .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
         .field { display: grid; gap: 8px; }
-        label { font-weight: 700; font-size: 14px; }
-        input, select, button {
+        .field.full { grid-column: 1 / -1; }
+        label { font-size: 14px; font-weight: 700; }
+        input, select, button, textarea {
             width: 100%;
+            padding: 13px 14px;
             border-radius: 16px;
             border: 1px solid var(--line);
-            padding: 13px 14px;
             font: inherit;
         }
-        input, select { background: #fff; color: var(--ink); }
+        input, select, textarea { background: #fff; color: var(--ink); }
         button {
+            border: none;
             cursor: pointer;
             color: #fff;
-            border: none;
             background: linear-gradient(135deg, var(--brand) 0%, #3389ff 100%);
             box-shadow: 0 14px 28px rgba(15, 111, 255, 0.18);
         }
@@ -74,39 +79,48 @@
             background: linear-gradient(135deg, var(--teal) 0%, #18b9b8 100%);
             box-shadow: 0 14px 28px rgba(14, 165, 164, 0.18);
         }
-        .notice, .result {
+        button.ghost {
+            color: var(--brand);
+            background: rgba(15, 111, 255, 0.08);
+            border: 1px solid rgba(15, 111, 255, 0.16);
+            box-shadow: none;
+        }
+        .list { display: grid; gap: 10px; }
+        .list .item, .notice {
             padding: 14px 16px;
             border-radius: 16px;
             border: 1px solid var(--line);
-            background: rgba(255,255,255,0.92);
+            background: rgba(255, 255, 255, 0.96);
             color: var(--muted);
             line-height: 1.7;
         }
-        .notice.warn { border-color: rgba(245, 158, 11, 0.3); background: rgba(255, 248, 235, 0.96); color: #92400e; }
-        .notice.ok, .result.ok { border-color: rgba(22, 163, 74, 0.28); background: rgba(240, 253, 244, 0.96); color: #166534; }
-        .notice.err, .result.err { border-color: rgba(220, 38, 38, 0.25); background: rgba(254, 242, 242, 0.96); color: #991b1b; }
+        .notice.ok { border-color: rgba(22, 163, 74, 0.28); background: rgba(240, 253, 244, 0.96); color: #166534; }
+        .notice.warn { border-color: rgba(245, 158, 11, 0.28); background: rgba(255, 248, 235, 0.96); color: #92400e; }
+        .notice.err { border-color: rgba(220, 38, 38, 0.28); background: rgba(254, 242, 242, 0.96); color: #991b1b; }
+        .toolbar { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+        .toolbar button { width: auto; min-width: 160px; }
         .switch {
             display: flex;
             align-items: center;
             gap: 10px;
-            margin-bottom: 12px;
+            margin: 6px 0 14px;
             font-weight: 700;
         }
         .switch input { width: auto; margin: 0; }
-        .footer-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 18px; }
-        .small { font-size: 13px; color: var(--muted); }
-        .list { display: grid; gap: 10px; margin-top: 16px; }
-        .list-item {
-            padding: 12px 14px;
-            border-radius: 14px;
-            border: 1px solid var(--line);
-            background: rgba(255,255,255,0.92);
-            color: var(--muted);
-        }
         .hidden { display: none; }
+        .foot {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            margin-top: 18px;
+            color: var(--muted);
+            font-size: 13px;
+        }
         @media (max-width: 920px) {
             .hero, .grid { grid-template-columns: 1fr; }
-            .footer-actions { flex-direction: column; }
+            .toolbar { flex-direction: column; }
+            .toolbar button { width: 100%; }
+            .foot { flex-direction: column; }
         }
     </style>
 </head>
@@ -115,25 +129,24 @@
         <section class="hero">
             <article>
                 <span class="tag">首次安装</span>
-                <h1>先完成安装配置，再进入 ImgPull 正式首页。</h1>
-                <p>这一步会保存站点信息、数据库类型和可选的 Harbor 配置。系统默认兼容当前仓库中的 SQLite 数据文件，也支持填写 MySQL 5 - 8 参数并测试连接。</p>
-                <div class="list">
-                    <div class="list-item">如果继续使用现有 SQLite 数据库，系统会提示这更适合测试、单机或轻量部署环境。</div>
-                    <div class="list-item">Harbor 配置可以现在填写，也可以先跳过，后续去后台继续测试和保存。</div>
-                    <div class="list-item">安装完成后，首页、控制台、交付页和后台都会切换到正式文件名，不再依赖旧的 `v2` 页面路径。</div>
+                <h1>先完成安装配置，再进入 ImgPull 正式页面</h1>
+                <p>首次启动时，系统会在这里写入站点配置、数据库类型和可选的 Harbor 连接信息。当前版本支持 SQLite 和 MySQL 5 到 8 二选一，Harbor 配置可在安装时填写，也可以先跳过，安装完成后再到后台补充。</p>
+                <div class="list" style="margin-top:16px;">
+                    <div class="item">SQLite 兼容当前仓库已有数据，适合轻量部署和本地测试。</div>
+                    <div class="item">MySQL 已支持安装阶段的连接测试与配置保存，但运行时主逻辑仍以 SQLite 兼容路径为主。</div>
+                    <div class="item">Harbor 建议在安装时先测通地址、账号和密码，后面镜像分发会直接使用这里的配置。</div>
                 </div>
             </article>
             <aside class="notice warn">
-                <strong>安装前提醒</strong>
-                <div style="margin-top:8px;">1. SQLite 可以直接复用当前已有数据，但只建议用于测试、单机或轻量部署环境。</div>
-                <div>2. MySQL 连接测试已经接入，推荐新部署优先准备 MySQL 5 - 8 环境。</div>
-                <div>3. Harbor 不强制在安装阶段配置，跳过后仍可在后台测试与保存。</div>
-                <div id="statusBox" style="margin-top:10px;"></div>
+                <strong>安装前说明</strong>
+                <div style="margin-top:8px;">1. 如果你暂时只想把系统跑起来，建议先选 SQLite。</div>
+                <div>2. 如果你计划后面接真实 Harbor，同步把 Harbor 配置测通会更省事。</div>
+                <div>3. 首次安装完成后，首页会自动切换成正式前台入口。</div>
             </aside>
         </section>
 
         <section class="section">
-            <h2>站点基础信息</h2>
+            <h2>基础信息</h2>
             <div class="grid">
                 <div class="field">
                     <label for="siteTitle">站点标题</label>
@@ -141,11 +154,11 @@
                 </div>
                 <div class="field">
                     <label for="siteSubtitle">站点副标题</label>
-                    <input id="siteSubtitle" placeholder="例如：海外镜像国内获取与分发平台">
+                    <input id="siteSubtitle" placeholder="例如：海外镜像国内获取与分发服务">
                 </div>
-                <div class="field">
+                <div class="field full">
                     <label for="adminEmail">管理员邮箱</label>
-                    <input id="adminEmail" placeholder="例如：admin@example.com">
+                    <input id="adminEmail" type="email" placeholder="例如：admin@example.com">
                 </div>
             </div>
         </section>
@@ -156,229 +169,247 @@
                 <div class="field">
                     <label for="databaseType">数据库类型</label>
                     <select id="databaseType">
-                        <option value="sqlite">SQLite（兼容当前 DB，轻量但不推荐高并发生产）</option>
+                        <option value="sqlite">SQLite（推荐先跑通）</option>
                         <option value="mysql">MySQL 5 - 8</option>
                     </select>
                 </div>
-                <div class="field">
-                    <label for="sqlitePath">SQLite 路径</label>
-                    <input id="sqlitePath" value="kubeaszpull.db" placeholder="例如：kubeaszpull.db">
+                <div class="field" id="sqliteField">
+                    <label for="sqlitePath">SQLite 文件路径</label>
+                    <input id="sqlitePath" value="kubeaszpull.db">
                 </div>
-            </div>
-
-            <div id="sqliteNotice" class="notice warn" style="margin-top:14px;">
-                你当前选择的是 SQLite。它可以直接复用仓库中的现有数据库，但只建议用于测试、单机或轻量部署环境。
             </div>
 
             <div id="mysqlFields" class="grid hidden" style="margin-top:14px;">
                 <div class="field">
                     <label for="mysqlHost">MySQL 主机</label>
-                    <input id="mysqlHost" placeholder="例如：127.0.0.1">
+                    <input id="mysqlHost" placeholder="127.0.0.1">
                 </div>
                 <div class="field">
                     <label for="mysqlPort">MySQL 端口</label>
-                    <input id="mysqlPort" value="3306" placeholder="3306">
+                    <input id="mysqlPort" value="3306">
                 </div>
                 <div class="field">
                     <label for="mysqlDatabase">数据库名</label>
-                    <input id="mysqlDatabase" placeholder="例如：imgpull">
+                    <input id="mysqlDatabase" placeholder="imgpull">
                 </div>
                 <div class="field">
                     <label for="mysqlUser">用户名</label>
-                    <input id="mysqlUser" placeholder="例如：root">
+                    <input id="mysqlUser" placeholder="root">
+                </div>
+                <div class="field full">
+                    <label for="mysqlPassword">密码</label>
+                    <input id="mysqlPassword" type="password" placeholder="请输入数据库密码">
+                </div>
+            </div>
+
+            <div class="toolbar">
+                <button id="testDbBtn" class="alt" type="button">测试数据库连接</button>
+            </div>
+            <div id="dbResult" class="notice" style="margin-top:14px;">安装向导会先测试数据库连接，成功后再保存正式配置。</div>
+        </section>
+
+        <section class="section">
+            <h2>Harbor 配置</h2>
+            <label class="switch">
+                <input id="harborEnabled" type="checkbox" checked>
+                安装时同时配置 Harbor
+            </label>
+
+            <div id="harborFields" class="grid">
+                <div class="field">
+                    <label for="harborBaseUrl">Harbor 地址</label>
+                    <input id="harborBaseUrl" placeholder="例如：https://harbor.example.com">
                 </div>
                 <div class="field">
-                    <label for="mysqlPassword">密码</label>
-                    <input id="mysqlPassword" type="password" placeholder="输入密码">
+                    <label for="harborCacheProject">默认缓存仓库</label>
+                    <input id="harborCacheProject" value="cache">
+                </div>
+                <div class="field">
+                    <label for="harborUsername">Harbor 用户名</label>
+                    <input id="harborUsername" placeholder="例如：admin">
+                </div>
+                <div class="field">
+                    <label for="harborPassword">Harbor 密码</label>
+                    <input id="harborPassword" type="password" placeholder="请输入 Harbor 密码">
                 </div>
             </div>
 
-            <div class="footer-actions" style="justify-content:flex-start;">
-                <button type="button" class="alt" id="testDbBtn">测试数据库连接</button>
+            <div class="toolbar">
+                <button id="testHarborBtn" class="alt" type="button">测试 Harbor 连接</button>
             </div>
-            <div class="result" id="dbResult" style="margin-top:14px;">尚未测试数据库连接。</div>
+            <div id="harborResult" class="notice" style="margin-top:14px;">如果你暂时不想配置 Harbor，可以取消勾选，安装完成后再去后台补充。</div>
         </section>
 
         <section class="section">
-            <div class="switch">
-                <input type="checkbox" id="harborEnabled" checked>
-                <label for="harborEnabled" style="margin:0;">安装时同时配置 Harbor</label>
+            <h2>完成安装</h2>
+            <p>点击“保存并完成安装”后，系统会写入 `config/app.config.json`，并跳转到前台首页。</p>
+            <div class="toolbar">
+                <button id="submitBtn" type="button">保存并完成安装</button>
+                <button id="refreshBtn" class="ghost" type="button">刷新当前状态</button>
             </div>
-            <div class="small">默认勾选。取消后，安装流程会先跳过 Harbor，后续你可以在后台继续测试和保存。</div>
-
-            <div id="harborFields" style="margin-top:16px;">
-                <div class="grid">
-                    <div class="field">
-                        <label for="harborBaseUrl">Harbor 地址</label>
-                        <input id="harborBaseUrl" placeholder="例如：https://harbor.example.com">
-                    </div>
-                    <div class="field">
-                        <label for="harborCacheProject">默认缓存仓库名</label>
-                        <input id="harborCacheProject" value="cache" placeholder="例如：cache">
-                    </div>
-                    <div class="field">
-                        <label for="harborUsername">Harbor 用户名</label>
-                        <input id="harborUsername" placeholder="例如：admin">
-                    </div>
-                    <div class="field">
-                        <label for="harborPassword">Harbor 密码</label>
-                        <input id="harborPassword" type="password" placeholder="输入 Harbor 密码">
-                    </div>
-                </div>
-                <div class="footer-actions" style="justify-content:flex-start;">
-                    <button type="button" class="alt" id="testHarborBtn">测试 Harbor 连接</button>
-                </div>
-                <div class="result" id="harborResult" style="margin-top:14px;">尚未测试 Harbor 连接。</div>
+            <div id="submitResult" class="notice" style="margin-top:14px;">当前尚未提交安装配置。</div>
+            <div class="foot">
+                <span>提示：SQLite 适合先跑通功能，但不建议直接用于高并发生产环境。</span>
+                <span>安装完成后可继续进入后台配置 Harbor、备案、SEO 等信息。</span>
             </div>
-        </section>
-
-        <section class="section">
-            <h2>开始安装</h2>
-            <p>安装完成后，系统会写入配置文件并跳转到正式首页。若你选择的是 SQLite，会保留现有数据兼容路径并给出安全提示。</p>
-            <div class="footer-actions">
-                <button type="button" id="submitBtn">保存并完成安装</button>
-            </div>
-            <div class="result" id="submitResult" style="margin-top:14px;">等待提交安装信息。</div>
         </section>
     </div>
 
     <script>
         const databaseTypeEl = document.getElementById('databaseType');
-        const sqliteNoticeEl = document.getElementById('sqliteNotice');
+        const sqliteFieldEl = document.getElementById('sqliteField');
         const mysqlFieldsEl = document.getElementById('mysqlFields');
         const harborEnabledEl = document.getElementById('harborEnabled');
         const harborFieldsEl = document.getElementById('harborFields');
-        const statusBoxEl = document.getElementById('statusBox');
 
-        function setResult(el, message, type = 'plain') {
-            el.className = `result${type === 'plain' ? '' : ` ${type}`}`;
+        function setNotice(id, message, type) {
+            const el = document.getElementById(id);
+            el.className = `notice${type ? ` ${type}` : ''}`;
             el.textContent = message;
         }
 
-        function setStatus(message, type = 'warn') {
-            statusBoxEl.className = `notice ${type}`;
-            statusBoxEl.textContent = message;
+        function getPayload() {
+            return {
+                siteTitle: document.getElementById('siteTitle').value.trim(),
+                siteSubtitle: document.getElementById('siteSubtitle').value.trim(),
+                adminEmail: document.getElementById('adminEmail').value.trim(),
+                databaseType: databaseTypeEl.value,
+                sqlitePath: document.getElementById('sqlitePath').value.trim(),
+                mysqlHost: document.getElementById('mysqlHost').value.trim(),
+                mysqlPort: document.getElementById('mysqlPort').value.trim(),
+                mysqlDatabase: document.getElementById('mysqlDatabase').value.trim(),
+                mysqlUser: document.getElementById('mysqlUser').value.trim(),
+                mysqlPassword: document.getElementById('mysqlPassword').value,
+                harborEnabled: harborEnabledEl.checked,
+                harborBaseUrl: document.getElementById('harborBaseUrl').value.trim(),
+                harborCacheProject: document.getElementById('harborCacheProject').value.trim(),
+                harborUsername: document.getElementById('harborUsername').value.trim(),
+                harborPassword: document.getElementById('harborPassword').value
+            };
         }
 
-        function syncDatabaseFields() {
+        function renderDatabaseFields() {
             const isMysql = databaseTypeEl.value === 'mysql';
+            sqliteFieldEl.classList.toggle('hidden', isMysql);
             mysqlFieldsEl.classList.toggle('hidden', !isMysql);
-            sqliteNoticeEl.classList.toggle('hidden', isMysql);
         }
 
-        function syncHarborFields() {
+        function renderHarborFields() {
             harborFieldsEl.classList.toggle('hidden', !harborEnabledEl.checked);
+            document.getElementById('testHarborBtn').disabled = !harborEnabledEl.checked;
         }
 
-        async function loadInstallStatus() {
+        async function loadStatus() {
             const response = await fetch('/api/install/status');
             const data = await response.json();
             if (data.installed) {
-                setStatus('系统已安装，正在跳转到首页。', 'ok');
-                window.setTimeout(() => {
-                    window.location.href = '/';
-                }, 900);
+                setNotice('submitResult', '系统已安装完成，即将跳转到首页。', 'ok');
+                window.location.href = '/';
                 return;
             }
 
-            setStatus(data.warnings && data.warnings.length ? data.warnings[0] : '请按顺序完成安装配置。', 'warn');
+            const config = data.config || {};
+            document.getElementById('siteTitle').value = config.site?.title || 'ImgPull';
+            document.getElementById('siteSubtitle').value = config.site?.subtitle || '海外镜像国内获取与分发平台';
+            document.getElementById('adminEmail').value = config.site?.adminEmail || '';
+
+            const db = config.database || {};
+            databaseTypeEl.value = db.type || 'sqlite';
+            document.getElementById('sqlitePath').value = db.sqlitePath || 'kubeaszpull.db';
+            document.getElementById('mysqlHost').value = db.mysql?.host || '';
+            document.getElementById('mysqlPort').value = db.mysql?.port || '3306';
+            document.getElementById('mysqlDatabase').value = db.mysql?.database || '';
+            document.getElementById('mysqlUser').value = db.mysql?.user || '';
+
+            const harbor = config.harbor || {};
+            harborEnabledEl.checked = harbor.enabled !== false;
+            document.getElementById('harborBaseUrl').value = harbor.baseUrl || '';
+            document.getElementById('harborCacheProject').value = harbor.cacheProjectName || 'cache';
+            document.getElementById('harborUsername').value = harbor.username || '';
+
+            renderDatabaseFields();
+            renderHarborFields();
+
+            if ((data.warnings || []).length) {
+                setNotice('dbResult', data.warnings.join(' '), 'warn');
+            }
         }
 
-        async function testDatabase() {
-            const payload = {
-                type: databaseTypeEl.value,
-                sqlitePath: document.getElementById('sqlitePath').value,
-                mysqlHost: document.getElementById('mysqlHost').value,
-                mysqlPort: document.getElementById('mysqlPort').value,
-                mysqlDatabase: document.getElementById('mysqlDatabase').value,
-                mysqlUser: document.getElementById('mysqlUser').value,
-                mysqlPassword: document.getElementById('mysqlPassword').value
-            };
-
-            setResult(document.getElementById('dbResult'), '正在测试数据库连接...');
-
+        async function testDb() {
+            setNotice('dbResult', '正在测试数据库连接，请稍候...', '');
+            const payload = getPayload();
             const response = await fetch('/api/install/test-db', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({
+                    type: payload.databaseType,
+                    sqlitePath: payload.sqlitePath,
+                    mysqlHost: payload.mysqlHost,
+                    mysqlPort: payload.mysqlPort,
+                    mysqlDatabase: payload.mysqlDatabase,
+                    mysqlUser: payload.mysqlUser,
+                    mysqlPassword: payload.mysqlPassword
+                })
             });
             const data = await response.json();
-            if (!response.ok || !data.success) {
-                setResult(document.getElementById('dbResult'), data.error || '数据库测试失败', 'err');
+            if (response.ok && data.success) {
+                setNotice('dbResult', data.message || '数据库连接测试成功。', 'ok');
                 return;
             }
-            setResult(document.getElementById('dbResult'), data.message || '数据库连接成功', 'ok');
+            setNotice('dbResult', data.error || '数据库连接测试失败。', 'err');
         }
 
         async function testHarbor() {
-            const payload = {
-                baseUrl: document.getElementById('harborBaseUrl').value,
-                username: document.getElementById('harborUsername').value,
-                password: document.getElementById('harborPassword').value
-            };
-
-            setResult(document.getElementById('harborResult'), '正在测试 Harbor 连接...');
-
+            if (!harborEnabledEl.checked) {
+                setNotice('harborResult', '当前未启用 Harbor 配置，可直接继续安装。', 'warn');
+                return;
+            }
+            setNotice('harborResult', '正在测试 Harbor 连接，请稍候...', '');
+            const payload = getPayload();
             const response = await fetch('/api/install/test-harbor', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({
+                    baseUrl: payload.harborBaseUrl,
+                    username: payload.harborUsername,
+                    password: payload.harborPassword
+                })
             });
             const data = await response.json();
-            if (!response.ok || !data.success) {
-                setResult(document.getElementById('harborResult'), data.error || 'Harbor 测试失败', 'err');
+            if (response.ok && data.success) {
+                setNotice('harborResult', data.message || 'Harbor 连接测试成功。', 'ok');
                 return;
             }
-            setResult(document.getElementById('harborResult'), data.message || 'Harbor 连接成功', 'ok');
+            setNotice('harborResult', data.error || 'Harbor 连接测试失败。', 'err');
         }
 
         async function submitInstall() {
-            const payload = {
-                siteTitle: document.getElementById('siteTitle').value,
-                siteSubtitle: document.getElementById('siteSubtitle').value,
-                adminEmail: document.getElementById('adminEmail').value,
-                databaseType: databaseTypeEl.value,
-                sqlitePath: document.getElementById('sqlitePath').value,
-                mysqlHost: document.getElementById('mysqlHost').value,
-                mysqlPort: document.getElementById('mysqlPort').value,
-                mysqlDatabase: document.getElementById('mysqlDatabase').value,
-                mysqlUser: document.getElementById('mysqlUser').value,
-                mysqlPassword: document.getElementById('mysqlPassword').value,
-                harborEnabled: harborEnabledEl.checked,
-                harborBaseUrl: document.getElementById('harborBaseUrl').value,
-                harborCacheProject: document.getElementById('harborCacheProject').value,
-                harborUsername: document.getElementById('harborUsername').value,
-                harborPassword: document.getElementById('harborPassword').value
-            };
-
-            setResult(document.getElementById('submitResult'), '正在保存安装配置...');
-
+            setNotice('submitResult', '正在保存安装配置，请稍候...', '');
+            const payload = getPayload();
             const response = await fetch('/api/install/submit', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
             const data = await response.json();
-            if (!response.ok || !data.success) {
-                setResult(document.getElementById('submitResult'), data.error || '安装失败', 'err');
+            if (response.ok && data.success) {
+                setNotice('submitResult', '安装完成，正在跳转到首页。', 'ok');
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 900);
                 return;
             }
-
-            setResult(document.getElementById('submitResult'), data.message || '安装成功，正在跳转首页。', 'ok');
-            window.setTimeout(() => {
-                window.location.href = '/';
-            }, 900);
+            setNotice('submitResult', data.error || '安装失败，请检查配置后重试。', 'err');
         }
 
-        databaseTypeEl.addEventListener('change', syncDatabaseFields);
-        harborEnabledEl.addEventListener('change', syncHarborFields);
-        document.getElementById('testDbBtn').addEventListener('click', testDatabase);
+        databaseTypeEl.addEventListener('change', renderDatabaseFields);
+        harborEnabledEl.addEventListener('change', renderHarborFields);
+        document.getElementById('testDbBtn').addEventListener('click', testDb);
         document.getElementById('testHarborBtn').addEventListener('click', testHarbor);
         document.getElementById('submitBtn').addEventListener('click', submitInstall);
+        document.getElementById('refreshBtn').addEventListener('click', loadStatus);
 
-        syncDatabaseFields();
-        syncHarborFields();
-        loadInstallStatus();
+        loadStatus();
     </script>
 </body>
 </html>
