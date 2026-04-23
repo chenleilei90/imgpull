@@ -7,12 +7,12 @@
     <style>
         :root {
             --bg: #edf4fb;
-            --panel: rgba(255, 255, 255, 0.9);
+            --panel: rgba(255, 255, 255, 0.92);
             --line: #d9e5f2;
             --ink: #0f172a;
             --muted: #5f6f86;
             --brand: #0f6fff;
-            --brand-2: #0ea5a4;
+            --teal: #0ea5a4;
             --ok: #16a34a;
             --shadow: 0 24px 60px rgba(15, 23, 42, 0.1);
         }
@@ -20,14 +20,19 @@
         body {
             margin: 0;
             color: var(--ink);
-            font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+            font-family: "Microsoft YaHei", "Noto Sans SC", sans-serif;
             background:
                 radial-gradient(circle at 8% 8%, rgba(15, 111, 255, 0.18), transparent 26%),
                 radial-gradient(circle at 92% 16%, rgba(14, 165, 164, 0.15), transparent 24%),
                 linear-gradient(180deg, #f7fbff 0%, var(--bg) 100%);
         }
-        .wrap { max-width: 1180px; margin: 0 auto; padding: 28px 20px 64px; }
-        .hero { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 22px; align-items: stretch; }
+        .wrap { max-width: 1180px; margin: 0 auto; padding: 28px 20px 56px; }
+        .hero {
+            display: grid;
+            grid-template-columns: 1.15fr 0.85fr;
+            gap: 22px;
+            align-items: stretch;
+        }
         .panel {
             background: var(--panel);
             border: 1px solid var(--line);
@@ -37,9 +42,21 @@
             box-shadow: var(--shadow);
         }
         h1 { margin: 0 0 12px; font-size: 44px; line-height: 1.06; letter-spacing: -0.03em; }
+        h2 { margin: 0 0 12px; font-size: 22px; }
         .lead { margin: 0; font-size: 16px; line-height: 1.8; color: var(--muted); }
-        .grid { display: grid; grid-template-columns: 1fr 170px; gap: 12px; margin-top: 24px; }
-        .stack { display: grid; gap: 14px; }
+        .tag {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: rgba(15, 111, 255, 0.12);
+            color: var(--brand);
+            font-size: 12px;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        .tag.ok { background: rgba(22, 163, 74, 0.12); color: var(--ok); }
+        .grid { display: grid; grid-template-columns: 1fr 170px; gap: 12px; margin-top: 18px; }
+        .stack { display: grid; gap: 14px; margin-top: 16px; }
         input, button, a.button {
             width: 100%;
             border-radius: 16px;
@@ -57,11 +74,15 @@
             text-align: center;
         }
         button.alt, a.button.alt {
-            background: linear-gradient(135deg, var(--brand-2) 0%, #15b8b7 100%);
+            background: linear-gradient(135deg, var(--teal) 0%, #15b8b7 100%);
         }
-        .status { margin-top: 14px; color: var(--muted); min-height: 24px; }
+        .status, .notice {
+            color: var(--muted);
+            min-height: 24px;
+            line-height: 1.7;
+        }
         .success-card {
-            margin-top: 14px;
+            margin-top: 10px;
             padding: 16px;
             border-radius: 18px;
             border: 1px solid #cfe0ff;
@@ -74,15 +95,8 @@
             margin-top: 10px;
             flex-wrap: wrap;
         }
-        .success-code strong {
-            font-size: 26px;
-            letter-spacing: 0.08em;
-        }
-        .success-code button {
-            width: auto;
-            min-width: 120px;
-            padding: 12px 16px;
-        }
+        .success-code strong { font-size: 26px; letter-spacing: 0.08em; }
+        .success-code button { width: auto; min-width: 120px; }
         .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
         .metric {
             border-radius: 18px;
@@ -108,19 +122,15 @@
             border-radius: 14px;
             color: var(--muted);
         }
-        .tag {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 999px;
-            background: rgba(15, 111, 255, 0.12);
-            color: var(--brand);
-            font-size: 12px;
-            margin-bottom: 10px;
-            font-weight: 600;
-        }
-        .tag.ok {
-            background: rgba(22, 163, 74, 0.12);
-            color: var(--ok);
+        .footer {
+            margin-top: 22px;
+            padding: 18px 0 10px;
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            color: var(--muted);
+            font-size: 13px;
         }
         @media (max-width: 920px) {
             .hero, .sections { grid-template-columns: 1fr; }
@@ -134,47 +144,51 @@
         <section class="hero">
             <article class="panel">
                 <span class="tag">ImgPull</span>
-                <h1>海外镜像统一拉取到国内，再生成你的专属下载地址。</h1>
-                <p class="lead">用户先搜索镜像，平台优先检查默认 Harbor 缓存。缓存未命中时，再从 Docker Hub 拉取到默认仓库，然后分发到你的专属命名空间，最后给你一个国内可直接 `pull` 的镜像地址。</p>
+                <h1>海外镜像统一获取，自动分发到你的专属国内地址</h1>
+                <p class="lead">用户在首页搜索镜像或输入串码进入控制台。系统优先命中本地 Harbor 默认缓存仓库，未命中时再回退到 Docker Hub 搜索，并把镜像同步到默认缓存仓库后分发到你的专属命名空间。</p>
+
                 <div class="stack">
                     <div>
-                        <div class="small" style="margin-bottom:8px;">已有串码</div>
+                        <div style="margin-bottom:8px;font-weight:700;">已有串码</div>
                         <div class="grid" style="margin-top:0;">
-                            <input id="code" placeholder="输入你的串码，例如 KZABC123">
-                            <button id="enterBtn">进入控制台</button>
+                            <input id="code" placeholder="请输入串码，例如 KZABC123">
+                            <button id="enterBtn" type="button">进入控制台</button>
                         </div>
-                        <div class="status" id="status">还没有验证串码。</div>
+                        <div id="status" class="status">输入串码后可直接进入用户控制台。</div>
                     </div>
+
                     <div class="card" style="padding:18px;">
                         <div class="tag ok">购买串码</div>
-                        <h3 style="margin:0 0 8px;">购买授权后即可拉取并管理专属镜像</h3>
-                        <p style="margin-bottom:14px;">填写邮箱后生成串码。购买成功后页面会直接显示串码，同时支持一键复制；后续配置 SMTP 后也可自动发送到邮箱。</p>
-                        <div class="grid" style="grid-template-columns: 1fr 190px; margin-top:0;">
-                            <input id="purchaseEmail" placeholder="输入购买方邮箱，例如 ops@example.com">
-                            <button id="purchaseBtn" class="alt">购买并生成串码</button>
+                        <h3 style="margin:0 0 8px;">购买后立即获得授权串码</h3>
+                        <p style="margin-bottom:14px;">填写邮箱后可生成新的授权串码。当前版本优先在页面直接展示和复制，后续接入 SMTP 后也可同步发到邮箱。</p>
+                        <div class="grid" style="grid-template-columns:1fr 190px;margin-top:0;">
+                            <input id="purchaseEmail" placeholder="请输入购买邮箱，例如 ops@example.com">
+                            <button id="purchaseBtn" class="alt" type="button">生成并显示串码</button>
                         </div>
-                        <div class="status" id="purchaseStatus">购买前请先确认邮箱地址正确。</div>
+                        <div id="purchaseStatus" class="status">购买后会立即返回串码，可直接复制使用。</div>
                         <div id="purchaseSuccess" class="success-card" style="display:none;">
                             <div class="tag ok">购买成功</div>
-                            <div>串码已经生成，下面可以直接复制使用。</div>
+                            <div>系统已生成新的授权串码：</div>
                             <div class="success-code">
                                 <strong id="purchaseCode">-</strong>
                                 <button id="copyPurchaseCodeBtn" class="alt" type="button">复制串码</button>
                             </div>
-                            <div class="small" id="purchaseEmailHint" style="margin-top:10px;"></div>
+                            <div id="purchaseEmailHint" style="margin-top:10px;color:var(--muted);font-size:13px;"></div>
                         </div>
                     </div>
                 </div>
-                <div class="grid" style="grid-template-columns: 1fr 1fr 1fr; margin-top: 16px;">
-                    <a class="button alt" href="/console">进入用户控制台</a>
-                    <a class="button alt" href="/deliveries">查看交付镜像</a>
-                    <a class="button alt" href="/admin">进入管理后台</a>
+
+                <div class="grid" style="grid-template-columns:1fr 1fr 1fr;margin-top:16px;">
+                    <a class="button alt" href="/console">用户控制台</a>
+                    <a class="button alt" href="/deliveries">交付镜像页</a>
+                    <a class="button alt" href="/admin">后台管理</a>
                 </div>
             </article>
+
             <aside class="panel">
-                <div class="stats" id="stats">
-                    <div class="metric"><strong id="catalogCount">-</strong><span>目录镜像数</span></div>
-                    <div class="metric"><strong id="localCount">-</strong><span>默认缓存镜像数</span></div>
+                <div class="stats">
+                    <div class="metric"><strong id="catalogCount">-</strong><span>镜像目录总数</span></div>
+                    <div class="metric"><strong id="localCount">-</strong><span>本地缓存镜像</span></div>
                     <div class="metric"><strong id="userCount">-</strong><span>有效用户数</span></div>
                     <div class="metric"><strong id="queuedCount">-</strong><span>排队任务数</span></div>
                 </div>
@@ -183,30 +197,35 @@
 
         <section class="sections">
             <article class="card">
-                <span class="tag ok">搜索规则</span>
-                <h3>只有两层搜索</h3>
-                <p>先搜默认私有缓存仓库。只有缓存完全没命中时，才去 Docker Hub 搜索，避免普通用户仓库参与搜索结果。</p>
+                <span class="tag ok">搜索逻辑</span>
+                <h3>优先本地缓存，再查 Docker Hub</h3>
+                <p>平台默认优先搜索本地 Harbor 默认缓存仓库。只有当本地没有命中或用户主动选择综合搜索时，系统才会展示 Docker Hub 结果。</p>
             </article>
             <article class="card">
-                <span class="tag ok">交付方式</span>
-                <h3>用户只拉自己的路径</h3>
-                <p>系统先把上游镜像落进默认缓存，再分发到用户自己的 Harbor 命名空间。用户最终只用自己的账号和自己的镜像地址。</p>
+                <span class="tag ok">获取流程</span>
+                <h3>默认仓库缓存，用户只拿专属地址</h3>
+                <p>镜像先进入默认缓存仓库，再分发到用户自己的 Harbor 命名空间。普通用户不直接操作默认仓库，只复制自己的专属拉取地址。</p>
             </article>
             <article class="card">
                 <span class="tag ok">保留策略</span>
-                <h3>缓存和用户分层清理</h3>
-                <p>用户删除后先保留 30 天。默认缓存仓库按你设置的保留天数管理，支持 `0`、`-1` 和正整数天数。</p>
+                <h3>缓存可续期，用户支持软删除</h3>
+                <p>后台可设置缓存保留天数，镜像被再次请求时会自动刷新缓存期限。用户删除后先进入 30 天保留期，再决定是否彻底清理。</p>
             </article>
         </section>
 
-        <section class="panel" style="margin-top: 22px;">
-            <h3 style="margin-top:0;">这一版已经接上的内容</h3>
+        <section class="panel" style="margin-top:22px;">
+            <h2>当前版本说明</h2>
             <div class="list">
-                <div class="item">独立镜像目录、用户逻辑项目、分发任务表和系统设置页已经拆开。</div>
-                <div class="item">首页、用户控制台、交付镜像页、管理后台现在分别承担入口、日常操作、交付查看和系统管理职责。</div>
-                <div class="item">接下来继续对接 Harbor API 和真实 `pull / tag / push` worker，就能进入可用版本。</div>
+                <div class="item">支持安装向导、SQLite / MySQL 选择、Harbor 可选配置、购买串码、用户控制台和后台设置。</div>
+                <div class="item">当前运行时主逻辑仍以 SQLite 兼容路径为主，MySQL 主要完成了安装配置和连接测试。</div>
+                <div class="item">真实 Harbor API 联动和完整的 pull / tag / push worker 仍在后续完善中。</div>
             </div>
         </section>
+
+        <footer class="footer">
+            <span id="footerLinks">友情链接：Docker Hub</span>
+            <span id="icpLine">备案信息：未配置</span>
+        </footer>
     </div>
 
     <script>
@@ -218,51 +237,80 @@
         const purchaseCodeEl = document.getElementById('purchaseCode');
         const purchaseEmailHintEl = document.getElementById('purchaseEmailHint');
 
+        function showStatus(message) {
+            statusEl.textContent = message;
+        }
+
         async function loadSummary() {
-            const response = await fetch('/api/v2/admin/summary');
-            const data = await response.json();
-            if (!response.ok || !data.success) return;
-            document.getElementById('catalogCount').textContent = data.summary.catalogCount;
-            document.getElementById('localCount').textContent = data.summary.localCatalogCount;
-            document.getElementById('userCount').textContent = data.summary.userCount;
-            document.getElementById('queuedCount').textContent = data.summary.queuedTaskCount;
+            try {
+                const [summaryResponse, settingsResponse] = await Promise.all([
+                    fetch('/api/v2/admin/summary'),
+                    fetch('/api/v2/settings')
+                ]);
+                const summaryData = await summaryResponse.json();
+                const settingsData = await settingsResponse.json();
+
+                if (summaryResponse.ok && summaryData.success) {
+                    document.getElementById('catalogCount').textContent = summaryData.summary.catalogCount;
+                    document.getElementById('localCount').textContent = summaryData.summary.localCatalogCount;
+                    document.getElementById('userCount').textContent = summaryData.summary.userCount;
+                    document.getElementById('queuedCount').textContent = summaryData.summary.queuedTaskCount;
+                }
+
+                if (settingsResponse.ok && settingsData.success) {
+                    const settings = settingsData.settings || {};
+                    document.title = settings.siteTitle || 'ImgPull';
+                    const footerLinks = settings.footerLinks
+                        ? settings.footerLinks.split(',').map((item) => item.trim()).filter(Boolean).join(' / ')
+                        : 'Docker Hub';
+                    document.getElementById('footerLinks').textContent = `友情链接：${footerLinks}`;
+                    const icp = settings.icpBeian || '未配置';
+                    const gongan = settings.gonganBeian ? `，公安备案：${settings.gonganBeian}` : '';
+                    document.getElementById('icpLine').textContent = `备案信息：${icp}${gongan}`;
+                }
+            } catch (error) {
+                // 首页摘要加载失败时不阻塞页面
+            }
         }
 
         async function enterConsole() {
             const code = codeEl.value.trim();
             if (!code) {
-                statusEl.textContent = '请输入串码后再进入控制台。';
+                showStatus('请输入串码后再进入控制台。');
                 return;
             }
+
             const response = await fetch(`/api/v2/me?code=${encodeURIComponent(code)}`);
             const data = await response.json();
             if (!response.ok || !data.success) {
-                statusEl.textContent = data.error || '串码验证失败。';
+                showStatus(data.error || '串码校验失败，请检查后重试。');
                 return;
             }
-            statusEl.textContent = `验证成功，用户命名空间是 ${data.accessCode.harborProjectName}，正在进入控制台...`;
+
+            showStatus(`串码校验成功，正在进入命名空间 ${data.accessCode.harborProjectName} 的控制台...`);
             window.location.href = `/console?code=${encodeURIComponent(code)}`;
         }
 
         async function copyPurchaseCode() {
             const text = purchaseCodeEl.textContent.trim();
             if (!text || text === '-') return;
+
             try {
                 await navigator.clipboard.writeText(text);
-                purchaseStatusEl.textContent = '串码复制成功，可以直接发送给用户使用。';
+                purchaseStatusEl.textContent = '串码已复制，可以直接发给用户使用。';
             } catch (error) {
-                window.prompt('复制失败，请手动复制下面的内容：', text);
+                window.prompt('自动复制失败，请手动复制下面的串码：', text);
             }
         }
 
         async function purchaseAccessCode() {
             const email = purchaseEmailEl.value.trim();
             if (!email) {
-                purchaseStatusEl.textContent = '请输入购买方邮箱。';
+                purchaseStatusEl.textContent = '请先输入邮箱，再生成串码。';
                 return;
             }
 
-            purchaseStatusEl.textContent = '正在生成串码...';
+            purchaseStatusEl.textContent = '正在生成串码，请稍候...';
             const response = await fetch('/api/v2/purchase', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -270,22 +318,21 @@
             });
             const data = await response.json();
             if (!response.ok || !data.success) {
-                purchaseStatusEl.textContent = data.error || '生成串码失败。';
-                purchaseSuccessEl.style.display = 'none';
+                purchaseStatusEl.textContent = data.error || '生成串码失败，请稍后重试。';
                 return;
             }
 
-            purchaseCodeEl.textContent = data.purchase.code;
-            purchaseEmailHintEl.textContent = data.purchase.emailSent
-                ? `串码已发送到 ${data.purchase.email}，页面中也可以直接复制。`
-                : `${data.purchase.emailMessage} 当前登记邮箱：${data.purchase.email}`;
+            const purchase = data.purchase || {};
             purchaseSuccessEl.style.display = 'block';
-            purchaseStatusEl.textContent = `购买成功，默认有效期 ${data.purchase.expireDays < 0 ? '永久' : `${data.purchase.expireDays} 天`}。`;
+            purchaseCodeEl.textContent = purchase.code || '-';
+            purchaseEmailHintEl.textContent = purchase.emailMessage || `购买邮箱：${purchase.email || email}`;
+            purchaseStatusEl.textContent = '串码已生成，支持直接复制。';
         }
 
         document.getElementById('enterBtn').addEventListener('click', enterConsole);
         document.getElementById('purchaseBtn').addEventListener('click', purchaseAccessCode);
         document.getElementById('copyPurchaseCodeBtn').addEventListener('click', copyPurchaseCode);
+
         loadSummary();
     </script>
 </body>
