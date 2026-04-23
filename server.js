@@ -570,268 +570,74 @@ function setImageProjectsForAccessCode(accessCode, catalogImageId, projectIds) {
     `).all(...finalProjectIds);
 }
 
-function markImageAsCached(catalogImage) {
-    const cacheFullName = buildLocalCacheName(catalogImage);
-    const cacheProject = getCacheProjectName();
-    db.prepare(`
-        UPDATE catalog_images
-        SET local_available = 1,
-            local_registry = ?,
-            local_namespace = ?,
-            local_repository = ?,
-            local_tag = ?,
-            local_full_name = ?,
-            cache_last_seen_at = CURRENT_TIMESTAMP,
-            cache_expires_at = ?,
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-    `).run(
-        getDefaultHarborDomain(),
-        cacheProject,
-        catalogImage.repository,
-        catalogImage.tag,
-        cacheFullName,
-        computeCacheExpiresAt(),
-        catalogImage.id
-    );
-    return db.prepare('SELECT * FROM catalog_images WHERE id = ?').get(catalogImage.id);
+function mapImageProjectsForAccessCode(accessCodeId) {
+    const rows = db.prepare(`
+        SELECT pi.catalog_image_id, p.id AS project_id, p.name, p.slug
+        FROM user_project_images pi
+        JOIN user_projects p ON p.id = pi.project_id
+        WHERE p.access_code_id = ?
+        ORDER BY CASE WHEN p.slug = 'default' THEN 0 ELSE 1 END, p.name ASC
+    `).all(accessCodeId);
+
+    return rows.reduce((acc, row) => {
+        if (!acc[row.catalog_image_id]) {
+            acc[row.catalog_image_id] = [];
+        }
+        acc[row.catalog_image_id].push({
+            id: row.project_id,
+            name: row.name,
+            slug: row.slug
+        });
+        return acc;
+    }, {});
 }
 
-function runDistributionTask(taskId) {
-    const task = db.prepare('SELECT * FROM distribution_tasks WHERE id = ?').get(taskId);
+function serializeTask(task) {
     if (!task) {
-        return { success: false, error: '任务不存在' };
+        return null;
     }
-
-    if (task.status === 'completed') {
-        return { success: true, task };
-    }
-
-    const catalogImage = db.prepare('SELECT * FROM catalog_images WHERE id = ?').get(task.catalog_image_id);
-    const accessCode = db.prepare('SELECT * FROM access_codes WHERE id = ?').get(task.access_code_id);
-
-    if (!catalogImage || !accessCode) {
-        db.prepare(`
-            UPDATE distribution_tasks
-            SET status = 'failed', finished_at = CURRENT_TIMESTAMP, last_error = ?
-            WHERE id = ?
-        `).run('镜像或用户信息缺失，任务无法继续执行', task.id);
-        return { success: false, error: '镜像或用户信息缺失，任务无法继续执行' };
-    }
-
-    db.prepare(`
-        UPDATE distribution_tasks
-        SET status = 'running', started_at = COALESCE(started_at, CURRENT_TIMESTAMP), last_error = NULL
-        WHERE id = ?
-    `).run(task.id);
-
-    let refreshedImage = catalogImage;
-    if (!catalogImage.local_available) {
-        refreshedImage = markImageAsCached(catalogImage);
-    } else {
-        db.prepare(`
-            UPDATE catalog_images
-            SET cache_last_seen_at = CURRENT_TIMESTAMP,
-                cache_expires_at = ?,
-                updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-        `).run(computeCacheExpiresAt(), catalogImage.id);
-        refreshedImage = db.prepare('SELECT * FROM catalog_images WHERE id = ?').get(catalogImage.id);
-    }
-
-    const targetFullName = buildUserImageName(refreshedImage, accessCode);
-    db.prepare(`
-        UPDATE distribution_tasks
-        SET status = 'completed',
-            cache_hit = ?,
-            cache_full_name = ?,
-            target_full_name = ?,
-            finished_at = CURRENT_TIMESTAMP,
-            last_error = NULL
-        WHERE id = ?
-    `).run(
-        refreshedImage.local_available ? 1 : 0,
-        refreshedImage.local_full_name || buildLocalCacheName(refreshedImage),
-        targetFullName,
-        task.id
-    );
 
     return {
-        success: true,
-        task: db.prepare('SELECT * FROM distribution_tasks WHERE id = ?').get(task.id),
-        image: refreshedImage
+        id: task.id,
+        status: task.status,
+        sourceStrategy: task.source_strategy,
+        triggerSource: task.trigger_source,
+        cacheHit: !!task.cache_hit,
+        retentionDays: task.retention_days_snapshot,
+        targetNamespace: task.target_namespace,
+        targetFullName: task.target_full_name,
+        upstreamFullName: task.upstream_full_name,
+        cacheFullName: task.cache_full_name,
+        requestedAt: task.requested_at,
+        startedAt: task.started_at || null,
+        finishedAt: task.finished_at || null,
+        lastError: task.last_error || null
     };
 }
 
-function runQueuedTasks(limit) {
-    const rows = db.prepare(`
-        SELECT id
-        FROM distribution_tasks
-        WHERE status = 'queued'
-        ORDER BY requested_at ASC, id ASC
-        LIMIT ?
-    `).all(limit);
+function serializeCatalogImage(row, accessCode, taskOverride) {
+    const localAvailable = !!row.local_available;
+    const latestTask = taskOverride || null;
 
-    const executed = [];
-    rows.forEach((row) => {
-        executed.push(runDistributionTask(row.id));
-    });
-    return executed;
-}
-
-function cleanupExpiredCache() {
-    const retentionDays = getCacheRetentionDays();
-    if (retentionDays < 0) {
-        return { removed: 0, retentionDays, rows: [] };
-    }
-
-    const now = getNowSql();
-    const rows = db.prepare(`
-        SELECT c.*
-        FROM catalog_images c
-        LEFT JOIN distribution_tasks t
-            ON t.catalog_image_id = c.id
-           AND t.status IN ('queued', 'running')
-        WHERE c.local_available = 1
-          AND c.cache_expires_at IS NOT NULL
-          AND c.cache_expires_at <= ?
-          AND t.id IS NULL
-        ORDER BY c.cache_expires_at ASC, c.id ASC
-    `).all(now);
-
-    rows.forEach((row) => {
-        db.prepare(`
-            UPDATE catalog_images
-            SET local_available = 0,
-                local_registry = NULL,
-                local_namespace = NULL,
-                local_repository = NULL,
-                local_tag = NULL,
-                local_full_name = NULL,
-                cache_last_seen_at = NULL,
-                cache_expires_at = NULL,
-                updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-        `).run(row.id);
-    });
-
-    return { removed: rows.length, retentionDays, rows };
-}
-
-function seedCatalogFromLegacy() {
-    const legacyTable = db.prepare(`
-        SELECT name FROM sqlite_master
-        WHERE type = 'table' AND name IN ('projects', 'versions', 'images')
-    `).all();
-
-    if (legacyTable.length < 3) {
-        return;
-    }
-
-    const legacyRows = db.prepare(`
-        SELECT
-            i.name AS image_name,
-            COALESCE(i.description, '') AS image_description,
-            p.harbor_domain,
-            p.harbor_project,
-            v.version
-        FROM images i
-        JOIN versions v ON i.version_id = v.id
-        JOIN projects p ON v.project_id = p.id
-        WHERE i.status = 'active'
-    `).all();
-
-    legacyRows.forEach((row) => {
-        const registry = row.harbor_domain || getDefaultHarborDomain();
-        const namespace = row.harbor_project || getCacheProjectName();
-        const repository = row.image_name;
-        const tag = row.version || 'latest';
-        const localAvailable = registry === getDefaultHarborDomain();
-        const sourceFullName = `${registry}/${namespace}/${repository}:${tag}`;
-        const cacheExpiresAt = localAvailable ? computeCacheExpiresAt() : null;
-
-        upsertCatalogImage({
-            source_type: localAvailable ? 'local' : 'mirror',
-            registry,
-            namespace,
-            repository,
-            tag,
-            display_name: `${namespace}/${repository}:${tag}`,
-            description: row.image_description || '',
-            local_available: localAvailable,
-            local_registry: localAvailable ? registry : null,
-            local_namespace: localAvailable ? namespace : null,
-            local_repository: localAvailable ? repository : null,
-            local_tag: localAvailable ? tag : null,
-            source_full_name: sourceFullName,
-            local_full_name: localAvailable ? `${registry}/${namespace}/${repository}:${tag}` : null,
-            cache_last_seen_at: localAvailable ? getNowSql() : null,
-            cache_expires_at: cacheExpiresAt
-        });
-    });
-}
-
-seedCatalogFromLegacy();
-
-async function searchDockerHub(query) {
-    if (!query || query.trim().length < 2 || typeof fetch !== 'function') {
-        return [];
-    }
-
-    if (getSetting('dockerhub_search_enabled', '1') !== '1') {
-        return [];
-    }
-
-    try {
-        const url = `https://hub.docker.com/v2/search/repositories/?page_size=10&query=${encodeURIComponent(query)}`;
-        const response = await fetch(url, { headers: { accept: 'application/json' } });
-        if (!response.ok) {
-            return [];
-        }
-
-        const data = await response.json();
-        return (data.results || []).map((item) => {
-            const namespace = item.repo_name.includes('/') ? item.repo_name.split('/')[0] : 'library';
-            const repository = item.repo_name.includes('/') ? item.repo_name.split('/').slice(1).join('/') : item.repo_name;
-            const tag = 'latest';
-            return {
-                source_type: 'dockerhub',
-                registry: 'docker.io',
-                namespace,
-                repository,
-                tag,
-                display_name: `${namespace}/${repository}:${tag}`,
-                description: item.short_description || '',
-                local_available: 0,
-                local_registry: null,
-                local_namespace: null,
-                local_repository: null,
-                local_tag: null,
-                source_full_name: `docker.io/${namespace}/${repository}:${tag}`,
-                local_full_name: null,
-                cache_expires_at: null
-            };
-        });
-    } catch (error) {
-        return [];
-    }
-}
-
-function queryLocalCatalog(query) {
-    const like = `%${String(query || '').trim()}%`;
-    return db.prepare(`
-        SELECT *
-        FROM catalog_images
-        WHERE local_available = 1 AND (
-            source_full_name LIKE @like OR
-            display_name LIKE @like OR
-            repository LIKE @like OR
-            namespace LIKE @like OR
-            COALESCE(local_full_name, '') LIKE @like
-        )
-        ORDER BY updated_at DESC, display_name ASC
-        LIMIT 20
-    `).all({ like });
+    return {
+        id: row.id,
+        sourceType: row.source_type,
+        registry: row.registry,
+        namespace: row.namespace,
+        repository: row.repository,
+        tag: row.tag,
+        digest: row.digest || null,
+        displayName: row.display_name,
+        description: row.description || '',
+        sourceFullName: row.source_full_name,
+        localAvailable,
+        localFullName: row.local_full_name || (localAvailable ? buildLocalCacheName(row) : null),
+        cacheExpiresAt: row.cache_expires_at || null,
+        cacheLastSeenAt: row.cache_last_seen_at || null,
+        lastRequestedAt: row.last_requested_at || null,
+        targetFullName: accessCode ? buildUserImageName(row, accessCode) : null,
+        task: serializeTask(latestTask)
+    };
 }
 
 function getProjectImageTask(projectId, catalogImageId) {
@@ -844,184 +650,216 @@ function getProjectImageTask(projectId, catalogImageId) {
     `).get(projectId, catalogImageId);
 }
 
-function getLatestTasksMap(accessCodeId, imageIds) {
-    const result = new Map();
-    if (!imageIds || !imageIds.length) {
-        return result;
-    }
-
-    const placeholders = imageIds.map(() => '?').join(',');
+function buildMyImagesForAccessCode(accessCode) {
+    const projectMap = mapImageProjectsForAccessCode(accessCode.id);
     const rows = db.prepare(`
-        SELECT *
-        FROM distribution_tasks
-        WHERE access_code_id = ?
-          AND catalog_image_id IN (${placeholders})
-        ORDER BY requested_at DESC, id DESC
-    `).all(accessCodeId, ...imageIds);
-
-    rows.forEach((row) => {
-        if (!result.has(row.catalog_image_id)) {
-            result.set(row.catalog_image_id, row);
-        }
-    });
-
-    return result;
-}
-
-function serializeTask(task) {
-    if (!task) {
-        return null;
-    }
-
-    return {
-        id: task.id,
-        status: task.status,
-        triggerSource: task.trigger_source,
-        cacheHit: !!task.cache_hit,
-        retentionDays: task.retention_days_snapshot,
-        targetNamespace: task.target_namespace,
-        targetFullName: task.target_full_name,
-        upstreamFullName: task.upstream_full_name,
-        cacheFullName: task.cache_full_name,
-        requestedAt: task.requested_at,
-        startedAt: task.started_at,
-        finishedAt: task.finished_at,
-        lastError: task.last_error
-    };
-}
-
-function serializeCatalogImage(row, accessCode, latestTask) {
-    return {
-        id: row.id,
-        sourceType: row.source_type,
-        source: {
-            registry: row.registry,
-            namespace: row.namespace,
-            repository: row.repository,
-            tag: row.tag,
-            fullName: row.source_full_name,
-            digest: row.digest || null
-        },
-        local: {
-            available: !!row.local_available,
-            registry: row.local_registry,
-            namespace: row.local_namespace,
-            repository: row.local_repository,
-            tag: row.local_tag,
-            fullName: row.local_full_name,
-            cacheExpiresAt: row.cache_expires_at || null,
-            cacheLastSeenAt: row.cache_last_seen_at || null
-        },
-        userTarget: accessCode
-            ? {
-                  namespace: accessCode.harbor_project_name,
-                  fullName: buildUserImageName(row, accessCode)
-              }
-            : null,
-        latestTask: serializeTask(latestTask || null),
-        displayName: row.display_name,
-        description: row.description
-    };
-}
-
-function listProjectsForCode(accessCodeId) {
-    return db.prepare(`
-        SELECT p.*, COUNT(pi.id) AS image_count
-        FROM user_projects p
-        LEFT JOIN user_project_images pi ON pi.project_id = p.id
-        WHERE p.access_code_id = ?
-        GROUP BY p.id
-        ORDER BY p.created_at DESC
-    `).all(accessCodeId);
-}
-
-function buildMyImagesForAccessCode(codeRow) {
-    const rows = db.prepare(`
-        SELECT
-            c.*,
-            GROUP_CONCAT(DISTINCT p.name) AS project_names,
-            COUNT(DISTINCT p.id) AS project_count,
-            MAX(pi.created_at) AS latest_project_add_at
-        FROM user_project_images pi
+        SELECT DISTINCT c.*
+        FROM catalog_images c
+        JOIN user_project_images pi ON pi.catalog_image_id = c.id
         JOIN user_projects p ON p.id = pi.project_id
-        JOIN catalog_images c ON c.id = pi.catalog_image_id
         WHERE p.access_code_id = ?
-        GROUP BY c.id
-        ORDER BY latest_project_add_at DESC, c.updated_at DESC
-    `).all(codeRow.id);
+        ORDER BY c.updated_at DESC, c.id DESC
+    `).all(accessCode.id);
 
-    const taskMap = getLatestTasksMap(codeRow.id, rows.map((row) => row.id));
     return rows.map((row) => {
-        const task = taskMap.get(row.id) || null;
+        const latestTask = db.prepare(`
+            SELECT *
+            FROM distribution_tasks
+            WHERE access_code_id = ? AND catalog_image_id = ?
+            ORDER BY requested_at DESC, id DESC
+            LIMIT 1
+        `).get(accessCode.id, row.id);
+
+        const projects = projectMap[row.id] || [];
         return {
-            ...serializeCatalogImage(row, codeRow, task),
-            projectNames: row.project_names ? row.project_names.split(',') : [],
-            projectCount: Number(row.project_count || 0),
-            delivered: !!task && task.status === 'completed'
+            ...serializeCatalogImage(row, accessCode, latestTask),
+            projects,
+            projectNames: projects.map((project) => project.name),
+            delivered: latestTask ? latestTask.status === 'completed' : false
         };
     });
 }
 
-app.get('/install', (req, res) => {
-    if (isInstalled()) {
-        return res.redirect('/');
+function parseImageKeyword(keyword) {
+    const trimmed = String(keyword || '').trim().replace(/^\/+|\/+$/g, '');
+    if (!trimmed) {
+        return null;
     }
-    return res.sendFile(path.join(__dirname, 'public', 'install.html'));
-});
+
+    const tagIndex = trimmed.lastIndexOf(':');
+    const hasTag = tagIndex > trimmed.lastIndexOf('/');
+    const withoutTag = hasTag ? trimmed.slice(0, tagIndex) : trimmed;
+    const tag = hasTag ? trimmed.slice(tagIndex + 1) : '';
+    const parts = withoutTag.split('/').filter(Boolean);
+
+    if (parts.length === 0) {
+        return null;
+    }
+
+    let registry = 'docker.io';
+    let namespace = 'library';
+    let repository = parts[parts.length - 1];
+
+    if (parts.length >= 3 && parts[0].includes('.')) {
+        registry = parts[0];
+        namespace = parts.slice(1, -1).join('/');
+    } else if (parts.length >= 2) {
+        namespace = parts.slice(0, -1).join('/');
+    }
+
+    return {
+        registry,
+        namespace,
+        repository,
+        tag: tag || 'latest',
+        sourceFullName: `${registry}/${namespace}/${repository}:${tag || 'latest'}`,
+        displayName: `${namespace}/${repository}:${tag || 'latest'}`
+    };
+}
+
+function runDistributionTask(taskId) {
+    const task = db.prepare('SELECT * FROM distribution_tasks WHERE id = ?').get(taskId);
+    if (!task) {
+        return { success: false, error: '任务不存在' };
+    }
+
+    if (!['queued', 'failed'].includes(task.status)) {
+        return { success: false, error: `当前状态无法执行任务：${task.status}` };
+    }
+
+    const image = db.prepare('SELECT * FROM catalog_images WHERE id = ?').get(task.catalog_image_id);
+    if (!image) {
+        db.prepare(`
+            UPDATE distribution_tasks
+            SET status = 'failed', started_at = CURRENT_TIMESTAMP, finished_at = CURRENT_TIMESTAMP, last_error = ?
+            WHERE id = ?
+        `).run('镜像不存在', task.id);
+        return { success: false, error: '镜像不存在' };
+    }
+
+    db.prepare(`
+        UPDATE distribution_tasks
+        SET status = 'running', started_at = CURRENT_TIMESTAMP, last_error = NULL
+        WHERE id = ?
+    `).run(task.id);
+
+    const cacheFullName = buildLocalCacheName(image);
+    const cacheExpiresAt = computeCacheExpiresAt();
+
+    db.prepare(`
+        UPDATE catalog_images
+        SET local_available = 1,
+            local_registry = ?,
+            local_namespace = ?,
+            local_repository = ?,
+            local_tag = ?,
+            local_full_name = ?,
+            cache_last_seen_at = CURRENT_TIMESTAMP,
+            cache_expires_at = ?,
+            last_requested_at = CURRENT_TIMESTAMP,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+    `).run(
+        getDefaultHarborDomain(),
+        getCacheProjectName(),
+        image.repository,
+        image.tag || 'latest',
+        cacheFullName,
+        cacheExpiresAt,
+        image.id
+    );
+
+    db.prepare(`
+        UPDATE distribution_tasks
+        SET status = 'completed',
+            cache_hit = 1,
+            cache_full_name = ?,
+            finished_at = CURRENT_TIMESTAMP,
+            last_error = NULL
+        WHERE id = ?
+    `).run(cacheFullName, task.id);
+
+    const updatedTask = db.prepare('SELECT * FROM distribution_tasks WHERE id = ?').get(task.id);
+    const updatedImage = db.prepare('SELECT * FROM catalog_images WHERE id = ?').get(image.id);
+    return { success: true, task: updatedTask, image: updatedImage };
+}
+
+function runQueuedTasks(limit = 10) {
+    const tasks = db.prepare(`
+        SELECT *
+        FROM distribution_tasks
+        WHERE status = 'queued'
+        ORDER BY requested_at ASC, id ASC
+        LIMIT ?
+    `).all(limit);
+
+    return tasks.map((task) => runDistributionTask(task.id));
+}
+
+function cleanupExpiredCache() {
+    const retentionDays = getCacheRetentionDays();
+    if (retentionDays < 0) {
+        return { removed: 0, retentionDays, rows: [] };
+    }
+
+    const now = getNowSql();
+    const rows = db.prepare(`
+        SELECT *
+        FROM catalog_images
+        WHERE local_available = 1
+          AND cache_expires_at IS NOT NULL
+          AND cache_expires_at <= ?
+    `).all(now);
+
+    const removable = rows.filter((row) => {
+        const runningTask = db.prepare(`
+            SELECT id FROM distribution_tasks
+            WHERE catalog_image_id = ? AND status IN ('queued', 'running')
+            LIMIT 1
+        `).get(row.id);
+        return !runningTask;
+    });
+
+    const stmt = db.prepare(`
+        UPDATE catalog_images
+        SET local_available = 0,
+            local_registry = NULL,
+            local_namespace = NULL,
+            local_repository = NULL,
+            local_tag = NULL,
+            local_full_name = NULL,
+            cache_last_seen_at = NULL,
+            cache_expires_at = NULL,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+    `);
+
+    removable.forEach((row) => stmt.run(row.id));
+    return { removed: removable.length, retentionDays, rows: removable };
+}
 
 app.get('/api/install/status', (req, res) => {
     res.json({
+        success: true,
         installed: isInstalled(),
-        config: appConfig ? {
-            site: appConfig.site || null,
-            database: appConfig.database ? {
-                type: appConfig.database.type,
-                sqlitePath: appConfig.database.sqlitePath || '',
-                mysql: appConfig.database.mysql ? {
-                    host: appConfig.database.mysql.host || '',
-                    port: appConfig.database.mysql.port || 3306,
-                    database: appConfig.database.mysql.database || '',
-                    user: appConfig.database.mysql.user || ''
-                } : null
-            } : null,
-            harbor: appConfig.harbor ? {
-                enabled: !!appConfig.harbor.enabled,
-                baseUrl: appConfig.harbor.baseUrl || '',
-                username: appConfig.harbor.username || '',
-                cacheProjectName: appConfig.harbor.cacheProjectName || ''
-            } : null
-        } : null,
-        warnings: [
-            'SQLite 兼容当前仓库已有数据，但不建议直接用于高并发生产环境。'
-        ]
+        databaseType: appConfig?.database?.type || 'sqlite'
     });
 });
 
 app.post('/api/install/test-db', async (req, res) => {
-    const type = String(req.body.type || 'sqlite').trim().toLowerCase();
+    const databaseType = String(req.body.databaseType || 'sqlite').toLowerCase();
 
-    if (type === 'sqlite') {
-        const sqlitePath = getSqlitePath({
-            database: { sqlitePath: String(req.body.sqlitePath || '').trim() || 'kubeaszpull.db' }
-        });
-
-        try {
+    try {
+        if (databaseType === 'sqlite') {
+            const sqlitePath = getSqlitePath({ database: { sqlitePath: req.body.sqlitePath } });
             ensureDirectory(path.dirname(sqlitePath));
             const testDb = new Database(sqlitePath);
             testDb.pragma('journal_mode = WAL');
             testDb.close();
-            return res.json({
-                success: true,
-                type: 'sqlite',
-                message: 'SQLite 连接可用。复用当前数据库适合轻量部署和测试环境，但不建议直接用于高并发生产。'
-            });
-        } catch (error) {
-            return res.status(400).json({ success: false, error: error.message });
+            return res.json({ success: true, message: `SQLite 连接成功：${sqlitePath}` });
         }
-    }
 
-    if (type === 'mysql') {
-        try {
+        if (databaseType === 'mysql') {
             const version = await testMySqlConnection({
                 host: req.body.mysqlHost,
                 port: req.body.mysqlPort,
@@ -1029,128 +867,121 @@ app.post('/api/install/test-db', async (req, res) => {
                 password: req.body.mysqlPassword,
                 database: req.body.mysqlDatabase
             });
-
-            return res.json({
-                success: true,
-                type: 'mysql',
-                message: `MySQL 连接成功，数据库版本：${version}`
-            });
-        } catch (error) {
-            return res.status(400).json({ success: false, error: error.message });
+            return res.json({ success: true, message: `MySQL 连接成功，版本：${version}` });
         }
-    }
 
-    return res.status(400).json({ success: false, error: '暂不支持该数据库类型' });
+        return res.status(400).json({ success: false, error: '不支持的数据库类型' });
+    } catch (error) {
+        return res.status(400).json({ success: false, error: error.message });
+    }
 });
 
 app.post('/api/install/test-harbor', async (req, res) => {
     try {
         await testHarborConnection({
-            baseUrl: req.body.baseUrl,
-            username: req.body.username,
-            password: req.body.password
+            baseUrl: req.body.harborBaseUrl,
+            username: req.body.harborUsername,
+            password: req.body.harborPassword
         });
-        return res.json({ success: true, message: 'Harbor 连接测试成功。' });
+        return res.json({ success: true, message: 'Harbor 连接测试成功' });
     } catch (error) {
         return res.status(400).json({ success: false, error: error.message });
     }
 });
 
 app.post('/api/install/submit', async (req, res) => {
-    const siteTitle = String(req.body.siteTitle || '').trim();
-    const siteSubtitle = String(req.body.siteSubtitle || '').trim();
-    const adminEmail = String(req.body.adminEmail || '').trim();
-    const databaseType = String(req.body.databaseType || 'sqlite').trim().toLowerCase();
-    const harborEnabled = req.body.harborEnabled === true || req.body.harborEnabled === 'true' || req.body.harborEnabled === '1';
+    try {
+        const siteTitle = String(req.body.siteTitle || '').trim();
+        const siteSubtitle = String(req.body.siteSubtitle || '').trim();
+        const adminEmail = String(req.body.adminEmail || '').trim();
+        const databaseType = String(req.body.databaseType || 'sqlite').toLowerCase();
+        const enableHarbor = !!req.body.enableHarbor;
 
-    if (!siteTitle) {
-        return res.status(400).json({ success: false, error: '请填写站点标题' });
-    }
+        if (!siteTitle) {
+            return res.status(400).json({ success: false, error: '请填写站点标题' });
+        }
 
-    if (!adminEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(adminEmail)) {
-        return res.status(400).json({ success: false, error: '请填写有效的管理员邮箱' });
-    }
+        if (!adminEmail) {
+            return res.status(400).json({ success: false, error: '请填写管理员邮箱' });
+        }
 
-    if (!['sqlite', 'mysql'].includes(databaseType)) {
-        return res.status(400).json({ success: false, error: '不支持的数据库类型' });
-    }
-
-    const nextConfig = {
-        installedAt: getNowSql(),
-        site: {
-            title: siteTitle,
-            subtitle: siteSubtitle,
-            adminEmail
-        },
-        database: {
-            type: databaseType,
-            sqlitePath: String(req.body.sqlitePath || 'kubeaszpull.db').trim() || 'kubeaszpull.db',
-            mysql: databaseType === 'mysql' ? {
+        let databaseConfig;
+        if (databaseType === 'sqlite') {
+            const sqlitePath = getSqlitePath({ database: { sqlitePath: req.body.sqlitePath } });
+            ensureDirectory(path.dirname(sqlitePath));
+            const testDb = new Database(sqlitePath);
+            testDb.close();
+            databaseConfig = {
+                type: 'sqlite',
+                sqlitePath: path.relative(__dirname, sqlitePath) || 'kubeaszpull.db'
+            };
+        } else if (databaseType === 'mysql') {
+            await testMySqlConnection({
+                host: req.body.mysqlHost,
+                port: req.body.mysqlPort,
+                user: req.body.mysqlUser,
+                password: req.body.mysqlPassword,
+                database: req.body.mysqlDatabase
+            });
+            databaseConfig = {
+                type: 'mysql',
                 host: String(req.body.mysqlHost || '').trim(),
                 port: Number(req.body.mysqlPort || 3306),
                 database: String(req.body.mysqlDatabase || '').trim(),
                 user: String(req.body.mysqlUser || '').trim(),
                 password: String(req.body.mysqlPassword || '')
-            } : null
-        },
-        harbor: harborEnabled ? {
-            enabled: true,
+            };
+        } else {
+            return res.status(400).json({ success: false, error: '不支持的数据库类型' });
+        }
+
+        const harborConfig = {
+            enabled: enableHarbor,
             baseUrl: String(req.body.harborBaseUrl || '').trim(),
             username: String(req.body.harborUsername || '').trim(),
             password: String(req.body.harborPassword || ''),
-            cacheProjectName: String(req.body.harborCacheProject || getCacheProjectName()).trim() || getCacheProjectName()
-        } : {
-            enabled: false
+            cacheProjectName: String(req.body.cacheProjectName || getCacheProjectName()).trim() || getCacheProjectName()
+        };
+
+        if (enableHarbor) {
+            await testHarborConnection(harborConfig);
         }
-    };
 
-    if (databaseType === 'mysql') {
-        try {
-            await testMySqlConnection(nextConfig.database.mysql);
-        } catch (error) {
-            return res.status(400).json({ success: false, error: `MySQL 测试失败：${error.message}` });
-        }
-    }
+        appConfig = {
+            installedAt: new Date().toISOString(),
+            site: {
+                title: siteTitle,
+                subtitle: siteSubtitle,
+                adminEmail
+            },
+            database: databaseConfig,
+            harbor: harborConfig
+        };
 
-    if (harborEnabled) {
-        try {
-            await testHarborConnection({
-                baseUrl: nextConfig.harbor.baseUrl,
-                username: nextConfig.harbor.username,
-                password: nextConfig.harbor.password
-            });
-        } catch (error) {
-            return res.status(400).json({ success: false, error: `Harbor 测试失败：${error.message}` });
-        }
-    }
+        writeAppConfig(appConfig);
 
-    writeAppConfig(nextConfig);
-    appConfig = readAppConfig();
-
-    const siteSettings = [
-        ['site_title', siteTitle],
-        ['site_subtitle', siteSubtitle],
-        ['harbor_enabled', harborEnabled ? '1' : '0'],
-        ['harbor_base_url', harborEnabled ? nextConfig.harbor.baseUrl : ''],
-        ['harbor_username', harborEnabled ? nextConfig.harbor.username : ''],
-        ['harbor_password', harborEnabled ? nextConfig.harbor.password : ''],
-        ['cache_project_name', harborEnabled ? nextConfig.harbor.cacheProjectName : getCacheProjectName()]
-    ];
-
-    siteSettings.forEach(([key, value]) => {
-        db.prepare(`
+        const stmt = db.prepare(`
             INSERT INTO settings (key, value, updated_at)
             VALUES (?, ?, CURRENT_TIMESTAMP)
             ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP
-        `).run(key, value);
-    });
+        `);
 
-    return res.json({
-        success: true,
-        message: databaseType === 'mysql'
-            ? '安装配置已保存。当前运行时仍优先兼容 SQLite 路径，MySQL 配置已写入，可继续后续迁移。'
-            : '安装配置已保存，正在进入首页。'
-    });
+        stmt.run('site_title', siteTitle);
+        stmt.run('site_subtitle', siteSubtitle);
+        stmt.run('harbor_enabled', enableHarbor ? '1' : '0');
+        stmt.run('harbor_base_url', harborConfig.baseUrl);
+        stmt.run('harbor_username', harborConfig.username);
+        stmt.run('harbor_password', harborConfig.password);
+        stmt.run('cache_project_name', harborConfig.cacheProjectName);
+
+        return res.json({ success: true, installed: true });
+    } catch (error) {
+        return res.status(400).json({ success: false, error: error.message });
+    }
+});
+
+app.get('/install', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'install.html'));
 });
 
 app.get('/', (req, res) => {
@@ -1174,6 +1005,62 @@ app.get('/v2/console', (req, res) => res.redirect('/console'));
 app.get('/v2/deliveries', (req, res) => res.redirect('/deliveries'));
 app.get('/v2/admin', (req, res) => res.redirect('/admin'));
 
+app.post('/api/v2/purchase', (req, res) => {
+    const email = String(req.body.email || '').trim();
+    const amount = Number(req.body.amount || 2);
+    const expireDays = getDefaultAccessCodeDays();
+
+    if (!email) {
+        return res.status(400).json({ error: '请输入邮箱地址' });
+    }
+
+    let code = generateAccessCode();
+    while (db.prepare('SELECT 1 FROM access_codes WHERE code = ?').get(code)) {
+        code = generateAccessCode();
+    }
+
+    const expireAt = expireDays < 0 ? null : plusDays(expireDays);
+    const namespace = normalizeNamespace(code);
+
+    const result = db.prepare(`
+        INSERT INTO access_codes (
+            code, email, amount, status, expire_days, expire_at, harbor_project_name, harbor_namespace_type
+        ) VALUES (?, ?, ?, 'active', ?, ?, ?, 'project')
+    `).run(code, email, amount, expireDays, expireAt, namespace);
+
+    ensureDefaultProject(result.lastInsertRowid);
+
+    res.json({
+        success: true,
+        accessCode: code,
+        email,
+        expireAt,
+        harborProjectName: namespace
+    });
+});
+
+app.get('/api/v2/verify-code/:code', (req, res) => {
+    const validation = getAccessCodeOrThrow(req.params.code);
+    if (validation.status !== 200) {
+        return res.status(validation.status).json(validation.payload);
+    }
+
+    const codeRow = validation.payload;
+    ensureDefaultProject(codeRow.id);
+
+    return res.json({
+        success: true,
+        accessCode: {
+            code: codeRow.code,
+            email: codeRow.email,
+            expireAt: codeRow.expire_at || null,
+            harborProjectName: codeRow.harbor_project_name,
+            harborNamespaceType: codeRow.harbor_namespace_type || 'project',
+            status: codeRow.status
+        }
+    });
+});
+
 app.get('/api/v2/me', (req, res) => {
     const validation = getAccessCodeOrThrow(req.query.code);
     if (validation.status !== 200) {
@@ -1181,95 +1068,133 @@ app.get('/api/v2/me', (req, res) => {
     }
 
     const codeRow = validation.payload;
-    res.json({
+    const projectCount = db.prepare('SELECT COUNT(*) AS count FROM user_projects WHERE access_code_id = ?').get(codeRow.id).count;
+    const taskSummary = db.prepare(`
+        SELECT
+            SUM(CASE WHEN status = 'queued' THEN 1 ELSE 0 END) AS queued_count,
+            SUM(CASE WHEN status = 'running' THEN 1 ELSE 0 END) AS running_count,
+            SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed_count,
+            SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) AS failed_count
+        FROM distribution_tasks
+        WHERE access_code_id = ?
+    `).get(codeRow.id);
+
+    return res.json({
         success: true,
-        accessCode: {
+        me: {
             code: codeRow.code,
             email: codeRow.email,
-            harborProjectName: codeRow.harbor_project_name,
-            purgeAfter: codeRow.purge_after || null,
+            status: codeRow.status,
             expireAt: codeRow.expire_at || null,
-            visibility: getSetting('default_user_repo_visibility', 'private')
+            harborProjectName: codeRow.harbor_project_name || normalizeNamespace(codeRow.code),
+            harborNamespaceType: codeRow.harbor_namespace_type || 'project',
+            projectCount,
+            tasks: {
+                queued: Number(taskSummary.queued_count || 0),
+                running: Number(taskSummary.running_count || 0),
+                completed: Number(taskSummary.completed_count || 0),
+                failed: Number(taskSummary.failed_count || 0)
+            }
         }
     });
 });
 
-app.post('/api/v2/purchase', (req, res) => {
-    const email = String(req.body.email || '').trim().toLowerCase();
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        return res.status(400).json({ error: '请输入有效的邮箱地址' });
+function buildDockerHubResults(keyword) {
+    const parsed = parseImageKeyword(keyword);
+    if (!parsed) {
+        return [];
     }
 
-    const expireDays = getDefaultAccessCodeDays();
-    let code = '';
-    for (let i = 0; i < 8; i += 1) {
-        code = generateAccessCode(8);
-        const exists = db.prepare('SELECT id FROM access_codes WHERE code = ?').get(code);
-        if (!exists) {
-            break;
+    const variants = [
+        parsed,
+        {
+            ...parsed,
+            tag: parsed.tag === 'latest' ? 'stable' : parsed.tag,
+            sourceFullName: `${parsed.registry}/${parsed.namespace}/${parsed.repository}:${parsed.tag === 'latest' ? 'stable' : parsed.tag}`,
+            displayName: `${parsed.namespace}/${parsed.repository}:${parsed.tag === 'latest' ? 'stable' : parsed.tag}`
         }
-    }
+    ];
 
-    if (!code) {
-        return res.status(500).json({ error: '生成串码失败，请稍后重试' });
-    }
-
-    const expireAt = expireDays < 0 ? null : plusDays(expireDays);
-    const namespace = normalizeNamespace(code);
-    const result = db.prepare(`
-        INSERT INTO access_codes (
-            code, email, amount, status, expire_days, expire_at, harbor_project_name
-        ) VALUES (?, ?, ?, 'active', ?, ?, ?)
-    `).run(code, email, 2.0, expireDays, expireAt, namespace);
-
-    ensureDefaultProject(result.lastInsertRowid);
-
-    res.json({
-        success: true,
-        purchase: {
-            code,
-            email,
-            expireDays,
-            expireAt,
-            harborProjectName: namespace,
-            emailSent: false,
-            emailMessage: '当前还没有接入 SMTP 邮件发送，串码已生成并展示，可直接在页面复制使用。'
+    const unique = new Map();
+    variants.forEach((item) => {
+        if (!unique.has(item.sourceFullName)) {
+            unique.set(item.sourceFullName, {
+                sourceType: 'dockerhub',
+                registry: item.registry,
+                namespace: item.namespace,
+                repository: item.repository,
+                tag: item.tag,
+                digest: null,
+                description: '来自 Docker Hub 的候选镜像',
+                displayName: item.displayName,
+                sourceFullName: item.sourceFullName,
+                localAvailable: false,
+                localFullName: null,
+                cacheExpiresAt: null,
+                cacheLastSeenAt: null,
+                lastRequestedAt: null
+            });
         }
     });
-});
 
-app.get('/api/v2/search/images', async (req, res) => {
-    const validation = getAccessCodeOrThrow(req.query.code);
-    if (validation.status !== 200) {
-        return res.status(validation.status).json(validation.payload);
+    return Array.from(unique.values());
+}
+
+app.get('/api/v2/search/images', (req, res) => {
+    const keyword = String(req.query.keyword || '').trim();
+    const searchSource = String(req.query.source || 'local').trim();
+    const code = req.query.code ? String(req.query.code).trim() : '';
+    let accessCode = null;
+
+    if (code) {
+        const validation = getAccessCodeOrThrow(code);
+        if (validation.status === 200) {
+            accessCode = validation.payload;
+        }
     }
 
-    const query = String(req.query.q || '').trim();
-    const scope = String(req.query.scope || 'local').trim();
-    if (!query) {
-        return res.status(400).json({ error: '请输入要搜索的镜像关键字' });
-    }
+    const likeKeyword = `%${keyword.replace(/[%_]/g, '')}%`;
+    const localRows = keyword
+        ? db.prepare(`
+            SELECT *
+            FROM catalog_images
+            WHERE (
+                display_name LIKE ? OR
+                source_full_name LIKE ? OR
+                repository LIKE ? OR
+                namespace LIKE ?
+            )
+            ORDER BY local_available DESC, updated_at DESC, id DESC
+            LIMIT 50
+        `).all(likeKeyword, likeKeyword, likeKeyword, likeKeyword)
+        : db.prepare(`
+            SELECT *
+            FROM catalog_images
+            ORDER BY local_available DESC, updated_at DESC, id DESC
+            LIMIT 30
+        `).all();
 
-    const codeRow = validation.payload;
-    const shouldSearchLocal = scope === 'local' || scope === 'all';
-    const shouldSearchDockerHub = scope === 'dockerhub' || scope === 'all';
-    const localResults = shouldSearchLocal ? queryLocalCatalog(query) : [];
-    const resolvedRemoteResults = shouldSearchDockerHub && (scope === 'dockerhub' || scope === 'all' || localResults.length === 0)
-        ? await searchDockerHub(query)
+    const shouldShowLocal = searchSource === 'local' || searchSource === 'both';
+    const shouldShowDockerHub = (searchSource === 'dockerhub' || searchSource === 'both') && getSetting('dockerhub_search_enabled', '1') === '1';
+
+    const localResults = shouldShowLocal ? localRows.map((row) => serializeCatalogImage(row, accessCode, accessCode ? db.prepare(`
+        SELECT *
+        FROM distribution_tasks
+        WHERE access_code_id = ? AND catalog_image_id = ?
+        ORDER BY requested_at DESC, id DESC
+        LIMIT 1
+    `).get(accessCode.id, row.id) : null)) : [];
+
+    const localNames = new Set(localResults.map((row) => row.sourceFullName));
+    const dockerHubResults = shouldShowDockerHub
+        ? buildDockerHubResults(keyword).filter((row) => !localNames.has(row.sourceFullName))
         : [];
-    const upsertedRemoteResults = resolvedRemoteResults.map((image) => upsertCatalogImage(image));
-
-    const merged = [...localResults, ...upsertedRemoteResults];
-    const results = merged.map((row) => serializeCatalogImage(row, codeRow, null));
 
     res.json({
         success: true,
-        query,
-        scope,
-        searchMode: localResults.length > 0 ? 'cache-only-hit' : 'cache-miss-then-dockerhub',
-        cacheProject: getCacheProjectName(),
-        defaultNamespace: codeRow.harbor_project_name,
-        results
+        source: searchSource,
+        localResults,
+        dockerHubResults
     });
 });
 
@@ -1280,8 +1205,27 @@ app.get('/api/v2/projects', (req, res) => {
     }
 
     const codeRow = validation.payload;
-    const projects = listProjectsForCode(codeRow.id);
-    res.json({ success: true, projects });
+    ensureDefaultProject(codeRow.id);
+
+    const projects = db.prepare(`
+        SELECT p.*, COUNT(pi.id) AS image_count
+        FROM user_projects p
+        LEFT JOIN user_project_images pi ON pi.project_id = p.id
+        WHERE p.access_code_id = ?
+        GROUP BY p.id
+        ORDER BY CASE WHEN p.slug = 'default' THEN 0 ELSE 1 END, p.created_at ASC, p.id ASC
+    `).all(codeRow.id);
+
+    res.json({
+        success: true,
+        projects: projects.map((project) => ({
+            id: project.id,
+            name: project.name,
+            slug: project.slug,
+            imageCount: Number(project.image_count || 0),
+            createdAt: project.created_at
+        }))
+    });
 });
 
 app.post('/api/v2/projects', (req, res) => {
@@ -1296,18 +1240,20 @@ app.post('/api/v2/projects', (req, res) => {
         return res.status(400).json({ error: '请输入项目名称' });
     }
 
-    const slug = slugify(req.body.slug || name);
-    const stmt = db.prepare('INSERT INTO user_projects (access_code_id, name, slug) VALUES (?, ?, ?)');
-
-    try {
-        const result = stmt.run(codeRow.id, name, slug);
-        res.json({ success: true, project: { id: result.lastInsertRowid, name, slug } });
-    } catch (error) {
-        if (String(error.message).includes('UNIQUE')) {
-            return res.status(409).json({ error: '项目名称已存在' });
-        }
-        res.status(500).json({ error: error.message });
+    let slug = slugify(name);
+    let suffix = 2;
+    while (db.prepare('SELECT 1 FROM user_projects WHERE access_code_id = ? AND slug = ?').get(codeRow.id, slug)) {
+        slug = `${slugify(name)}-${suffix}`;
+        suffix += 1;
     }
+
+    const result = db.prepare(`
+        INSERT INTO user_projects (access_code_id, name, slug)
+        VALUES (?, ?, ?)
+    `).run(codeRow.id, name, slug);
+
+    const project = db.prepare('SELECT * FROM user_projects WHERE id = ?').get(result.lastInsertRowid);
+    res.json({ success: true, project });
 });
 
 app.get('/api/v2/projects/:projectId/images', (req, res) => {
@@ -1601,7 +1547,7 @@ app.post('/api/v2/settings/test-harbor', async (req, res) => {
 app.get('/api/v2/admin/users', (req, res) => {
     const rows = db.prepare(`
         SELECT
-            a.*,
+            a.*, 
             COUNT(DISTINCT p.id) AS project_count,
             COUNT(DISTINCT pi.catalog_image_id) AS image_count
         FROM access_codes a
@@ -1729,6 +1675,7 @@ app.post('/api/v2/admin/cache/cleanup', (req, res) => {
     res.json({
         success: true,
         removed: result.removed,
+        cleanedCount: result.removed,
         retentionDays: result.retentionDays,
         images: result.rows.map((row) => ({
             id: row.id,
