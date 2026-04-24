@@ -42,6 +42,7 @@ function createApp() {
   app.get('/tasks', page('tasks.html'));
   app.get('/task-detail', page('task-detail.html'));
   app.get('/images', page('images.html'));
+  app.get('/account', page('account.html'));
 
   app.use('/api/v1/auth', authRoutes);
   app.get('/api/v1/me', requireAuth, AuthController.me);
