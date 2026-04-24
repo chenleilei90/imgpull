@@ -1,339 +1,45 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ImgPull</title>
-    <style>
-        :root {
-            --bg: #edf4fb;
-            --panel: rgba(255, 255, 255, 0.92);
-            --line: #d9e5f2;
-            --ink: #0f172a;
-            --muted: #5f6f86;
-            --brand: #0f6fff;
-            --teal: #0ea5a4;
-            --ok: #16a34a;
-            --shadow: 0 24px 60px rgba(15, 23, 42, 0.1);
-        }
-        * { box-sizing: border-box; }
-        body {
-            margin: 0;
-            color: var(--ink);
-            font-family: "Microsoft YaHei", "Noto Sans SC", sans-serif;
-            background:
-                radial-gradient(circle at 8% 8%, rgba(15, 111, 255, 0.18), transparent 26%),
-                radial-gradient(circle at 92% 16%, rgba(14, 165, 164, 0.15), transparent 24%),
-                linear-gradient(180deg, #f7fbff 0%, var(--bg) 100%);
-        }
-        .wrap { max-width: 1180px; margin: 0 auto; padding: 28px 20px 56px; }
-        .hero {
-            display: grid;
-            grid-template-columns: 1.15fr 0.85fr;
-            gap: 22px;
-            align-items: stretch;
-        }
-        .panel {
-            background: var(--panel);
-            border: 1px solid var(--line);
-            border-radius: 28px;
-            padding: 26px;
-            backdrop-filter: blur(12px);
-            box-shadow: var(--shadow);
-        }
-        h1 { margin: 0 0 12px; font-size: 44px; line-height: 1.06; letter-spacing: -0.03em; }
-        h2 { margin: 0 0 12px; font-size: 22px; }
-        .lead { margin: 0; font-size: 16px; line-height: 1.8; color: var(--muted); }
-        .tag {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 999px;
-            background: rgba(15, 111, 255, 0.12);
-            color: var(--brand);
-            font-size: 12px;
-            margin-bottom: 10px;
-            font-weight: 700;
-        }
-        .tag.ok { background: rgba(22, 163, 74, 0.12); color: var(--ok); }
-        .grid { display: grid; grid-template-columns: 1fr 170px; gap: 12px; margin-top: 18px; }
-        .stack { display: grid; gap: 14px; margin-top: 16px; }
-        input, button, a.button {
-            width: 100%;
-            border-radius: 16px;
-            border: 1px solid var(--line);
-            padding: 14px 16px;
-            font: inherit;
-            text-decoration: none;
-        }
-        input { background: #fff; color: var(--ink); }
-        button, a.button {
-            cursor: pointer;
-            background: linear-gradient(135deg, var(--brand) 0%, #3389ff 100%);
-            color: white;
-            border: none;
-            text-align: center;
-        }
-        button.alt, a.button.alt {
-            background: linear-gradient(135deg, var(--teal) 0%, #15b8b7 100%);
-        }
-        .status, .notice {
-            color: var(--muted);
-            min-height: 24px;
-            line-height: 1.7;
-        }
-        .success-card {
-            margin-top: 10px;
-            padding: 16px;
-            border-radius: 18px;
-            border: 1px solid #cfe0ff;
-            background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(237,244,255,0.95));
-        }
-        .success-code {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            margin-top: 10px;
-            flex-wrap: wrap;
-        }
-        .success-code strong { font-size: 26px; letter-spacing: 0.08em; }
-        .success-code button { width: auto; min-width: 120px; }
-        .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-        .metric {
-            border-radius: 18px;
-            background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(245,250,255,0.94));
-            border: 1px solid var(--line);
-            padding: 18px;
-        }
-        .metric strong { display: block; font-size: 28px; margin-bottom: 6px; }
-        .sections { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 22px; }
-        .card {
-            border-radius: 22px;
-            border: 1px solid var(--line);
-            background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(246,249,253,0.92));
-            padding: 20px;
-        }
-        .card h3 { margin: 0 0 10px; font-size: 20px; }
-        .card p { margin: 0; color: var(--muted); line-height: 1.7; }
-        .list { margin-top: 14px; display: grid; gap: 10px; }
-        .item {
-            padding: 12px 14px;
-            background: rgba(255,255,255,0.96);
-            border: 1px solid var(--line);
-            border-radius: 14px;
-            color: var(--muted);
-        }
-        .footer {
-            margin-top: 22px;
-            padding: 18px 0 10px;
-            display: flex;
-            justify-content: space-between;
-            gap: 16px;
-            flex-wrap: wrap;
-            color: var(--muted);
-            font-size: 13px;
-        }
-        @media (max-width: 920px) {
-            .hero, .sections { grid-template-columns: 1fr; }
-            .grid { grid-template-columns: 1fr; }
-            h1 { font-size: 34px; }
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ImgPull - 海外公开镜像同步到国内仓库</title>
+  <link rel="stylesheet" href="/public/assets/p0.css">
 </head>
-<body>
-    <div class="wrap">
-        <section class="hero">
-            <article class="panel">
-                <span class="tag">ImgPull</span>
-                <h1>海外镜像统一获取，自动分发到你的专属国内地址</h1>
-                <p class="lead">用户在首页搜索镜像或输入串码进入控制台。系统优先命中本地 Harbor 默认缓存仓库，未命中时再回退到 Docker Hub 搜索，并把镜像同步到默认缓存仓库后分发到你的专属命名空间。</p>
-
-                <div class="stack">
-                    <div>
-                        <div style="margin-bottom:8px;font-weight:700;">已有串码</div>
-                        <div class="grid" style="margin-top:0;">
-                            <input id="code" placeholder="请输入串码，例如 KZABC123">
-                            <button id="enterBtn" type="button">进入控制台</button>
-                        </div>
-                        <div id="status" class="status">输入串码后可直接进入用户控制台。</div>
-                    </div>
-
-                    <div class="card" style="padding:18px;">
-                        <div class="tag ok">购买串码</div>
-                        <h3 style="margin:0 0 8px;">购买后立即获得授权串码</h3>
-                        <p style="margin-bottom:14px;">填写邮箱后可生成新的授权串码。若后台已启用 SMTP，系统会同时把串码发送到购买邮箱。</p>
-                        <div class="grid" style="grid-template-columns:1fr 190px;margin-top:0;">
-                            <input id="purchaseEmail" placeholder="请输入购买邮箱，例如 ops@example.com">
-                            <button id="purchaseBtn" class="alt" type="button">生成并显示串码</button>
-                        </div>
-                        <div id="purchaseStatus" class="status">购买后会立即返回串码，可直接复制使用。</div>
-                        <div id="purchaseSuccess" class="success-card" style="display:none;">
-                            <div class="tag ok">购买成功</div>
-                            <div>系统已生成新的授权串码：</div>
-                            <div class="success-code">
-                                <strong id="purchaseCode">-</strong>
-                                <button id="copyPurchaseCodeBtn" class="alt" type="button">复制串码</button>
-                            </div>
-                            <div id="purchaseEmailHint" style="margin-top:10px;color:var(--muted);font-size:13px;"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid" style="grid-template-columns:1fr 1fr 1fr;margin-top:16px;">
-                    <a class="button alt" href="/console">用户控制台</a>
-                    <a class="button alt" href="/deliveries">交付镜像页</a>
-                    <a class="button alt" href="/admin">后台管理</a>
-                </div>
-            </article>
-
-            <aside class="panel">
-                <div class="stats">
-                    <div class="metric"><strong id="catalogCount">-</strong><span>镜像目录总数</span></div>
-                    <div class="metric"><strong id="localCount">-</strong><span>本地缓存镜像</span></div>
-                    <div class="metric"><strong id="userCount">-</strong><span>有效用户数</span></div>
-                    <div class="metric"><strong id="queuedCount">-</strong><span>排队任务数</span></div>
-                </div>
-            </aside>
-        </section>
-
-        <section class="sections">
-            <article class="card">
-                <span class="tag ok">搜索逻辑</span>
-                <h3>优先本地缓存，再查 Docker Hub</h3>
-                <p>平台默认优先搜索本地 Harbor 默认缓存仓库。只有当本地没有命中或用户主动选择综合搜索时，系统才会展示 Docker Hub 结果。</p>
-            </article>
-            <article class="card">
-                <span class="tag ok">获取流程</span>
-                <h3>默认仓库缓存，用户只拿专属地址</h3>
-                <p>镜像先进入默认缓存仓库，再分发到用户自己的 Harbor 命名空间。普通用户不直接操作默认仓库，只复制自己的专属拉取地址。</p>
-            </article>
-            <article class="card">
-                <span class="tag ok">保留策略</span>
-                <h3>缓存可续期，用户支持软删除</h3>
-                <p>后台可设置缓存保留天数，镜像被再次请求时会自动刷新缓存期限。用户删除后先进入 30 天保留期，再决定是否彻底清理。</p>
-            </article>
-        </section>
-
-        <section class="panel" style="margin-top:22px;">
-            <h2>当前版本说明</h2>
-            <div class="list">
-                <div class="item">支持安装向导、SQLite / MySQL 选择、Harbor 可选配置、购买串码、用户控制台和后台设置。</div>
-                <div class="item">当前运行时主逻辑仍以 SQLite 兼容路径为主，MySQL 主要完成了安装配置和连接测试。</div>
-                <div class="item">真实 Harbor API 联动和完整的 pull / tag / push worker 仍在后续完善中。</div>
-            </div>
-        </section>
-
-        <footer class="footer">
-            <span id="footerLinks">友情链接：Docker Hub</span>
-            <span id="icpLine">备案信息：未配置</span>
-        </footer>
+<body data-page="landing">
+  <main class="hero">
+    <div class="topbar">
+      <a class="brand" href="/">
+        <span class="brand-mark">I</span>
+        <span>ImgPull</span>
+      </a>
+      <div class="actions">
+        <a class="btn ghost" href="/login">登录</a>
+        <a class="btn" href="/login">立即使用</a>
+      </div>
     </div>
 
-    <script>
-        const codeEl = document.getElementById('code');
-        const statusEl = document.getElementById('status');
-        const purchaseEmailEl = document.getElementById('purchaseEmail');
-        const purchaseStatusEl = document.getElementById('purchaseStatus');
-        const purchaseSuccessEl = document.getElementById('purchaseSuccess');
-        const purchaseCodeEl = document.getElementById('purchaseCode');
-        const purchaseEmailHintEl = document.getElementById('purchaseEmailHint');
-
-        function showStatus(message) {
-            statusEl.textContent = message;
-        }
-
-        async function loadSummary() {
-            try {
-                const [summaryResponse, settingsResponse] = await Promise.all([
-                    fetch('/api/v2/admin/summary'),
-                    fetch('/api/v2/settings')
-                ]);
-                const summaryData = await summaryResponse.json();
-                const settingsData = await settingsResponse.json();
-
-                if (summaryResponse.ok && summaryData.success) {
-                    document.getElementById('catalogCount').textContent = summaryData.summary.catalogCount;
-                    document.getElementById('localCount').textContent = summaryData.summary.localCatalogCount;
-                    document.getElementById('userCount').textContent = summaryData.summary.userCount;
-                    document.getElementById('queuedCount').textContent = summaryData.summary.queuedTaskCount;
-                }
-
-                if (settingsResponse.ok && settingsData.success) {
-                    const settings = settingsData.settings || {};
-                    document.title = settings.siteTitle || 'ImgPull';
-                    const footerLinks = settings.footerLinks
-                        ? settings.footerLinks.split(',').map((item) => item.trim()).filter(Boolean).join(' / ')
-                        : 'Docker Hub';
-                    document.getElementById('footerLinks').textContent = `友情链接：${footerLinks}`;
-                    const icp = settings.icpBeian || '未配置';
-                    const gongan = settings.gonganBeian ? `，公安备案：${settings.gonganBeian}` : '';
-                    document.getElementById('icpLine').textContent = `备案信息：${icp}${gongan}`;
-                }
-            } catch (error) {
-                // 首页摘要加载失败时不阻塞页面
-            }
-        }
-
-        async function enterConsole() {
-            const code = codeEl.value.trim();
-            if (!code) {
-                showStatus('请输入串码后再进入控制台。');
-                return;
-            }
-
-            const response = await fetch(`/api/v2/me?code=${encodeURIComponent(code)}`);
-            const data = await response.json();
-            if (!response.ok || !data.success) {
-                showStatus(data.error || '串码校验失败，请检查后重试。');
-                return;
-            }
-
-            showStatus(`串码校验成功，正在进入命名空间 ${data.me.harborProjectName} 的控制台...`);
-            window.location.href = `/console?code=${encodeURIComponent(code)}`;
-        }
-
-        async function copyPurchaseCode() {
-            const text = purchaseCodeEl.textContent.trim();
-            if (!text || text === '-') return;
-
-            try {
-                await navigator.clipboard.writeText(text);
-                purchaseStatusEl.textContent = '串码已复制，可以直接发给用户使用。';
-            } catch (error) {
-                window.prompt('自动复制失败，请手动复制下面的串码：', text);
-            }
-        }
-
-        async function purchaseAccessCode() {
-            const email = purchaseEmailEl.value.trim();
-            if (!email) {
-                purchaseStatusEl.textContent = '请先输入邮箱，再生成串码。';
-                return;
-            }
-
-            purchaseStatusEl.textContent = '正在生成串码，请稍候...';
-            const response = await fetch('/api/v2/purchase', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email })
-            });
-            const data = await response.json();
-            if (!response.ok || !data.success) {
-                purchaseStatusEl.textContent = data.error || '生成串码失败，请稍后重试。';
-                return;
-            }
-
-            const purchase = data.purchase || {};
-            purchaseSuccessEl.style.display = 'block';
-            purchaseCodeEl.textContent = purchase.code || '-';
-            purchaseEmailHintEl.textContent = purchase.emailMessage || `购买邮箱：${purchase.email || email}`;
-            purchaseStatusEl.textContent = purchase.emailSent ? '串码已生成，并已发送到邮箱。' : '串码已生成，支持直接复制。';
-        }
-
-        document.getElementById('enterBtn').addEventListener('click', enterConsole);
-        document.getElementById('purchaseBtn').addEventListener('click', purchaseAccessCode);
-        document.getElementById('copyPurchaseCodeBtn').addEventListener('click', copyPurchaseCode);
-
-        loadSummary();
-    </script>
+    <section class="landing">
+      <div class="card">
+        <p class="badge success">海外公开镜像到国内用户仓库</p>
+        <h1>把 DockerHub 公开镜像同步到你自己的国内仓库</h1>
+        <p class="muted">绑定 Harbor、阿里云 ACR 或腾讯云 TCR，输入镜像后由平台执行 pull、tag、push，最终由你从自己的仓库地址拉取。</p>
+        <div class="row" style="margin-top:22px">
+          <input id="heroImage" placeholder="例如 nginx:1.25">
+          <button class="btn" id="startSync">开始同步</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>使用流程</h2>
+        <div class="steps">
+          <div class="step"><strong>1. 绑定国内仓库</strong><br><span class="muted">保存 Harbor / ACR / TCR 的目标命名空间与凭证。</span></div>
+          <div class="step"><strong>2. 输入公开镜像</strong><br><span class="muted">首发支持 DockerHub 官方公开镜像。</span></div>
+          <div class="step"><strong>3. 平台执行同步</strong><br><span class="muted">Worker 执行 pull、tag、login、push。</span></div>
+          <div class="step"><strong>4. 从你的仓库拉取</strong><br><span class="muted">复制 docker / nerdctl / crictl 拉取命令。</span></div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script src="/public/assets/p0.js"></script>
 </body>
 </html>

@@ -30,6 +30,19 @@ function createApp() {
 
   app.use('/public', express.static(path.join(process.cwd(), 'public')));
 
+  const page = (fileName) => (req, res) => {
+    res.sendFile(path.join(process.cwd(), 'public', fileName));
+  };
+
+  app.get('/', page('index.html'));
+  app.get('/login', page('login.html'));
+  app.get('/dashboard', page('dashboard.html'));
+  app.get('/registries', page('registries.html'));
+  app.get('/sync', page('sync.html'));
+  app.get('/tasks', page('tasks.html'));
+  app.get('/task-detail', page('task-detail.html'));
+  app.get('/images', page('images.html'));
+
   app.use('/api/v1/auth', authRoutes);
   app.get('/api/v1/me', requireAuth, AuthController.me);
   app.use('/api/v1/registries', registryRoutes);
