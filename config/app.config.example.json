@@ -1,0 +1,29 @@
+{
+  "server": {
+    "port": 3001,
+    "host": "0.0.0.0"
+  },
+  "security": {
+    "appSecret": "replace-with-a-long-random-secret",
+    "tokenExpiresInHours": 72,
+    "internalWorkerToken": "replace-with-a-long-random-worker-token"
+  },
+  "database": {
+    "host": "127.0.0.1",
+    "port": 3306,
+    "user": "root",
+    "password": "root",
+    "database": "img_sync_platform",
+    "waitForConnections": true,
+    "connectionLimit": 10,
+    "queueLimit": 0
+  },
+  "executor": {
+    "enabled": true,
+    "driver": "docker",
+    "dockerBinary": "docker",
+    "fakeDelayMs": 50,
+    "pullTimeoutMs": 1800000,
+    "pushTimeoutMs": 1800000
+  }
+}

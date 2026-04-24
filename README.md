@@ -1,179 +1,203 @@
-# ImgPull
+# ImgPull Backend MVP
 
-ImgPull 是一个“海外容器镜像国内获取与分发平台”。
+ImgPull Backend MVP is the P0 backend for syncing public Docker Hub images into a user's own domestic registry.
 
-它的核心流程是：
-
-1. 用户搜索镜像。
-2. 系统优先检查本地 Harbor 默认缓存仓库。
-3. 本地没有时，再回源到 Docker Hub。
-4. 镜像先进入默认缓存仓库。
-5. 系统再把镜像分发到用户自己的专属命名空间。
-6. 用户在控制台复制 `docker`、`nerdctl` 或 `crictl` 拉取命令，在自己的服务器上拉取镜像。
-
-## 目录结构
+The current backend focuses on the core chain:
 
 ```text
-imgpull/
-├─ config/
-├─ docs/
-│  └─ INSTALL.md
-├─ public/
-│  ├─ install.html
-│  ├─ index.html
-│  ├─ console.html
-│  ├─ deliveries.html
-│  └─ admin.html
-├─ package.json
-├─ README.md
-└─ server.js
+register/login -> bind registry -> test registry -> create sync task -> worker claim
+-> pull -> tag -> login -> push -> write status/logs -> query task/images
 ```
 
-## 环境要求
+## Runtime Requirements
 
-- Node.js 18 或更高版本
-- Windows、Linux、macOS 均可运行
-- 如果要接 Harbor，请准备 Harbor 地址、账号和密码
-- 如果要测试或使用 MySQL，请准备 MySQL 5 到 8 的连接信息
-- 如果要启用邮件发送，请准备 SMTP 主机、端口、账号、密码和发件邮箱
-- 如果要启用真实分发链路，请确认部署机器已经安装 Docker，并且服务进程有权限执行：
-  - `docker login`
-  - `docker pull`
-  - `docker tag`
-  - `docker push`
+- Node.js 20 or newer
+- MySQL 8 compatible database
+- Docker CLI on the worker host when using the real executor
 
-## 安装方式
+This repository also supports a `fake` executor for integration tests and local API verification when Docker is unavailable.
 
-1. 安装依赖
+## Install
 
 ```bash
 npm install
 ```
 
-2. 启动服务
+## Database
+
+Create the database and tables:
 
 ```bash
-npm start
+mysql -h 127.0.0.1 -P 3306 -u root -p < schema.sql
 ```
 
-3. 默认端口
+Insert a minimum free plan:
 
-```text
-3001
+```sql
+USE img_sync_platform;
+
+INSERT INTO plans (
+  code, name, price_month, price_year, daily_sync_limit, monthly_sync_limit,
+  max_batch_size, max_concurrent_tasks, max_registry_accounts,
+  api_enabled, api_daily_limit, max_image_size_bytes, max_task_duration_seconds,
+  log_retention_days, status
+) VALUES (
+  'free', 'free', 0, 0, 3, 100,
+  3, 1, 1, 0, 0, 2147483648, 600, 7, 'active'
+) ON DUPLICATE KEY UPDATE name = VALUES(name);
 ```
 
-4. 自定义端口
+## Configuration
 
-Linux / macOS:
+Copy the example configuration:
 
 ```bash
-PORT=8080 npm start
+cp config/app.config.example.json config/app.config.json
 ```
 
 Windows PowerShell:
 
 ```powershell
-$env:PORT=8080
+Copy-Item config/app.config.example.json config/app.config.json
+```
+
+Main environment variables:
+
+```text
+PORT=3001
+HOST=127.0.0.1
+APP_SECRET=replace-with-a-long-random-secret
+TOKEN_EXPIRES_IN_HOURS=72
+INTERNAL_WORKER_TOKEN=replace-with-a-long-random-worker-token
+
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=root
+DB_NAME=img_sync_platform
+
+EXECUTOR_ENABLED=true
+EXECUTOR_DRIVER=docker
+DOCKER_BINARY=docker
+FAKE_EXECUTOR_DELAY_MS=50
+PULL_TIMEOUT_MS=1800000
+PUSH_TIMEOUT_MS=1800000
+```
+
+Environment variables override `config/app.config.json`.
+
+## Executor Modes
+
+Real Docker executor:
+
+```bash
+EXECUTOR_DRIVER=docker npm start
+```
+
+PowerShell:
+
+```powershell
+$env:EXECUTOR_DRIVER="docker"
 npm start
 ```
 
-更完整的安装说明见：
-
-- [docs/INSTALL.md](docs/INSTALL.md)
-
-## 首次安装
-
-未安装时，访问首页会自动跳转到：
+The real executor runs:
 
 ```text
-/install
+docker pull
+docker tag
+docker login
+docker push
+docker logout
 ```
 
-安装页支持：
+Fake executor:
 
-- 站点标题
-- 站点副标题
-- 管理员邮箱
-- 数据库类型选择
-  - SQLite
-  - MySQL 5 到 8
-- SQLite 文件路径
-- MySQL 主机、端口、数据库、用户名、密码
-- Harbor 可选配置
-- Harbor 连接测试
+```bash
+EXECUTOR_DRIVER=fake npm start
+```
 
-安装配置会保存到：
+PowerShell:
+
+```powershell
+$env:EXECUTOR_DRIVER="fake"
+npm start
+```
+
+The fake executor does not call Docker. It is used for integration tests and local success-path verification.
+
+## Start
+
+```bash
+npm start
+```
+
+Expected log:
 
 ```text
-config/app.config.json
+[server] listening on http://127.0.0.1:3001
 ```
 
-## 数据库说明
+Health check:
 
-### SQLite
+```bash
+curl http://127.0.0.1:3001/health
+```
 
-当前版本继续兼容仓库里的历史 SQLite 数据。
+## Test
 
-适合：
+The integration tests create an isolated test database and run the fake executor success path.
 
-- 本地测试
-- 单机部署
-- 轻量试运行
+```bash
+npm test
+```
 
-不建议直接用于：
+Test database environment variables:
 
-- 高并发生产环境
-- 多实例共享写入场景
+```text
+TEST_DB_HOST=127.0.0.1
+TEST_DB_PORT=3306
+TEST_DB_USER=root
+TEST_DB_PASSWORD=root
+```
 
-### MySQL
+## P0 API Surface
 
-当前版本已经支持：
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/login`
+- `GET /api/v1/me`
+- `GET /api/v1/registries`
+- `POST /api/v1/registries`
+- `PUT /api/v1/registries/:id`
+- `DELETE /api/v1/registries/:id`
+- `POST /api/v1/registries/:id/test`
+- `POST /api/v1/registries/:id/set-default`
+- `POST /api/v1/sync-tasks`
+- `GET /api/v1/sync-tasks`
+- `GET /api/v1/sync-tasks/:id`
+- `POST /api/v1/sync-tasks/:id/cancel`
+- `POST /api/v1/sync-tasks/:id/retry`
+- `GET /api/v1/sync-tasks/items/:id/logs`
+- `GET /api/v1/my-images`
+- `GET /api/v1/my-images/:id`
+- `POST /api/v1/my-images/:id/resync`
+- `POST /internal/worker/tasks/claim`
+- `POST /internal/worker/task-items/:id/run`
+- `POST /internal/worker/cycle`
 
-- 安装时填写 MySQL 参数
-- 安装页测试 MySQL 连接
-- 保存 MySQL 配置
+All `/internal/worker/*` requests must include `X-Worker-Token: $INTERNAL_WORKER_TOKEN`.
 
-当前限制：
+## Current Verification
 
-- 运行时主业务逻辑仍以 SQLite 兼容路径为主
-- MySQL 目前已具备安装配置能力，但运行时还未完全切换
+Current automated coverage includes:
 
-## 主要页面
+- Task status transition test
+- Fake executor success-path integration test
+- Registry response redaction test
+- Internal worker token authentication test
+- Registry edit-without-secret preservation test
+- Registry delete-and-recreate consistency test
+- Cancel queued task test
+- Retry canceled task test
 
-- `/install` 首次安装页
-- `/` 前台首页
-- `/console` 用户控制台
-- `/deliveries` 已交付镜像页
-- `/admin` 管理后台
-
-兼容入口仍保留：
-
-- `/v2`
-- `/v2/console`
-- `/v2/deliveries`
-- `/v2/admin`
-
-## 当前已实现
-
-- 正式入口文件整理完成
-- 删除旧版 `v2` 页面命名
-- 接入首次安装流程
-- 支持安装时选择 SQLite 或 MySQL
-- 支持 Harbor 可选配置和连接测试
-- 支持 SMTP 邮件配置、连接测试与串码邮件发送
-- 首页支持串码输入与购买串码
-- 用户控制台支持镜像搜索、项目管理、我的镜像、任务查看
-- 交付页支持复制专属镜像拉取命令
-- 后台支持基础设置、Harbor 配置、SMTP 配置、执行链路配置、缓存与任务概览
-- 支持将排队任务推进成真实的 Docker 执行链路
-  - `docker login`
-  - `docker pull`
-  - `docker tag`
-  - `docker push`
-- 支持后台自动轮询执行排队任务
-
-## 当前建议
-
-1. 继续完善 MySQL 运行时支持，而不只是安装与测试层支持。
-2. 继续补 Harbor API 级同步和任务日志细化能力。
-3. 继续补后台广告位、SEO、备案和内容管理能力。
+Real Docker verification requires a host with Docker CLI and a writable target registry. See [docs/real-docker-acceptance.md](docs/real-docker-acceptance.md).
