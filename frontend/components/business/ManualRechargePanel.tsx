@@ -19,21 +19,24 @@ const rechargeCandidates = [
 
 export function ManualRechargePanel() {
   const [applied, setApplied] = useState(false);
-  const [query, setQuery] = useState("ops@demo.com");
-  const [selectedUser, setSelectedUser] = useState(rechargeCandidates[0]);
+  const [query, setQuery] = useState("");
+  const [selectedUser, setSelectedUser] = useState<(typeof rechargeCandidates)[number] | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const matches = useMemo(() => {
     const keyword = query.trim().toLowerCase();
-    if (!keyword) return rechargeCandidates.slice(0, 5);
+    if (!keyword) return [];
+    if (selectedUser && keyword === selectedUser.account.toLowerCase()) return [];
     return rechargeCandidates
       .filter((user) => [user.account, user.name, user.id].join(" ").toLowerCase().includes(keyword))
       .slice(0, 6);
-  }, [query]);
+  }, [query, selectedUser]);
 
   function chooseUser(user: typeof rechargeCandidates[number]) {
     setSelectedUser(user);
     setQuery(user.account);
     setApplied(false);
+    setSearchOpen(false);
   }
 
   return (
@@ -50,9 +53,18 @@ export function ManualRechargePanel() {
               className="input"
               placeholder="输入 chen、ops、dev 等关键词搜索用户"
               value={query}
-              onChange={(event) => { setQuery(event.target.value); setApplied(false); }}
+              onBlur={() => window.setTimeout(() => setSearchOpen(false), 120)}
+              onChange={(event) => {
+                setQuery(event.target.value);
+                setSelectedUser(null);
+                setSearchOpen(true);
+                setApplied(false);
+              }}
+              onFocus={() => {
+                if (query.trim() && matches.length > 0) setSearchOpen(true);
+              }}
             />
-            {matches.length > 0 ? (
+            {searchOpen && matches.length > 0 ? (
               <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-20 overflow-hidden rounded-[10px] border border-borderSoft bg-white shadow-panel">
                 {matches.map((user) => (
                   <button
@@ -86,7 +98,7 @@ export function ManualRechargePanel() {
         </label>
         <label className="field">
           <span className="label">当前用户余额</span>
-          <input className="input" value={`可用 ${selectedUser.balance} / 冻结 ${selectedUser.frozen}`} readOnly />
+          <input className="input" value={selectedUser ? `可用 ${selectedUser.balance} / 冻结 ${selectedUser.frozen}` : "请选择用户"} readOnly />
         </label>
         <label className="field md:col-span-2">
           <span className="label">备注</span>
@@ -94,7 +106,7 @@ export function ManualRechargePanel() {
         </label>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <Button variant="primary" onClick={() => setApplied(true)}>确认人工充值</Button>
+        <Button variant="primary" disabled={!selectedUser} onClick={() => setApplied(true)}>确认人工充值</Button>
         {applied ? <Badge tone="green">订单 paid / 积分 +200 / 用户已通知 / 操作日志已写入</Badge> : null}
       </div>
     </div>

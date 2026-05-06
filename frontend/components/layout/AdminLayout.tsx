@@ -54,7 +54,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         </header>
-        <main className={`mx-auto grid w-[min(1440px,calc(100vw-28px))] grid-cols-1 gap-5 py-5 transition-all duration-200 ease-out ${sidebarCollapsed ? "lg:grid-cols-[76px_minmax(0,1fr)]" : "lg:grid-cols-[264px_minmax(0,1fr)]"}`}>
+        <main className={`mx-auto grid w-[min(1440px,calc(100vw-28px))] grid-cols-1 gap-5 py-5 transition-all duration-200 ease-out ${sidebarCollapsed ? "lg:grid-cols-[76px_minmax(0,1fr)]" : "lg:grid-cols-[188px_minmax(0,1fr)]"}`}>
           <Sidebar title="管理后台" routes={adminRoutes} collapsed={sidebarCollapsed} onCollapsedChange={handleSidebarCollapsedChange} />
           <section className="min-w-0">
             <MobileNav label="管理后台导航" routes={adminRoutes} />

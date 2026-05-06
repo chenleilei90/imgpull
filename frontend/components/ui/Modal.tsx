@@ -16,21 +16,21 @@ export function Modal({
   onFullscreenToggle?: () => void;
 }) {
   const panelClass = fullscreen
-    ? "h-full w-full rounded-none bg-white p-5 shadow-panel"
+    ? "flex h-screen w-full flex-col rounded-none bg-white p-5 shadow-panel"
     : placement === "drawer"
-      ? "ml-auto min-h-full w-[min(1120px,100vw)] rounded-none border-l border-borderSoft bg-white p-5 shadow-panel"
-      : "mx-auto mt-[6vh] w-[min(760px,calc(100vw-28px))] rounded-panel border border-borderSoft bg-white p-5 shadow-panel";
+      ? "ml-auto flex h-screen w-[min(1120px,100vw)] flex-col rounded-none border-l border-borderSoft bg-white p-5 shadow-panel"
+      : "mx-auto mt-[6vh] flex max-h-[88vh] w-[min(760px,calc(100vw-28px))] flex-col rounded-panel border border-borderSoft bg-white p-5 shadow-panel";
 
   const contentClass = fullscreen
-    ? "max-h-[calc(100vh-128px)] overflow-y-auto pr-1"
+    ? "min-h-0 flex-1 overflow-y-auto pr-1"
     : placement === "drawer"
-      ? "max-h-[calc(100vh-128px)] overflow-y-auto pr-1"
-      : "max-h-[70vh] overflow-y-auto pr-1";
+      ? "min-h-0 flex-1 overflow-y-auto pr-1"
+      : "min-h-0 overflow-y-auto pr-1";
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/22 backdrop-blur-sm">
       <div className={panelClass}>
-        <div className="mb-4 flex items-start justify-between gap-4">
+        <div className="mb-4 flex shrink-0 items-start justify-between gap-4">
           <h3 className="m-0 text-lg font-black text-ink">{title}</h3>
           <div className="flex items-center gap-2">
             {onFullscreenToggle ? (
@@ -50,7 +50,7 @@ export function Modal({
           </div>
         </div>
         <div className={contentClass}>{children}</div>
-        {footer ? <div className="mt-5 flex flex-wrap justify-end gap-2 border-t border-borderSoft pt-4">{footer}</div> : null}
+        {footer ? <div className="mt-5 flex shrink-0 flex-wrap justify-end gap-2 border-t border-borderSoft bg-white pt-4">{footer}</div> : null}
       </div>
     </div>
   );
