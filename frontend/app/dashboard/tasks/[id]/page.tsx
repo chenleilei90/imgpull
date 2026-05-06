@@ -1,5 +1,4 @@
 import { DigestPanel } from "@/components/business/DigestPanel";
-import { TaskListPreviewPanel } from "@/components/business/TaskListPreviewPanel";
 import { TaskLogs } from "@/components/business/TaskLogs";
 import { TaskStatusBadges } from "@/components/business/TaskStatusBadges";
 import { TaskSyncResultPanel } from "@/components/business/TaskSyncResultPanel";
@@ -12,11 +11,14 @@ import { mockApi } from "@/lib/mock-api";
 export default async function TaskDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const task = mockApi.getTask(id);
-  const previewTasks = mockApi.getTasks().slice(0, 2);
 
   return (
     <UserDashboardLayout>
       <div className="section-title">
+        <div className="mb-4 flex min-h-10 flex-wrap items-center gap-3">
+          <Button href="/dashboard/tasks" variant="secondary" size="md" className="h-10 leading-none">← 返回任务列表</Button>
+          <span className="flex h-10 items-center text-sm font-black leading-none text-muted">用户控制台 / 任务列表 / 任务详情</span>
+        </div>
         <h1>任务详情</h1>
         <p>任务编号 {task.taskNo} / {task.title}</p>
       </div>
@@ -25,8 +27,6 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
           <CardHeader title="同步结果" description="先看任务结果、镜像地址、积分处理和下一步建议；技术字段放在下方。" />
           <TaskSyncResultPanel task={task} />
         </Card>
-
-        <TaskListPreviewPanel tasks={previewTasks} />
 
         <Card>
           <CardHeader title="拉取命令与 Digest" description="tag 适合日常使用，digest 更适合固定版本和审计。" />
