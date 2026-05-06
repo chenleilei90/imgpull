@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { CodeBlock } from "@/components/ui/CodeBlock";
+import { DemoNotice } from "@/components/ui/DemoNotice";
 import { Modal } from "@/components/ui/Modal";
 import { Select } from "@/components/ui/Select";
 import { workerNodes as initialWorkerNodes } from "@/lib/mock-data";
@@ -287,6 +288,10 @@ export default function AdminWorkersPage() {
 
       <div className="mb-4 rounded-panel border border-blue-100 bg-blue-50/70 px-4 py-3 text-sm font-bold leading-7 text-slate-700">
         {notice}
+      </div>
+
+      <div className="mb-4">
+        <DemoNotice tone="security" message="请勿在演示环境填写真实 Worker Token、AccessKey、Registry 密码或生产凭据。当前新增节点、测试连接、模拟心跳都只是前端 mock，不会启动真实 Worker 或拉取 / 推送镜像。" />
       </div>
 
       <WorkerBoundaryPanel />

@@ -7,6 +7,7 @@ import { ConsoleLegalNote } from "@/components/layout/Footer";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Button } from "@/components/ui/Button";
+import { DemoNotice } from "@/components/ui/DemoNotice";
 import { clearMockSession, useMockSession } from "@/lib/mock-auth";
 import { adminRoutes } from "@/lib/routes";
 
@@ -54,6 +55,9 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         </header>
+        <div className="mx-auto mt-4 w-[min(1440px,calc(100vw-28px))]">
+          <DemoNotice tone="admin" compact />
+        </div>
         <main className={`mx-auto grid w-[min(1440px,calc(100vw-28px))] grid-cols-1 gap-5 py-5 transition-all duration-200 ease-out ${sidebarCollapsed ? "lg:grid-cols-[76px_minmax(0,1fr)]" : "lg:grid-cols-[188px_minmax(0,1fr)]"}`}>
           <Sidebar title="管理后台" routes={adminRoutes} collapsed={sidebarCollapsed} onCollapsedChange={handleSidebarCollapsedChange} />
           <section className="min-w-0">

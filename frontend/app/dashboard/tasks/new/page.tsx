@@ -5,6 +5,7 @@ import { BatchTaskImportPanel } from "@/components/business/BatchTaskImportPanel
 import { UserDashboardLayout } from "@/components/layout/UserDashboardLayout";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
+import { DemoNotice } from "@/components/ui/DemoNotice";
 import { Select } from "@/components/ui/Select";
 import { registryAccounts } from "@/lib/mock-data";
 
@@ -19,6 +20,10 @@ export default function NewTaskPage() {
       <div className="section-title">
         <h1>新建镜像任务</h1>
         <p>支持单个镜像创建，也支持一次粘贴多行镜像地址并生成多条独立任务。每条任务独立冻结积分、执行和失败返还。</p>
+      </div>
+
+      <div className="mb-5">
+        <DemoNotice tone="security" />
       </div>
 
       <div className={`mb-5 rounded-panel border p-4 text-sm font-bold leading-7 ${
