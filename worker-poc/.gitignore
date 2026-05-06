@@ -1,0 +1,9 @@
+.env
+*.env
+*.auth.json
+*auth*.json
+*credentials*
+*secret*
+results/*
+!results/.gitkeep
+!results/REPORT_TEMPLATE.md

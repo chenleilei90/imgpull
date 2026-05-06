@@ -1,0 +1,37 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: imgpull-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: imgpull
+      POSTGRES_PASSWORD: imgpull
+      POSTGRES_DB: imgpull
+    ports:
+      - "5432:5432"
+    volumes:
+      - imgpull_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U imgpull -d imgpull"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: imgpull-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - imgpull_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  imgpull_postgres_data:
+  imgpull_redis_data:

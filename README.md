@@ -1,203 +1,228 @@
-# ImgPull Backend MVP
+﻿# ImgPull 镜像助手
 
-ImgPull Backend MVP is the P0 backend for syncing public Docker Hub images into a user's own domestic registry.
+ImgPull 是一个面向 DevOps、云原生工程师、运维和开发团队的镜像同步 SaaS 产品原型。目标是帮助用户把 Docker Hub、GHCR、Quay 等公开容器镜像同步到自己的私有镜像仓库，例如阿里云 ACR、腾讯云 TCR、华为云 SWR、火山云 CR、自建 Harbor 或通用 Docker Registry。
 
-The current backend focuses on the core chain:
+当前仓库是 **P0 前端演示版 + backend 脚手架基线 + Worker POC 准备版**。网站当前只用于页面演示和产品流程评审，不能真实拉取或推送镜像。
 
-```text
-register/login -> bind registry -> test registry -> create sync task -> worker claim
--> pull -> tag -> login -> push -> write status/logs -> query task/images
-```
+## 当前状态
 
-## Runtime Requirements
+- `frontend/`：Next.js + React + TypeScript + Tailwind 的可演示前端，使用 mock data 和 mock auth。
+- `backend/`：NestJS + Fastify + Prisma 的后端脚手架候选版，运行闭环暂缓。
+- `worker-poc/`：Skopeo / Crane POC 脚本准备版，真实实测暂缓。
+- `prototype/`：早期静态 HTML 原型，保留作对照。
+- `docs/`：P0/P1 产品、页面、架构、数据库、API 和 Worker 协议文档。
 
-- Node.js 20 or newer
-- MySQL 8 compatible database
-- Docker CLI on the worker host when using the real executor
+## 快速运行前端
 
-This repository also supports a `fake` executor for integration tests and local API verification when Docker is unavailable.
+需要 Node.js 20 或更高版本。
 
-## Install
-
-```bash
+~~~bash
+cd frontend
 npm install
-```
+npm run dev -- --port 3001
+~~~
 
-## Database
+浏览器打开：
 
-Create the database and tables:
+~~~text
+http://localhost:3001
+~~~
 
-```bash
-mysql -h 127.0.0.1 -P 3306 -u root -p < schema.sql
-```
+如果 3001 被占用，可以换端口：
 
-Insert a minimum free plan:
+~~~bash
+npm run dev -- --port 3002
+~~~
 
-```sql
-USE img_sync_platform;
+## 前端验证命令
 
-INSERT INTO plans (
-  code, name, price_month, price_year, daily_sync_limit, monthly_sync_limit,
-  max_batch_size, max_concurrent_tasks, max_registry_accounts,
-  api_enabled, api_daily_limit, max_image_size_bytes, max_task_duration_seconds,
-  log_retention_days, status
-) VALUES (
-  'free', 'free', 0, 0, 3, 100,
-  3, 1, 1, 0, 0, 2147483648, 600, 7, 'active'
-) ON DUPLICATE KEY UPDATE name = VALUES(name);
-```
+~~~bash
+cd frontend
+npm run typecheck
+npm run lint
+npm run build
+~~~
 
-## Configuration
+## 演示登录方式
 
-Copy the example configuration:
+前端使用 mock auth，不接真实登录接口。
 
-```bash
-cp config/app.config.example.json config/app.config.json
-```
+- 打开 `/login`
+- 点击“以普通用户身份进入”进入 `/dashboard`
+- 点击“以管理员身份进入”进入 `/admin`
+- 未登录访问 `/dashboard/*` 或 `/admin/*` 会跳转登录页
+- 普通用户访问 `/admin/*` 会被拦截回用户控制台
 
-Windows PowerShell:
+## 主要页面
 
-```powershell
-Copy-Item config/app.config.example.json config/app.config.json
-```
+公共页面：
 
-Main environment variables:
+- `/`
+- `/product`
+- `/pricing`
+- `/registries`
+- `/help`
+- `/help/articles/[slug]`
+- `/error-codes`
+- `/terms`
+- `/privacy`
+- `/login`
+- `/register`
 
-```text
-PORT=3001
-HOST=127.0.0.1
-APP_SECRET=replace-with-a-long-random-secret
-TOKEN_EXPIRES_IN_HOURS=72
-INTERNAL_WORKER_TOKEN=replace-with-a-long-random-worker-token
+用户后台：
 
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=root
-DB_NAME=img_sync_platform
+- `/dashboard`
+- `/dashboard/tasks/new`
+- `/dashboard/tasks`
+- `/dashboard/tasks/[id]`
+- `/dashboard/registries`
+- `/dashboard/points`
+- `/dashboard/orders`
+- `/dashboard/activities`
+- `/dashboard/messages`
+- `/dashboard/settings`
 
-EXECUTOR_ENABLED=true
-EXECUTOR_DRIVER=docker
-DOCKER_BINARY=docker
-FAKE_EXECUTOR_DELAY_MS=50
-PULL_TIMEOUT_MS=1800000
-PUSH_TIMEOUT_MS=1800000
-```
+管理员后台：
 
-Environment variables override `config/app.config.json`.
+- `/admin`
+- `/admin/tasks`
+- `/admin/tasks/[id]`
+- `/admin/workers`
+- `/admin/users`
+- `/admin/points`
+- `/admin/orders`
+- `/admin/activities`
+- `/admin/announcements`
+- `/admin/docs`
+- `/admin/error-codes`
+- `/admin/config`
+- `/admin/audit-logs`
+- `/admin/health`
 
-## Executor Modes
+## P0 功能范围
 
-Real Docker executor:
+P0 已覆盖前端演示闭环：
 
-```bash
-EXECUTOR_DRIVER=docker npm start
-```
+- 官网、价格、支持仓库、帮助中心、错误码、服务条款、隐私政策
+- 用户后台、管理员后台、公共 Footer、备案占位
+- mock 登录、路由保护、用户 / 管理员两种演示身份
+- 单个镜像任务创建
+- 轻量批量导入：最多 50 行源镜像、最多 3 个目标项目、最多创建 150 条独立 ImageTask
+- 用户可见任务编号 `IMG-ABC-1234` 和批次编号 `BAT-ABC-1234`
+- 任务列表、任务详情、同步结果、Digest、tag pull / digest pull 命令
+- 私有仓库管理、项目 / namespace 手动维护口径
+- 积分冻结、成功结算、失败返还、人工充值演示
+- 消息中心和系统公告演示
+- 帮助中心文档化和管理员 Markdown 文章管理
+- 管理员 Worker 节点管理 mock：新增、编辑、详情、注册指引、生命周期操作
 
-PowerShell:
+## 当前不做
 
-```powershell
-$env:EXECUTOR_DRIVER="docker"
-npm start
-```
+当前版本不实现：
 
-The real executor runs:
+- 真实后端业务闭环
+- 真实数据库运行和迁移验收
+- 真实 Worker 程序
+- 真实 Worker Docker 镜像或 Linux 二进制
+- 真实 Skopeo / Crane registry copy
+- 真实仓库凭据下发
+- 真实支付宝 / 微信支付 SDK
+- 真实支付回调
+- 云厂商 OpenAPI 自动读取 namespace / project
+- Harbor API 自动读取 project
+- 生产 registry、生产账号或真实 AccessKey
 
-```text
-docker pull
-docker tag
-docker login
-docker push
-docker logout
-```
+## backend 说明
 
-Fake executor:
+后端代码位于 `backend/`，当前是脚手架候选版，不是已验收上线服务。
 
-```bash
-EXECUTOR_DRIVER=fake npm start
-```
+本地运行需要 Docker Desktop、PostgreSQL、Redis：
 
-PowerShell:
+~~~bash
+cd backend
+npm install
+cp .env.example .env
+docker compose up -d postgres redis
+npx prisma validate
+npx prisma migrate dev --name init_p0_baseline
+npx prisma generate
+npx prisma db seed
+npm run typecheck
+npm run lint
+npm run build
+npm run start:dev
+~~~
 
-```powershell
-$env:EXECUTOR_DRIVER="fake"
-npm start
-```
+健康检查目标：
 
-The fake executor does not call Docker. It is used for integration tests and local success-path verification.
+~~~text
+http://localhost:4000/api/health
+~~~
 
-## Start
+后端运行闭环当前暂缓，前端不会请求真实后端。
 
-```bash
-npm start
-```
+## Worker POC 说明
 
-Expected log:
+Worker POC 位于 `worker-poc/`。它只用于后续在真实测试机上验证 Skopeo / Crane 是否能完成 registry-to-registry copy。
 
-```text
-[server] listening on http://127.0.0.1:3001
-```
+当前不会开发真实 Worker，也不会执行真实镜像同步。
 
-Health check:
+基本检查：
 
-```bash
-curl http://127.0.0.1:3001/health
-```
+~~~bash
+bash worker-poc/scripts/00-check-tools.sh
+~~~
 
-## Test
+实测前需要安装：
 
-The integration tests create an isolated test database and run the fake executor success path.
+- skopeo
+- crane
+- jq
+- 可选 docker
 
-```bash
-npm test
-```
+真实凭据、`.env` 和 authfile 不允许提交。
 
-Test database environment variables:
+## 文档阅读顺序
 
-```text
-TEST_DB_HOST=127.0.0.1
-TEST_DB_PORT=3306
-TEST_DB_USER=root
-TEST_DB_PASSWORD=root
-```
+建议按以下顺序阅读：
 
-## P0 API Surface
+1. `docs/01-product-requirements.md`
+2. `docs/09-final-product-baseline.md`
+3. `docs/10-page-route-and-action-map.md`
+4. `docs/04-ui-pages-and-design-system.md`
+5. `docs/03-billing-membership.md`
+6. `docs/05-registry-auth-research.md`
+7. `docs/02-architecture-and-task-engine.md`
+8. `docs/12-execution-backends-and-database-schema.md`
+9. `docs/13-api-and-worker-contract.md`
+10. `docs/15-worker-node-lifecycle.md`
+11. `docs/14-closed-loop-audit.md`
+12. `docs/11-risk-cost-and-delivery-checklist.md`
+13. `docs/07-feature-completeness-audit.md`
+14. `docs/06-mvp-decisions.md`
+15. `docs/08-competitor-and-reference-research.md`
 
-- `POST /api/v1/auth/register`
-- `POST /api/v1/auth/login`
-- `GET /api/v1/me`
-- `GET /api/v1/registries`
-- `POST /api/v1/registries`
-- `PUT /api/v1/registries/:id`
-- `DELETE /api/v1/registries/:id`
-- `POST /api/v1/registries/:id/test`
-- `POST /api/v1/registries/:id/set-default`
-- `POST /api/v1/sync-tasks`
-- `GET /api/v1/sync-tasks`
-- `GET /api/v1/sync-tasks/:id`
-- `POST /api/v1/sync-tasks/:id/cancel`
-- `POST /api/v1/sync-tasks/:id/retry`
-- `GET /api/v1/sync-tasks/items/:id/logs`
-- `GET /api/v1/my-images`
-- `GET /api/v1/my-images/:id`
-- `POST /api/v1/my-images/:id/resync`
-- `POST /internal/worker/tasks/claim`
-- `POST /internal/worker/task-items/:id/run`
-- `POST /internal/worker/cycle`
+## 安全和提交规则
 
-All `/internal/worker/*` requests must include `X-Worker-Token: $INTERNAL_WORKER_TOKEN`.
+不要提交：
 
-## Current Verification
+- `.env`
+- authfile
+- token
+- password
+- AccessKey / SecretKey
+- `node_modules/`
+- `.next/`
+- `dist/`
+- `*.log`
+- `*.tsbuildinfo`
+- Worker POC 实测日志
 
-Current automated coverage includes:
+根目录 `.gitignore` 已覆盖这些规则。
 
-- Task status transition test
-- Fake executor success-path integration test
-- Registry response redaction test
-- Internal worker token authentication test
-- Registry edit-without-secret preservation test
-- Registry delete-and-recreate consistency test
-- Cancel queued task test
-- Retry canceled task test
+## 下一步建议
 
-Real Docker verification requires a host with Docker CLI and a writable target registry. See [docs/real-docker-acceptance.md](docs/real-docker-acceptance.md).
+1. 继续人工评审 P0 前端演示页面。
+2. 前端确认后，再决定是否恢复 backend 运行闭环验收。
+3. 真实 Worker 设计前，先执行 `worker-poc/` 的 Skopeo / Crane 实测。
+4. 不要在 P0 再扩 P1/P2 功能，避免范围失控。

@@ -1,0 +1,729 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  normal
+  disabled
+  closing
+}
+
+enum AdminRole {
+  super_admin
+}
+
+enum AdminStatus {
+  normal
+  disabled
+}
+
+enum ActorType {
+  user
+  admin
+}
+
+enum RegistryProvider {
+  aliyun_acr
+  tencent_tcr
+  volcengine
+  huawei_swr
+  harbor
+  generic
+}
+
+enum RegistryAccountStatus {
+  active
+  test_success
+  auth_failed
+  push_denied
+  namespace_missing
+  tls_error
+  disabled
+  deleted
+}
+
+enum TaskStatus {
+  draft
+  validating
+  queued
+  assigned
+  running
+  canceling
+  canceled
+  succeeded
+  failed
+}
+
+enum BillingStatus {
+  not_frozen
+  frozen
+  settled
+  refunding
+  refunded
+  settlement_failed
+}
+
+enum WorkerTaskStatus {
+  unclaimed
+  claimed
+  running
+  heartbeat_lost
+  completed
+}
+
+enum CurrentStage {
+  submitted
+  validating
+  points_frozen
+  queued
+  assigned
+  inspecting_source
+  copying
+  pushing
+  verifying_target
+  settling
+  completed
+  failed
+  canceled
+}
+
+enum AttemptStatus {
+  running
+  success
+  failed
+  canceled
+}
+
+enum StageStatus {
+  pending
+  running
+  success
+  failed
+  skipped
+}
+
+enum LogLevel {
+  debug
+  info
+  warn
+  error
+}
+
+enum PointTransactionType {
+  register_bonus
+  activity_grant
+  membership_grant
+  freeze
+  consume
+  refund
+  manual_recharge
+  online_recharge
+  admin_adjust
+}
+
+enum OperatorType {
+  system
+  user
+  admin
+}
+
+enum OrderType {
+  points
+  membership
+  manual
+}
+
+enum OrderStatus {
+  pending
+  paid
+  closed
+  refunded
+  failed
+  reserved
+}
+
+enum PayChannel {
+  manual
+  alipay
+  wechat
+}
+
+enum PaymentProvider {
+  manual
+  alipay
+  wechat
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  failed
+  refunded
+}
+
+enum MembershipStatus {
+  active
+  expired
+  canceled
+}
+
+enum WorkerNodeStatus {
+  pending
+  online
+  offline
+  maintenance
+  draining
+  disabled
+  retired
+  deleted
+}
+
+enum WorkerExecutorType {
+  skopeo
+  crane
+  docker
+  nerdctl
+}
+
+enum ActivityType {
+  register_bonus
+  claim_points
+  manual_campaign
+}
+
+enum ActivityStatus {
+  draft
+  enabled
+  disabled
+  ended
+}
+
+enum MessageType {
+  task
+  order
+  points
+  announcement
+  system
+}
+
+enum PublishStatus {
+  draft
+  published
+  archived
+}
+
+enum SystemJobStatus {
+  pending
+  running
+  succeeded
+  failed
+}
+
+model User {
+  id                 Int                 @id @default(autoincrement())
+  email              String?             @unique
+  phone              String?             @unique
+  passwordHash       String              @map("password_hash")
+  status             UserStatus          @default(normal)
+  registerIp         String?             @map("register_ip")
+  lastLoginAt        DateTime?           @map("last_login_at")
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+  sessions           UserSession[]
+  pointAccount       PointAccount?
+  registryAccounts   RegistryAccount[]
+  imageTasks         ImageTask[]
+  pointTransactions  PointTransaction[]
+  rechargeOrders     RechargeOrder[]
+  memberships        UserMembership[]
+  activityClaims     ActivityClaim[]
+  messages           UserMessage[]
+
+  @@map("users")
+}
+
+model UserSession {
+  id          Int       @id @default(autoincrement())
+  userId      Int       @map("user_id")
+  tokenHash   String    @unique @map("token_hash")
+  ip          String?
+  userAgent   String?   @map("user_agent")
+  expiresAt   DateTime  @map("expires_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  revokedAt   DateTime? @map("revoked_at")
+  user        User      @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+  @@map("user_sessions")
+}
+
+model Admin {
+  id             Int             @id @default(autoincrement())
+  username       String          @unique
+  passwordHash   String          @map("password_hash")
+  role           AdminRole       @default(super_admin)
+  status         AdminStatus     @default(normal)
+  lastLoginAt    DateTime?       @map("last_login_at")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+  sessions       AdminSession[]
+  auditLogs      AdminAuditLog[]
+
+  @@map("admins")
+}
+
+model AdminSession {
+  id          Int       @id @default(autoincrement())
+  adminId     Int       @map("admin_id")
+  tokenHash   String    @unique @map("token_hash")
+  ip          String?
+  userAgent   String?   @map("user_agent")
+  expiresAt   DateTime  @map("expires_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  revokedAt   DateTime? @map("revoked_at")
+  admin       Admin     @relation(fields: [adminId], references: [id])
+
+  @@index([adminId, createdAt])
+  @@map("admin_sessions")
+}
+
+model LoginLog {
+  id          Int       @id @default(autoincrement())
+  actorType   ActorType @map("actor_type")
+  actorId     Int?      @map("actor_id")
+  account     String
+  success     Boolean
+  failReason  String?   @map("fail_reason")
+  ip          String?
+  userAgent   String?   @map("user_agent")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@index([actorType, actorId, createdAt])
+  @@map("login_logs")
+}
+
+model PointAccount {
+  id                  Int      @id @default(autoincrement())
+  userId              Int      @unique @map("user_id")
+  balancePoints       Int      @default(0) @map("balance_points")
+  frozenPoints        Int      @default(0) @map("frozen_points")
+  totalEarnedPoints   Int      @default(0) @map("total_earned_points")
+  totalConsumedPoints Int      @default(0) @map("total_consumed_points")
+  version             Int      @default(0)
+  updatedAt           DateTime @updatedAt @map("updated_at")
+  user                User     @relation(fields: [userId], references: [id])
+
+  @@map("point_accounts")
+}
+
+model PointTransaction {
+  id              Int                  @id @default(autoincrement())
+  userId          Int                  @map("user_id")
+  type            PointTransactionType
+  balanceBefore   Int                  @map("balance_before")
+  frozenBefore    Int                  @map("frozen_before")
+  balanceDelta    Int                  @map("balance_delta")
+  frozenDelta     Int                  @map("frozen_delta")
+  balanceAfter    Int                  @map("balance_after")
+  frozenAfter     Int                  @map("frozen_after")
+  refType         String?              @map("ref_type")
+  refId           Int?                 @map("ref_id")
+  idempotencyKey  String               @unique @map("idempotency_key")
+  operatorType    OperatorType         @map("operator_type")
+  operatorId      Int?                 @map("operator_id")
+  remark          String?
+  createdAt       DateTime             @default(now()) @map("created_at")
+  user            User                 @relation(fields: [userId], references: [id])
+  activityClaims  ActivityClaim[]
+
+  @@index([userId, createdAt])
+  @@map("point_transactions")
+}
+
+model RegistryAccount {
+  id                Int                   @id @default(autoincrement())
+  userId            Int                   @map("user_id")
+  provider          RegistryProvider
+  name              String
+  registryUrl       String                @map("registry_url")
+  namespace         String
+  usernameEncrypted String?               @map("username_encrypted")
+  passwordEncrypted String?               @map("password_encrypted")
+  secretKeyVersion  String?               @map("secret_key_version")
+  secretRotatedAt   DateTime?             @map("secret_rotated_at")
+  lastResolvedAt    DateTime?             @map("last_resolved_at")
+  resolveCount      Int                   @default(0) @map("resolve_count")
+  status            RegistryAccountStatus @default(active)
+  lastTestAt        DateTime?             @map("last_test_at")
+  deletedAt         DateTime?             @map("deleted_at")
+  createdAt         DateTime              @default(now()) @map("created_at")
+  updatedAt         DateTime              @updatedAt @map("updated_at")
+  user              User                  @relation(fields: [userId], references: [id])
+  imageTasks        ImageTask[]
+
+  @@index([userId, createdAt])
+  @@map("registry_accounts")
+}
+
+model ImageTask {
+  id                   Int                 @id @default(autoincrement())
+  userId               Int                 @map("user_id")
+  registryAccountId    Int?                @map("registry_account_id")
+  sourceImage          String              @map("source_image")
+  targetImage          String              @map("target_image")
+  architecture         String              @default("all")
+  taskStatus           TaskStatus          @default(queued) @map("task_status")
+  billingStatus        BillingStatus       @default(not_frozen) @map("billing_status")
+  workerStatus         WorkerTaskStatus    @default(unclaimed) @map("worker_status")
+  currentStage         CurrentStage        @default(submitted) @map("current_stage")
+  estimatedPoints      Int                 @default(0) @map("estimated_points")
+  frozenPoints         Int                 @default(0) @map("frozen_points")
+  settledPoints        Int                 @default(0) @map("settled_points")
+  refundedPoints       Int                 @default(0) @map("refunded_points")
+  estimatedSizeBytes   BigInt?             @map("estimated_size_bytes")
+  pulledBytes          BigInt?             @map("pulled_bytes")
+  pushedBytes          BigInt?             @map("pushed_bytes")
+  sourceManifestDigest String?             @map("source_manifest_digest")
+  targetManifestDigest String?             @map("target_manifest_digest")
+  targetDigest         String?             @map("target_digest")
+  claimTokenHash       String?             @map("claim_token_hash")
+  claimExpiresAt       DateTime?           @map("claim_expires_at")
+  currentAttempt       Int                 @default(0) @map("current_attempt")
+  assignedWorkerId     Int?                @map("assigned_worker_id")
+  cancelRequestedAt    DateTime?           @map("cancel_requested_at")
+  startedAt            DateTime?           @map("started_at")
+  finishedAt           DateTime?           @map("finished_at")
+  settledAt            DateTime?           @map("settled_at")
+  refundedAt           DateTime?           @map("refunded_at")
+  idempotencyKey       String              @unique @map("idempotency_key")
+  createdAt            DateTime            @default(now()) @map("created_at")
+  updatedAt            DateTime            @updatedAt @map("updated_at")
+  user                 User                @relation(fields: [userId], references: [id])
+  registryAccount      RegistryAccount?    @relation(fields: [registryAccountId], references: [id])
+  assignedWorker       WorkerNode?         @relation(fields: [assignedWorkerId], references: [id])
+  attempts             ImageTaskAttempt[]
+  stages               ImageTaskStage[]
+  logs                 ImageTaskLog[]
+
+  @@index([userId, createdAt])
+  @@index([taskStatus, createdAt])
+  @@index([workerStatus, claimExpiresAt])
+  @@map("image_tasks")
+}
+
+model ImageTaskAttempt {
+  id           Int           @id @default(autoincrement())
+  taskId       Int           @map("task_id")
+  attemptNo    Int           @map("attempt_no")
+  workerId     Int?          @map("worker_id")
+  status       AttemptStatus @default(running)
+  startedAt    DateTime      @default(now()) @map("started_at")
+  endedAt      DateTime?     @map("ended_at")
+  errorCode    String?       @map("error_code")
+  errorMessage String?       @map("error_message")
+  task         ImageTask     @relation(fields: [taskId], references: [id])
+  worker       WorkerNode?   @relation(fields: [workerId], references: [id])
+
+  @@unique([taskId, attemptNo])
+  @@index([workerId, startedAt])
+  @@map("image_task_attempts")
+}
+
+model ImageTaskStage {
+  id        Int         @id @default(autoincrement())
+  taskId    Int         @map("task_id")
+  attemptNo Int         @map("attempt_no")
+  stage     CurrentStage
+  status    StageStatus @default(pending)
+  startedAt DateTime?   @map("started_at")
+  endedAt   DateTime?   @map("ended_at")
+  errorCode String?     @map("error_code")
+  task      ImageTask   @relation(fields: [taskId], references: [id])
+
+  @@index([taskId, attemptNo])
+  @@map("image_task_stages")
+}
+
+model ImageTaskLog {
+  id           Int          @id @default(autoincrement())
+  taskId       Int          @map("task_id")
+  attemptNo    Int          @map("attempt_no")
+  level        LogLevel     @default(info)
+  stage        CurrentStage?
+  message      String
+  safeMetaJson Json?        @map("safe_meta_json")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  task         ImageTask    @relation(fields: [taskId], references: [id])
+
+  @@index([taskId, attemptNo, createdAt])
+  @@map("image_task_logs")
+}
+
+model RechargePackage {
+  id           Int             @id @default(autoincrement())
+  name         String
+  priceCents   Int             @map("price_cents")
+  points       Int
+  bonusPoints  Int             @default(0) @map("bonus_points")
+  enabled      Boolean         @default(true)
+  sortOrder    Int             @default(0) @map("sort_order")
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+  orders       RechargeOrder[]
+
+  @@map("recharge_packages")
+}
+
+model RechargeOrder {
+  id             Int             @id @default(autoincrement())
+  orderNo        String          @unique @map("order_no")
+  userId         Int             @map("user_id")
+  packageId      Int?            @map("package_id")
+  orderType      OrderType       @map("order_type")
+  payChannel     PayChannel      @map("pay_channel")
+  status         OrderStatus     @default(pending)
+  amountCents    Int             @map("amount_cents")
+  points         Int
+  planId         Int?            @map("plan_id")
+  snapshotJson   Json?           @map("snapshot_json")
+  paidAt         DateTime?       @map("paid_at")
+  closedAt       DateTime?       @map("closed_at")
+  idempotencyKey String          @unique @map("idempotency_key")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+  user           User            @relation(fields: [userId], references: [id])
+  package        RechargePackage? @relation(fields: [packageId], references: [id])
+  plan           MembershipPlan? @relation(fields: [planId], references: [id])
+  paymentRecords PaymentRecord[]
+
+  @@index([userId, createdAt])
+  @@map("recharge_orders")
+}
+
+model PaymentRecord {
+  id              Int             @id @default(autoincrement())
+  orderId         Int             @map("order_id")
+  provider        PaymentProvider
+  providerTradeNo String?         @map("provider_trade_no")
+  amountCents     Int             @map("amount_cents")
+  status          PaymentStatus   @default(pending)
+  paidAt          DateTime?       @map("paid_at")
+  rawPayload      Json?           @map("raw_payload")
+  idempotencyKey  String          @unique @map("idempotency_key")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  order           RechargeOrder   @relation(fields: [orderId], references: [id])
+
+  @@index([orderId, createdAt])
+  @@map("payment_records")
+}
+
+model MembershipPlan {
+  id                  Int              @id @default(autoincrement())
+  code                String           @unique
+  name                String
+  priceCents          Int              @map("price_cents")
+  grantPoints         Int              @default(0) @map("grant_points")
+  dailyTaskLimit      Int              @map("daily_task_limit")
+  dailyPointLimit     Int              @map("daily_point_limit")
+  concurrentTaskLimit Int              @map("concurrent_task_limit")
+  maxImageSizeMb      Int              @map("max_image_size_mb")
+  enabled             Boolean          @default(true)
+  sortOrder           Int              @default(0) @map("sort_order")
+  createdAt           DateTime         @default(now()) @map("created_at")
+  updatedAt           DateTime         @updatedAt @map("updated_at")
+  memberships         UserMembership[]
+  orders              RechargeOrder[]
+
+  @@map("membership_plans")
+}
+
+model UserMembership {
+  id        Int              @id @default(autoincrement())
+  userId    Int              @map("user_id")
+  planId    Int              @map("plan_id")
+  status    MembershipStatus @default(active)
+  startedAt DateTime         @map("started_at")
+  expiresAt DateTime?        @map("expires_at")
+  createdAt DateTime         @default(now()) @map("created_at")
+  user      User             @relation(fields: [userId], references: [id])
+  plan      MembershipPlan   @relation(fields: [planId], references: [id])
+
+  @@index([userId, status])
+  @@map("user_memberships")
+}
+
+model WorkerNode {
+  id              Int                @id @default(autoincrement())
+  name            String             @unique
+  status          WorkerNodeStatus   @default(pending)
+  endpoint        String?
+  executorType    WorkerExecutorType @default(skopeo) @map("executor_type")
+  version         String?
+  maxConcurrency  Int                @default(1) @map("max_concurrency")
+  weight          Int                @default(100)
+  tokenHash       String?            @map("token_hash")
+  tokenVersion    Int                @default(1) @map("token_version")
+  tokenRotatedAt  DateTime?          @map("token_rotated_at")
+  lastHeartbeatAt DateTime?          @map("last_heartbeat_at")
+  deletedAt       DateTime?          @map("deleted_at")
+  createdAt       DateTime           @default(now()) @map("created_at")
+  updatedAt       DateTime           @updatedAt @map("updated_at")
+  heartbeats      WorkerHeartbeat[]
+  tasks           ImageTask[]
+  attempts        ImageTaskAttempt[]
+
+  @@index([status, lastHeartbeatAt])
+  @@map("worker_nodes")
+}
+
+model WorkerHeartbeat {
+  id            Int              @id @default(autoincrement())
+  workerId      Int              @map("worker_id")
+  status        WorkerNodeStatus
+  currentTasks  Int              @default(0) @map("current_tasks")
+  cpuUsage      Float?           @map("cpu_usage")
+  memoryUsage   Float?           @map("memory_usage")
+  diskFreeBytes BigInt?          @map("disk_free_bytes")
+  reportedAt    DateTime         @default(now()) @map("reported_at")
+  worker        WorkerNode       @relation(fields: [workerId], references: [id])
+
+  @@index([workerId, reportedAt])
+  @@map("worker_heartbeats")
+}
+
+model Activity {
+  id           Int             @id @default(autoincrement())
+  title        String
+  type         ActivityType
+  rewardPoints Int             @map("reward_points")
+  status       ActivityStatus  @default(draft)
+  startAt      DateTime?       @map("start_at")
+  endAt        DateTime?       @map("end_at")
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+  claims       ActivityClaim[]
+
+  @@index([status, startAt, endAt])
+  @@map("activities")
+}
+
+model ActivityClaim {
+  id                 Int              @id @default(autoincrement())
+  activityId         Int              @map("activity_id")
+  userId             Int              @map("user_id")
+  pointTransactionId Int?             @map("point_transaction_id")
+  claimedAt          DateTime         @default(now()) @map("claimed_at")
+  idempotencyKey     String           @unique @map("idempotency_key")
+  activity           Activity         @relation(fields: [activityId], references: [id])
+  user               User             @relation(fields: [userId], references: [id])
+  pointTransaction   PointTransaction? @relation(fields: [pointTransactionId], references: [id])
+
+  @@unique([activityId, userId])
+  @@index([userId, claimedAt])
+  @@map("activity_claims")
+}
+
+model UserMessage {
+  id        Int         @id @default(autoincrement())
+  userId    Int         @map("user_id")
+  type      MessageType
+  title     String
+  content   String
+  readAt    DateTime?   @map("read_at")
+  refType   String?     @map("ref_type")
+  refId     Int?        @map("ref_id")
+  createdAt DateTime    @default(now()) @map("created_at")
+  user      User        @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+  @@map("user_messages")
+}
+
+model Announcement {
+  id          Int           @id @default(autoincrement())
+  title       String
+  content     String
+  status      PublishStatus @default(draft)
+  publishedAt DateTime?     @map("published_at")
+  createdBy   Int?          @map("created_by")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  @@index([status, publishedAt])
+  @@map("announcements")
+}
+
+model HelpArticle {
+  id          Int           @id @default(autoincrement())
+  slug        String        @unique
+  title       String
+  content     String
+  category    String
+  status      PublishStatus @default(draft)
+  publishedAt DateTime?     @map("published_at")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  @@index([status, publishedAt])
+  @@map("help_articles")
+}
+
+model ErrorCode {
+  id            Int      @id @default(autoincrement())
+  code          String   @unique
+  message       String
+  suggestion    String
+  refundDefault Boolean  @default(true) @map("refund_default")
+  enabled       Boolean  @default(true)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("error_codes")
+}
+
+model AdminAuditLog {
+  id         Int       @id @default(autoincrement())
+  adminId    Int?      @map("admin_id")
+  action     String
+  targetType String    @map("target_type")
+  targetId   Int?      @map("target_id")
+  beforeJson Json?     @map("before_json")
+  afterJson  Json?     @map("after_json")
+  ip         String?
+  createdAt  DateTime  @default(now()) @map("created_at")
+  admin      Admin?    @relation(fields: [adminId], references: [id])
+
+  @@index([adminId, createdAt])
+  @@map("admin_audit_logs")
+}
+
+model SystemConfig {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  valueJson Json     @map("value_json")
+  group     String
+  updatedBy Int?     @map("updated_by")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("system_configs")
+}
+
+model SystemJob {
+  id           Int             @id @default(autoincrement())
+  type         String
+  status       SystemJobStatus @default(pending)
+  payloadJson  Json?           @map("payload_json")
+  lockedAt     DateTime?       @map("locked_at")
+  finishedAt   DateTime?       @map("finished_at")
+  errorMessage String?         @map("error_message")
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+
+  @@index([type, status, createdAt])
+  @@map("system_jobs")
+}
